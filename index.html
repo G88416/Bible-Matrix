@@ -1,0 +1,430 @@
+# Lotto Battle Arena (2 Player Competitive Game)
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Lotto Battle Arena</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800&display=swap" rel="stylesheet">
+
+<style>
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+  font-family:'Orbitron',sans-serif;
+}
+
+body{
+  min-height:100vh;
+  background:linear-gradient(135deg,#070012,#17002b,#240046);
+  color:white;
+  overflow-x:hidden;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  padding:20px;
+}
+
+.container{
+  width:100%;
+  max-width:1200px;
+}
+
+.title{
+  text-align:center;
+  font-size:3rem;
+  font-weight:800;
+  margin-bottom:10px;
+  background:linear-gradient(90deg,#00f5ff,#ff00c8);
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+}
+
+.subtitle{
+  text-align:center;
+  opacity:0.7;
+  margin-bottom:35px;
+}
+
+.arena{
+  display:grid;
+  grid-template-columns:1fr 180px 1fr;
+  gap:20px;
+}
+
+.player-box{
+  background:rgba(255,255,255,0.06);
+  border:1px solid rgba(255,255,255,0.12);
+  border-radius:30px;
+  padding:25px;
+  backdrop-filter:blur(12px);
+  position:relative;
+  overflow:hidden;
+}
+
+.player-box::before{
+  content:'';
+  position:absolute;
+  width:180%;
+  height:100%;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,0.07),transparent);
+  top:0;
+  left:-180%;
+  animation:shine 5s infinite;
+}
+
+@keyframes shine{
+  100%{
+    left:180%;
+  }
+}
+
+.player-name{
+  text-align:center;
+  font-size:1.5rem;
+  margin-bottom:20px;
+}
+
+.stats{
+  display:flex;
+  justify-content:space-between;
+  margin-bottom:25px;
+}
+
+.card{
+  width:48%;
+  background:rgba(255,255,255,0.08);
+  border-radius:20px;
+  padding:15px;
+  text-align:center;
+}
+
+.card h3{
+  font-size:0.8rem;
+  opacity:0.7;
+  margin-bottom:10px;
+}
+
+.card p{
+  font-size:1.5rem;
+  font-weight:700;
+}
+
+.balls{
+  display:flex;
+  justify-content:center;
+  gap:10px;
+  flex-wrap:wrap;
+  min-height:90px;
+}
+
+.ball{
+  width:65px;
+  height:65px;
+  border-radius:50%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:1.3rem;
+  font-weight:800;
+  animation:pop .4s forwards;
+  transform:scale(0);
+  box-shadow:0 0 20px rgba(255,255,255,.3);
+}
+
+@keyframes pop{
+  to{
+    transform:scale(1) rotate(360deg);
+  }
+}
+
+.ball:nth-child(1){background:#ff006e;}
+.ball:nth-child(2){background:#8338ec;}
+.ball:nth-child(3){background:#3a86ff;}
+.ball:nth-child(4){background:#06d6a0;}
+.ball:nth-child(5){background:#ffbe0b;}
+.ball:nth-child(6){background:#fb5607;}
+
+.center-panel{
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  gap:20px;
+}
+
+.vs{
+  width:140px;
+  height:140px;
+  border-radius:50%;
+  background:linear-gradient(135deg,#ff00c8,#00f5ff);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:2.5rem;
+  font-weight:800;
+  box-shadow:0 0 40px rgba(255,0,200,.5);
+  animation:pulse 1s infinite alternate;
+}
+
+@keyframes pulse{
+  from{transform:scale(1);}
+  to{transform:scale(1.08);}
+}
+
+button{
+  border:none;
+  border-radius:50px;
+  padding:16px 22px;
+  font-size:1rem;
+  font-weight:700;
+  cursor:pointer;
+  transition:.25s;
+}
+
+.spin-btn{
+  background:linear-gradient(90deg,#ff00c8,#ff7b00);
+  color:white;
+  box-shadow:0 10px 25px rgba(255,0,200,.4);
+}
+
+.spin-btn:hover{
+  transform:translateY(-3px) scale(1.05);
+}
+
+.reset-btn{
+  background:rgba(255,255,255,0.1);
+  color:white;
+}
+
+.message{
+  margin-top:35px;
+  text-align:center;
+  font-size:1.2rem;
+  font-weight:700;
+  color:#ffe600;
+  min-height:30px;
+}
+
+.history{
+  margin-top:15px;
+  font-size:0.85rem;
+  opacity:0.8;
+  line-height:1.6;
+}
+
+@media(max-width:900px){
+  .arena{
+    grid-template-columns:1fr;
+  }
+
+  .center-panel{
+    order:-1;
+    margin-bottom:20px;
+  }
+
+  .vs{
+    width:100px;
+    height:100px;
+    font-size:2rem;
+  }
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+
+<h1 class="title">LOTTO BATTLE ARENA</h1>
+<p class="subtitle">Player vs Player • Strategy • Lucky Combos • Competitive Gameplay</p>
+
+<div class="arena">
+
+<div class="player-box">
+  <h2 class="player-name">🔴 PLAYER ONE</h2>
+
+  <div class="stats">
+    <div class="card">
+      <h3>SCORE</h3>
+      <p id="score1">0</p>
+    </div>
+
+    <div class="card">
+      <h3>WINS</h3>
+      <p id="wins1">0</p>
+    </div>
+  </div>
+
+  <div class="balls" id="balls1"></div>
+
+  <div class="history" id="history1"></div>
+</div>
+
+<div class="center-panel">
+  <div class="vs">VS</div>
+
+  <button class="spin-btn" onclick="battle()">
+    ⚔️ START BATTLE
+  </button>
+
+  <button class="reset-btn" onclick="resetGame()">
+    🔄 RESET GAME
+  </button>
+</div>
+
+<div class="player-box">
+  <h2 class="player-name">🔵 PLAYER TWO</h2>
+
+  <div class="stats">
+    <div class="card">
+      <h3>SCORE</h3>
+      <p id="score2">0</p>
+    </div>
+
+    <div class="card">
+      <h3>WINS</h3>
+      <p id="wins2">0</p>
+    </div>
+  </div>
+
+  <div class="balls" id="balls2"></div>
+
+  <div class="history" id="history2"></div>
+</div>
+
+</div>
+
+<div class="message" id="message">
+Press START BATTLE to begin.
+</div>
+
+</div>
+
+<script>
+let wins1 = 0;
+let wins2 = 0;
+
+function generateUniqueNumbers(){
+  let nums = [];
+
+  while(nums.length < 6){
+    let n = Math.floor(Math.random() * 49) + 1;
+
+    if(!nums.includes(n)){
+      nums.push(n);
+    }
+  }
+
+  return nums.sort((a,b)=>a-b);
+}
+
+function renderBalls(containerId,numbers){
+  const container = document.getElementById(containerId);
+  container.innerHTML = '';
+
+  numbers.forEach((num,index)=>{
+    setTimeout(()=>{
+      const ball = document.createElement('div');
+      ball.className = 'ball';
+      ball.innerText = num;
+      container.appendChild(ball);
+    },index * 180);
+  });
+}
+
+function calculatePower(numbers){
+  let even = numbers.filter(n=>n%2===0).length;
+  let odd = numbers.filter(n=>n%2!==0).length;
+
+  let comboBonus = 0;
+
+  for(let i=0;i<numbers.length-1;i++){
+    if(numbers[i+1]-numbers[i]===1){
+      comboBonus += 20;
+    }
+  }
+
+  let total = numbers.reduce((a,b)=>a+b,0);
+
+  return total + comboBonus + (even*5) + (odd*3);
+}
+
+function battle(){
+
+  const nums1 = generateUniqueNumbers();
+  const nums2 = generateUniqueNumbers();
+
+  renderBalls('balls1',nums1);
+  renderBalls('balls2',nums2);
+
+  const power1 = calculatePower(nums1);
+  const power2 = calculatePower(nums2);
+
+  document.getElementById('score1').innerText = power1;
+  document.getElementById('score2').innerText = power2;
+
+  document.getElementById('history1').innerHTML = 'Combo: ' + nums1.join(' • ');
+  document.getElementById('history2').innerHTML = 'Combo: ' + nums2.join(' • ');
+
+  const message = document.getElementById('message');
+
+  setTimeout(()=>{
+
+    if(power1 > power2){
+      wins1++;
+      document.getElementById('wins1').innerText = wins1;
+      message.innerHTML = '🏆 PLAYER ONE dominates the arena!';
+    }
+    else if(power2 > power1){
+      wins2++;
+      document.getElementById('wins2').innerText = wins2;
+      message.innerHTML = '⚡ PLAYER TWO crushes the competition!';
+    }
+    else{
+      message.innerHTML = '🤝 EPIC DRAW! Both players are equally powerful!';
+    }
+
+  },1600);
+}
+
+function resetGame(){
+  wins1 = 0;
+  wins2 = 0;
+
+  document.getElementById('wins1').innerText = 0;
+  document.getElementById('wins2').innerText = 0;
+
+  document.getElementById('score1').innerText = 0;
+  document.getElementById('score2').innerText = 0;
+
+  document.getElementById('balls1').innerHTML = '';
+  document.getElementById('balls2').innerHTML = '';
+
+  document.getElementById('history1').innerHTML = '';
+  document.getElementById('history2').innerHTML = '';
+
+  document.getElementById('message').innerHTML = 'Game reset. Start a new battle!';
+}
+</script>
+
+</body>
+</html>
+```
+
+## Advanced Features Included
+
+* 2-player competitive battle mode
+* Animated lotto battle arena
+* Smart scoring algorithm
+* Combo bonuses for number patterns
+* Win tracking system
+* Neon cyberpunk gaming design
+* Fully mobile responsive
+* Randomized strategic outcomes
+* Animated battle effects
+* Competitive replay gameplay
+* Reset system
+* Dynamic winner announcements
