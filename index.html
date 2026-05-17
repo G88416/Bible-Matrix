@@ -439,6 +439,75 @@ footer {
     font-weight: 600;
 }
 
+.auth-shell {
+    padding: 32px;
+}
+
+.auth-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+    margin-top: 18px;
+}
+
+.auth-form {
+    display: grid;
+    gap: 10px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 18px;
+    padding: 16px;
+}
+
+.auth-form input,
+.auth-form select {
+    width: 100%;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: rgba(0, 0, 0, 0.2);
+    color: var(--text);
+    padding: 10px 12px;
+}
+
+.auth-feedback {
+    color: #ffe39f;
+    min-height: 20px;
+    font-size: 0.9rem;
+}
+
+.firebase-warning {
+    margin-top: 14px;
+    background: rgba(255, 93, 115, 0.2);
+    border: 1px solid rgba(255, 93, 115, 0.5);
+    color: #ffd9de;
+    padding: 10px 12px;
+    border-radius: 12px;
+}
+
+.rank-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 12px 0 18px;
+}
+
+.rank-table th,
+.rank-table td {
+    text-align: left;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 8px 4px;
+    font-size: 0.9rem;
+}
+
+.name-male {
+    color: #79b7ff;
+    font-weight: 700;
+}
+
+.name-female {
+    color: #ff9ad5;
+    font-weight: 700;
+}
+
 footer {
     margin-top: 18px;
     font-size: 0.9rem;
@@ -448,6 +517,7 @@ footer {
     .hero,
     .hero-highlights,
     .stage-overview,
+    .auth-grid,
     .stat-grid,
     .answers,
     .result-scoreboard,
@@ -491,37 +561,73 @@ footer {
 </style>
 </head>
 <body>
-<section id="homeScreen" class="screen active">
+<section id="authScreen" class="screen active">
+    <div class="container glass auth-shell">
+        <div class="eyebrow">🔐 Firebase Portal</div>
+        <h2>Phone Sign Up and Login</h2>
+        <p class="kicker">Sign up with phone number, full names, and gender. Then log in with OTP to play and save rankings.</p>
+        <div id="firebaseWarning" class="firebase-warning" style="display:none;"></div>
+        <div class="auth-grid">
+            <div class="auth-form">
+                <h3>Sign Up</h3>
+                <input id="signupFullName" type="text" placeholder="Full names" />
+                <select id="signupGender">
+                    <option value="">Select gender</option>
+                    <option value="male">Male</option>
+                    <option value="female">Female</option>
+                </select>
+                <input id="signupPhone" type="tel" placeholder="Phone number (e.g. +2348012345678)" />
+                <button class="btn btn-primary" onclick="sendSignupCode()">Send OTP</button>
+                <input id="signupOtp" type="text" placeholder="Enter OTP" />
+                <button class="btn btn-secondary" onclick="verifySignupCode()">Verify and Create Account</button>
+                <div id="signupRecaptcha"></div>
+                <p id="signupFeedback" class="auth-feedback"></p>
+            </div>
+            <div class="auth-form">
+                <h3>Log In</h3>
+                <input id="loginPhone" type="tel" placeholder="Phone number (e.g. +2348012345678)" />
+                <button class="btn btn-primary" onclick="sendLoginCode()">Send OTP</button>
+                <input id="loginOtp" type="text" placeholder="Enter OTP" />
+                <button class="btn btn-secondary" onclick="verifyLoginCode()">Verify and Log In</button>
+                <div id="loginRecaptcha"></div>
+                <p id="loginFeedback" class="auth-feedback"></p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section id="homeScreen" class="screen">
     <div class="container glass hero">
         <div class="hero-copy">
             <div class="eyebrow">✨ Youth and Young Adults Ministry Quiz</div>
             <h1>Luke Quiz Journey</h1>
             <p>
                 Make Bible study nights more engaging with a polished quiz experience built for your youth ministry.
-                Players move through four stages, and each round introduces tougher questions from the Gospel of Luke.
+                Sign in, play through Luke-based questions, and climb the ranking table with your best score.
             </p>
             <div class="hero-actions">
                 <button class="btn btn-primary" onclick="startGame()">Start the 4-Stage Journey</button>
                 <button class="btn btn-secondary" onclick="showRules()">How to Play</button>
             </div>
-            <div class="hero-highlights">
-                <div class="mini-card">
-                    <strong>4</strong>
-                    <span>Progressive stages with rising difficulty.</span>
-                </div>
-                <div class="mini-card">
-                    <strong id="totalQuestionCount">20</strong>
-                    <span>Luke-based questions for fun discipleship moments.</span>
-                </div>
-                <div class="mini-card">
-                    <strong>Mobile</strong>
-                    <span>Friendly layout for phones, tablets, and laptops.</span>
-                </div>
-            </div>
             <footer>“For the Son of Man came to seek and to save the lost.” — Luke 19:10</footer>
         </div>
 
         <aside class="hero-panel">
+            <h2>🏆 Ranking</h2>
+            <table class="rank-table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Name</th>
+                        <th>Score</th>
+                    </tr>
+                </thead>
+                <tbody id="rankingTableBody">
+                    <tr>
+                        <td colspan="3">No ranking data yet.</td>
+                    </tr>
+                </tbody>
+            </table>
             <h2>Stage Journey</h2>
             <div class="stage-overview">
                 <div class="stage-card">
@@ -670,7 +776,21 @@ footer {
     </div>
 </section>
 
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
 <script>
+const firebaseConfig = {
+    apiKey: "YOUR_API_KEY",
+    authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+    projectId: "YOUR_PROJECT_ID",
+    storageBucket: "YOUR_PROJECT_ID.firebasestorage.app",
+    messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+    appId: "YOUR_APP_ID"
+};
+// Replace the placeholder values above with your real Firebase web app configuration.
+const MAX_QUIZ_SCORE = 20;
+
 const stages = [
     {
         name: "Foundations",
@@ -822,10 +942,19 @@ let currentStageIndex = 0;
 let currentQuestionIndex = 0;
 let playerScore = 0;
 let aiScore = 0;
+let playerCorrectAnswers = 0;
 let timer = 0;
 let countdown;
 let awaitingAnswer = false;
 let stageResults = [];
+let auth = null;
+let db = null;
+let currentUser = null;
+let currentProfile = null;
+let signupConfirmation = null;
+let loginConfirmation = null;
+let signupRecaptcha = null;
+let loginRecaptcha = null;
 // Brief pause so players can review the right answer before the next question loads.
 const nextQuestionDelayMs = 1400;
 // The AI gets a small edge on timeouts because the player did not answer in time.
@@ -836,13 +965,236 @@ function showScreen(screenId) {
     document.getElementById(screenId).classList.add('active');
 }
 
+function firebaseConfigured() {
+    const placeholders = new Set([
+        'YOUR_API_KEY',
+        'YOUR_PROJECT_ID.firebaseapp.com',
+        'YOUR_PROJECT_ID',
+        'YOUR_PROJECT_ID.firebasestorage.app',
+        'YOUR_MESSAGING_SENDER_ID',
+        'YOUR_APP_ID'
+    ]);
+    return Object.values(firebaseConfig).every((value) => !placeholders.has(String(value)));
+}
+
+function firebaseReady() {
+    return Boolean(auth && db);
+}
+
+function setAuthFeedback(id, message) {
+    document.getElementById(id).textContent = message;
+}
+
+function getOrCreateRecaptcha(elementId, existingRef) {
+    if (existingRef) {
+        return existingRef;
+    }
+    return new firebase.auth.RecaptchaVerifier(elementId, { size: 'normal' });
+}
+
+async function sendSignupCode() {
+    if (!firebaseReady()) return;
+    const fullName = document.getElementById('signupFullName').value.trim();
+    const gender = document.getElementById('signupGender').value;
+    const phone = document.getElementById('signupPhone').value.trim();
+    if (!fullName || !gender || !phone) {
+        setAuthFeedback('signupFeedback', 'Please add full names, gender, and phone.');
+        return;
+    }
+    try {
+        signupRecaptcha = getOrCreateRecaptcha('signupRecaptcha', signupRecaptcha);
+        signupConfirmation = await auth.signInWithPhoneNumber(phone, signupRecaptcha);
+        setAuthFeedback('signupFeedback', 'OTP sent. Enter it to complete signup.');
+    } catch (error) {
+        setAuthFeedback('signupFeedback', `Failed to send OTP: ${error.message}`);
+    }
+}
+
+async function verifySignupCode() {
+    if (!firebaseReady()) return;
+    const fullName = document.getElementById('signupFullName').value.trim();
+    const gender = document.getElementById('signupGender').value;
+    const phone = document.getElementById('signupPhone').value.trim();
+    const otp = document.getElementById('signupOtp').value.trim();
+    if (!signupConfirmation || !otp || !fullName || !gender || !phone) {
+        setAuthFeedback('signupFeedback', 'Send OTP first and complete all fields.');
+        return;
+    }
+    try {
+        const credential = await signupConfirmation.confirm(otp);
+        const user = credential.user;
+        const userRef = db.collection('users').doc(user.uid);
+        const existingDoc = await userRef.get();
+        if (existingDoc.exists) {
+            setAuthFeedback('signupFeedback', 'Account already exists. Please log in instead.');
+            return;
+        }
+        await userRef.set({
+            uid: user.uid,
+            fullName,
+            gender,
+            phoneNumber: user.phoneNumber || phone,
+            bestScore: 0,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        setAuthFeedback('signupFeedback', 'Signup complete. You are now logged in.');
+    } catch (error) {
+        setAuthFeedback('signupFeedback', `Signup failed: ${error.message}`);
+    }
+}
+
+function getGenderClass(gender) {
+    if (gender === 'female') return 'name-female';
+    if (gender === 'male') return 'name-male';
+    return '';
+}
+
+async function sendLoginCode() {
+    if (!firebaseReady()) return;
+    const phone = document.getElementById('loginPhone').value.trim();
+    if (!phone) {
+        setAuthFeedback('loginFeedback', 'Please enter your phone number.');
+        return;
+    }
+    try {
+        loginRecaptcha = getOrCreateRecaptcha('loginRecaptcha', loginRecaptcha);
+        loginConfirmation = await auth.signInWithPhoneNumber(phone, loginRecaptcha);
+        setAuthFeedback('loginFeedback', 'OTP sent. Enter it to log in.');
+    } catch (error) {
+        setAuthFeedback('loginFeedback', `Failed to send OTP: ${error.message}`);
+    }
+}
+
+async function verifyLoginCode() {
+    if (!firebaseReady()) return;
+    const otp = document.getElementById('loginOtp').value.trim();
+    if (!loginConfirmation || !otp) {
+        setAuthFeedback('loginFeedback', 'Send OTP first then enter the code.');
+        return;
+    }
+    try {
+        const credential = await loginConfirmation.confirm(otp);
+        const userDoc = await db.collection('users').doc(credential.user.uid).get();
+        if (!userDoc.exists) {
+            await auth.signOut();
+            setAuthFeedback('loginFeedback', 'No signup profile found. Please sign up first.');
+            return;
+        }
+        setAuthFeedback('loginFeedback', 'Login complete.');
+    } catch (error) {
+        setAuthFeedback('loginFeedback', `Login failed: ${error.message}`);
+    }
+}
+
+async function refreshLeaderboard() {
+    if (!firebaseReady()) return;
+    const rankingTableBody = document.getElementById('rankingTableBody');
+    rankingTableBody.innerHTML = '<tr><td colspan="3">Loading...</td></tr>';
+    try {
+        const snapshot = await db.collection('users')
+            .where('bestScore', '>=', 0)
+            .orderBy('bestScore', 'desc')
+            .limit(20)
+            .get();
+
+        if (snapshot.empty) {
+            rankingTableBody.innerHTML = '<tr><td colspan="3">No ranking data yet.</td></tr>';
+            return;
+        }
+
+        rankingTableBody.innerHTML = '';
+        snapshot.docs.forEach((doc, index) => {
+            const data = doc.data();
+            const row = document.createElement('tr');
+            const nameClass = getGenderClass(data.gender);
+            const safeScore = Math.min(MAX_QUIZ_SCORE, Math.max(0, Number(data.bestScore) || 0));
+            const rankCell = document.createElement('td');
+            rankCell.textContent = String(index + 1);
+            const nameCell = document.createElement('td');
+            const nameSpan = document.createElement('span');
+            if (nameClass) {
+                nameSpan.className = nameClass;
+            }
+            nameSpan.textContent = data.fullName || 'Unknown';
+            nameCell.appendChild(nameSpan);
+            const scoreCell = document.createElement('td');
+            scoreCell.textContent = String(safeScore);
+            row.appendChild(rankCell);
+            row.appendChild(nameCell);
+            row.appendChild(scoreCell);
+            rankingTableBody.appendChild(row);
+        });
+    } catch (error) {
+        console.error('Failed to load ranking:', error);
+        rankingTableBody.innerHTML = '<tr><td colspan="3">Failed to load ranking.</td></tr>';
+    }
+}
+
+async function saveBestScore() {
+    if (!firebaseReady() || !currentUser || !currentProfile) return;
+    const boundedScore = Math.max(0, Math.min(MAX_QUIZ_SCORE, playerCorrectAnswers));
+    const bestScore = Math.max(Number(currentProfile.bestScore || 0), boundedScore);
+    await db.collection('users').doc(currentUser.uid).set({
+        uid: currentUser.uid,
+        fullName: currentProfile.fullName || '',
+        gender: currentProfile.gender || '',
+        phoneNumber: currentProfile.phoneNumber || currentUser.phoneNumber || '',
+        bestScore,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    }, { merge: true });
+    currentProfile.bestScore = bestScore;
+}
+
+async function logout() {
+    if (!auth) return;
+    await auth.signOut();
+}
+
+function initFirebase() {
+    if (!firebaseConfigured()) {
+        const warning = document.getElementById('firebaseWarning');
+        warning.style.display = 'block';
+        warning.textContent = 'Firebase config is missing. Add your firebase web config in index.html.';
+        showScreen('authScreen');
+        return;
+    }
+
+    firebase.initializeApp(firebaseConfig);
+    auth = firebase.auth();
+    db = firebase.firestore();
+
+    auth.onAuthStateChanged(async (user) => {
+        if (!user) {
+            currentUser = null;
+            currentProfile = null;
+            showScreen('authScreen');
+            return;
+        }
+        currentUser = user;
+        const profile = await db.collection('users').doc(user.uid).get();
+        if (!profile.exists) {
+            await auth.signOut();
+            return;
+        }
+        currentProfile = profile.data();
+        showScreen('homeScreen');
+        refreshLeaderboard();
+    });
+}
+
 function startGame() {
+    if (!currentUser) {
+        showScreen('authScreen');
+        return;
+    }
     clearInterval(countdown);
     initializeQuizMeta();
     currentStageIndex = 0;
     currentQuestionIndex = 0;
     playerScore = 0;
     aiScore = 0;
+    playerCorrectAnswers = 0;
     awaitingAnswer = false;
     stageResults = stages.map((stage) => ({
         name: stage.name,
@@ -928,6 +1280,7 @@ function selectAnswer(selectedIndex, button) {
     if (selectedIndex === question.correct) {
         button.classList.add('correct');
         playerScore += stage.points;
+        playerCorrectAnswers += 1;
         stageResults[currentStageIndex].player += stage.points;
         document.getElementById('feedbackText').textContent = 'Correct! You earned points for this stage.';
     } else {
@@ -1020,7 +1373,7 @@ function showResults() {
     clearInterval(countdown);
     showScreen('resultScreen');
 
-    document.getElementById('finalPlayer').textContent = playerScore;
+    document.getElementById('finalPlayer').textContent = `${playerCorrectAnswers} / ${getTotalQuestionCount()}`;
     document.getElementById('finalAI').textContent = aiScore;
 
     let winnerText = "It's a draw!";
@@ -1035,7 +1388,7 @@ function showResults() {
     }
 
     document.getElementById('winnerText').textContent = winnerText;
-    document.getElementById('resultMessage').textContent = resultMessage;
+    document.getElementById('resultMessage').textContent = `${resultMessage} Your ranking score is ${playerCorrectAnswers} out of ${getTotalQuestionCount()}.`;
 
     const breakdown = document.getElementById('stageBreakdown');
     breakdown.innerHTML = '';
@@ -1044,6 +1397,10 @@ function showResults() {
         item.innerHTML = `<span>Stage ${index + 1}: ${stage.name}</span><span>${stage.player} - ${stage.ai}</span>`;
         breakdown.appendChild(item);
     });
+
+    saveBestScore()
+        .catch((error) => console.error('Failed to save best score:', error))
+        .finally(() => refreshLeaderboard());
 }
 
 function restartGame() {
@@ -1061,7 +1418,10 @@ function getAnsweredQuestionCount() {
 }
 
 function initializeQuizMeta() {
-    document.getElementById('totalQuestionCount').textContent = getTotalQuestionCount();
+    const totalQuestionCountEl = document.getElementById('totalQuestionCount');
+    if (totalQuestionCountEl) {
+        totalQuestionCountEl.textContent = getTotalQuestionCount();
+    }
 }
 
 function showRules() {
@@ -1072,13 +1432,14 @@ function showRules() {
 2. Answer before the timer ends to score points for your team.
 3. Correct answers earn more points in later stages.
 4. If time runs out, the answer is revealed and the AI may score.
-5. Use the stage breaks to pause, reflect, and keep the room engaged.
+5. Your ranking score is based on correct answers from 0 to 20.
 
 Perfect for youth nights, young adult hangouts, and ministry competitions!`
     );
 }
 
 initializeQuizMeta();
+initFirebase();
 </script>
 </body>
 </html>
