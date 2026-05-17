@@ -1,570 +1,1084 @@
-```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Luke Gospel Quiz Battle</title>
-
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
-
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Luke Quiz Journey</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
-*{
-    margin:0;
-    padding:0;
-    box-sizing:border-box;
-    font-family:'Poppins',sans-serif;
+:root {
+    --bg: #081120;
+    --bg-soft: #12203a;
+    --card: rgba(11, 23, 43, 0.78);
+    --card-border: rgba(255, 255, 255, 0.1);
+    --text: #eef4ff;
+    --muted: #b7c6e3;
+    --accent: #f5c451;
+    --accent-strong: #ff9f43;
+    --success: #2ecc71;
+    --danger: #ff5d73;
+    --shadow: 0 24px 60px rgba(0, 0, 0, 0.32);
 }
 
-body{
-    background:linear-gradient(135deg,#07111f,#132238,#1c3558);
-    min-height:100vh;
-    color:white;
-    overflow-x:hidden;
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: 'Inter', sans-serif;
 }
 
-.screen{
-    display:none;
-    padding:20px;
-    min-height:100vh;
-    justify-content:center;
-    align-items:center;
+body {
+    min-height: 100vh;
+    color: var(--text);
+    background:
+        radial-gradient(circle at top, rgba(245, 196, 81, 0.18), transparent 30%),
+        radial-gradient(circle at bottom right, rgba(108, 99, 255, 0.16), transparent 25%),
+        linear-gradient(160deg, #050b16 0%, #0d1830 45%, #14284a 100%);
 }
 
-.active{
-    display:flex;
+body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background-image:
+        linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+    background-size: 44px 44px;
+    pointer-events: none;
+    opacity: 0.35;
 }
 
-.container{
-    width:100%;
-    max-width:900px;
+.screen {
+    display: none;
+    min-height: 100vh;
+    padding: 24px;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    z-index: 1;
 }
 
-.glass{
-    background:rgba(255,255,255,0.08);
-    border:1px solid rgba(255,255,255,0.1);
-    backdrop-filter:blur(12px);
-    border-radius:25px;
-    padding:30px;
-    box-shadow:0 10px 30px rgba(0,0,0,0.4);
+.screen.active {
+    display: flex;
 }
 
-.title{
-    text-align:center;
-    margin-bottom:20px;
+.container {
+    width: 100%;
+    max-width: 1100px;
 }
 
-.title h1{
-    font-size:3rem;
-    color:#ffd86b;
+.glass {
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    backdrop-filter: blur(16px);
+    border-radius: 28px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
 }
 
-.title p{
-    opacity:0.8;
-    margin-top:10px;
+.hero {
+    display: grid;
+    grid-template-columns: 1.15fr 0.85fr;
+    gap: 28px;
+    padding: 34px;
 }
 
-.btn{
-    border:none;
-    background:linear-gradient(45deg,#ffb347,#ffcc33);
-    color:#111;
-    font-weight:700;
-    padding:14px 22px;
-    border-radius:14px;
-    cursor:pointer;
-    transition:0.3s;
-    width:100%;
-    margin-top:12px;
-    font-size:1rem;
+.hero-copy,
+.hero-panel,
+.game-layout,
+.transition-card,
+.result-card {
+    padding: 0;
 }
 
-.btn:hover{
-    transform:translateY(-3px) scale(1.02);
+.eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    border-radius: 999px;
+    background: rgba(245, 196, 81, 0.15);
+    color: #ffe39f;
+    font-size: 0.9rem;
+    margin-bottom: 18px;
 }
 
-.menu-grid{
-    display:grid;
-    grid-template-columns:1fr 1fr;
-    gap:15px;
-    margin-top:20px;
+.hero h1 {
+    font-size: clamp(2.5rem, 5vw, 4.5rem);
+    line-height: 1.05;
+    margin-bottom: 14px;
 }
 
-.stats{
-    display:flex;
-    justify-content:space-between;
-    margin-bottom:20px;
-    gap:10px;
-    flex-wrap:wrap;
+.hero p {
+    color: var(--muted);
+    line-height: 1.7;
+    max-width: 620px;
 }
 
-.stat-box{
-    flex:1;
-    min-width:120px;
-    background:rgba(255,255,255,0.08);
-    padding:12px;
-    border-radius:15px;
-    text-align:center;
+.hero-actions {
+    display: flex;
+    gap: 14px;
+    flex-wrap: wrap;
+    margin: 26px 0 30px;
 }
 
-.question-box{
-    margin-top:20px;
+.btn {
+    border: none;
+    border-radius: 18px;
+    padding: 15px 22px;
+    font-weight: 700;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
 }
 
-.question{
-    font-size:1.4rem;
-    margin-bottom:20px;
-    line-height:1.5;
+.btn:hover {
+    transform: translateY(-2px);
 }
 
-.answers{
-    display:grid;
-    grid-template-columns:1fr 1fr;
-    gap:15px;
+.btn-primary {
+    color: #111827;
+    background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+    box-shadow: 0 16px 35px rgba(245, 196, 81, 0.26);
 }
 
-.answer-btn{
-    padding:18px;
-    border:none;
-    border-radius:14px;
-    background:rgba(255,255,255,0.08);
-    color:white;
-    font-size:1rem;
-    cursor:pointer;
-    transition:0.25s;
-    border:2px solid transparent;
+.btn-secondary {
+    color: var(--text);
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.12);
 }
 
-.answer-btn:hover{
-    background:#ffd86b;
-    color:#111;
+.hero-highlights,
+.stage-overview,
+.result-breakdown {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
 }
 
-.correct{
-    background:#00c853 !important;
-    color:white !important;
+.mini-card,
+.stage-card,
+.stat-card,
+.result-stat,
+.breakdown-card,
+.stage-summary {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 20px;
+    padding: 18px;
 }
 
-.wrong{
-    background:#ff1744 !important;
-    color:white !important;
+.mini-card strong,
+.stat-card strong,
+.result-stat strong,
+.stage-summary strong {
+    display: block;
+    font-size: 1.45rem;
+    margin-bottom: 6px;
 }
 
-.progress{
-    height:12px;
-    background:rgba(255,255,255,0.1);
-    border-radius:50px;
-    overflow:hidden;
-    margin-top:20px;
+.mini-card span,
+.stat-card span,
+.result-stat span,
+.breakdown-card p,
+.stage-summary p,
+.stage-card p,
+.helper-text,
+.kicker,
+footer {
+    color: var(--muted);
 }
 
-.progress-bar{
-    height:100%;
-    width:0%;
-    background:linear-gradient(90deg,#ffd86b,#ff9800);
-    transition:0.4s;
+.hero-panel {
+    padding: 28px;
+    border-left: 1px solid rgba(255, 255, 255, 0.08);
+    background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
 }
 
-.result-title{
-    text-align:center;
-    font-size:2rem;
-    margin-bottom:20px;
+.hero-panel h2,
+.section-title,
+.transition-card h2,
+.result-card h2 {
+    margin-bottom: 14px;
+    font-size: 1.4rem;
 }
 
-.winner{
-    font-size:1.4rem;
-    text-align:center;
-    margin-top:15px;
-    color:#ffd86b;
+.stage-overview {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
-.badge{
-    display:inline-block;
-    background:#ffd86b;
-    color:#111;
-    padding:6px 14px;
-    border-radius:30px;
-    margin-top:12px;
-    font-weight:700;
+.stage-card {
+    position: relative;
+    overflow: hidden;
 }
 
-footer{
-    margin-top:25px;
-    text-align:center;
-    opacity:0.7;
-    font-size:0.9rem;
+.stage-card::after {
+    content: "";
+    position: absolute;
+    inset: auto -20px -20px auto;
+    width: 90px;
+    height: 90px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.05);
 }
 
-@media(max-width:700px){
-
-.answers{
-    grid-template-columns:1fr;
+.stage-label,
+.stage-pill,
+.score-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 12px;
+    border-radius: 999px;
+    font-size: 0.85rem;
+    font-weight: 700;
 }
 
-.menu-grid{
-    grid-template-columns:1fr;
+.stage-label {
+    background: rgba(255, 255, 255, 0.1);
+    margin-bottom: 10px;
 }
 
-.title h1{
-    font-size:2.2rem;
+.stage-pill {
+    background: rgba(245, 196, 81, 0.15);
+    color: #ffe39f;
 }
 
-.question{
-    font-size:1.1rem;
+.score-pill {
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--text);
 }
 
+.game-shell,
+.transition-shell,
+.result-shell {
+    padding: 32px;
+}
+
+.game-top {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    align-items: center;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+}
+
+.game-header h2 {
+    font-size: clamp(1.6rem, 3vw, 2.3rem);
+    margin: 12px 0 10px;
+}
+
+.kicker {
+    font-size: 0.95rem;
+    line-height: 1.6;
+}
+
+.stat-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 14px;
+    margin-bottom: 24px;
+}
+
+.stat-card {
+    text-align: center;
+}
+
+.progress-wrap {
+    margin-bottom: 24px;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 14px;
+    border-radius: 999px;
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.progress-bar span {
+    display: block;
+    height: 100%;
+    width: 0;
+    border-radius: inherit;
+    background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+    transition: width 0.35s ease;
+}
+
+.progress-meta {
+    margin-top: 10px;
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    color: var(--muted);
+    font-size: 0.95rem;
+}
+
+.question-card {
+    padding: 28px;
+    border-radius: 24px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.question-card h3 {
+    font-size: clamp(1.4rem, 2.5vw, 2rem);
+    line-height: 1.4;
+    margin-bottom: 10px;
+}
+
+.answers {
+    margin-top: 22px;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+}
+
+.answer-btn {
+    width: 100%;
+    text-align: left;
+    padding: 18px;
+    border-radius: 18px;
+    color: var(--text);
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    cursor: pointer;
+    transition: transform 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.answer-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    background: rgba(245, 196, 81, 0.14);
+    border-color: rgba(245, 196, 81, 0.4);
+}
+
+.answer-btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.96;
+}
+
+.answer-btn.correct {
+    background: rgba(46, 204, 113, 0.24);
+    border-color: rgba(46, 204, 113, 0.6);
+}
+
+.answer-btn.wrong {
+    background: rgba(255, 93, 115, 0.24);
+    border-color: rgba(255, 93, 115, 0.55);
+}
+
+.feedback {
+    min-height: 28px;
+    margin-top: 18px;
+    color: #ffe39f;
+    font-weight: 600;
+}
+
+.transition-card,
+.result-card {
+    padding: 32px;
+}
+
+.transition-card .stage-summary,
+.result-card .result-stat {
+    text-align: center;
+}
+
+.transition-actions,
+.result-actions {
+    display: flex;
+    gap: 14px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-top: 24px;
+}
+
+.result-hero {
+    text-align: center;
+    margin-bottom: 28px;
+}
+
+.result-hero h2 {
+    font-size: clamp(2rem, 4vw, 3rem);
+}
+
+.result-hero p {
+    color: var(--muted);
+    max-width: 720px;
+    margin: 10px auto 0;
+    line-height: 1.7;
+}
+
+.result-scoreboard {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+    margin-bottom: 20px;
+}
+
+.breakdown-card h4 {
+    margin-bottom: 10px;
+}
+
+.breakdown-card ul {
+    list-style: none;
+    display: grid;
+    gap: 10px;
+}
+
+.breakdown-card li {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    font-weight: 600;
+}
+
+footer {
+    margin-top: 18px;
+    font-size: 0.9rem;
+}
+
+@media (max-width: 900px) {
+    .hero,
+    .hero-highlights,
+    .stage-overview,
+    .stat-grid,
+    .answers,
+    .result-scoreboard,
+    .result-breakdown {
+        grid-template-columns: 1fr;
+    }
+
+    .hero-panel {
+        border-left: none;
+        border-top: 1px solid rgba(255, 255, 255, 0.08);
+    }
+}
+
+@media (max-width: 640px) {
+    .screen {
+        padding: 14px;
+    }
+
+    .hero,
+    .game-shell,
+    .transition-card,
+    .result-card {
+        padding: 20px;
+    }
+
+    .btn,
+    .answer-btn {
+        width: 100%;
+    }
+
+    .hero-actions,
+    .transition-actions,
+    .result-actions {
+        flex-direction: column;
+    }
+
+    .question-card {
+        padding: 20px;
+    }
 }
 </style>
 </head>
-
 <body>
-
-<!-- HOME -->
 <section id="homeScreen" class="screen active">
-<div class="container">
-<div class="glass">
+    <div class="container glass hero">
+        <div class="hero-copy">
+            <div class="eyebrow">✨ Youth and Young Adults Ministry Quiz</div>
+            <h1>Luke Quiz Journey</h1>
+            <p>
+                Make Bible study nights more engaging with a polished quiz experience built for your youth ministry.
+                Players move through four stages, and each round introduces tougher questions from the Gospel of Luke.
+            </p>
+            <div class="hero-actions">
+                <button class="btn btn-primary" onclick="startGame()">Start the 4-Stage Journey</button>
+                <button class="btn btn-secondary" onclick="showRules()">How to Play</button>
+            </div>
+            <div class="hero-highlights">
+                <div class="mini-card">
+                    <strong>4</strong>
+                    <span>Progressive stages with rising difficulty.</span>
+                </div>
+                <div class="mini-card">
+                    <strong id="totalQuestionCount">20</strong>
+                    <span>Luke-based questions for fun discipleship moments.</span>
+                </div>
+                <div class="mini-card">
+                    <strong>Mobile</strong>
+                    <span>Friendly layout for phones, tablets, and laptops.</span>
+                </div>
+            </div>
+            <footer>“For the Son of Man came to seek and to save the lost.” — Luke 19:10</footer>
+        </div>
 
-<div class="title">
-<h1>LUKE QUIZ BATTLE</h1>
-<p>Challenge your Bible knowledge from the Gospel of Luke.</p>
-<div class="badge">Player VS AI</div>
-</div>
-
-<div class="menu-grid">
-<button class="btn" onclick="startGame()">START GAME</button>
-<button class="btn" onclick="showRules()">HOW TO PLAY</button>
-</div>
-
-<footer>
-Ecclesiastes 10:19
-</footer>
-
-</div>
-</div>
+        <aside class="hero-panel">
+            <h2>Stage Journey</h2>
+            <div class="stage-overview">
+                <div class="stage-card">
+                    <div class="stage-label">Stage 1</div>
+                    <h3>Foundations</h3>
+                    <p>Start with familiar Luke passages and warm up the room.</p>
+                </div>
+                <div class="stage-card">
+                    <div class="stage-label">Stage 2</div>
+                    <h3>Growing Deeper</h3>
+                    <p>Move into ministry moments, miracles, and meaning.</p>
+                </div>
+                <div class="stage-card">
+                    <div class="stage-label">Stage 3</div>
+                    <h3>Kingdom Focus</h3>
+                    <p>Challenge the group with discipleship and parable details.</p>
+                </div>
+                <div class="stage-card">
+                    <div class="stage-label">Stage 4</div>
+                    <h3>Leadership Level</h3>
+                    <p>Finish strong with tougher resurrection and mission questions.</p>
+                </div>
+            </div>
+        </aside>
+    </div>
 </section>
 
-<!-- GAME -->
 <section id="gameScreen" class="screen">
-<div class="container">
-<div class="glass">
+    <div class="container glass game-shell">
+        <div class="game-top">
+            <div class="game-header">
+                <div id="stagePill" class="stage-pill">Stage 1 • Foundations</div>
+                <h2 id="stageTitle">Foundations</h2>
+                <p id="stageDescription" class="kicker"></p>
+            </div>
+            <div class="score-pill" id="pointsPill">10 points per correct answer</div>
+        </div>
 
-<div class="stats">
-<div class="stat-box">
-<h3>YOU</h3>
-<p id="playerScore">0</p>
-</div>
+        <div class="stat-grid">
+            <div class="stat-card">
+                <strong id="playerScore">0</strong>
+                <span>You</span>
+            </div>
+            <div class="stat-card">
+                <strong id="aiScore">0</strong>
+                <span>AI Opponent</span>
+            </div>
+            <div class="stat-card">
+                <strong id="questionNumber">1 / 5</strong>
+                <span>Stage Question</span>
+            </div>
+            <div class="stat-card">
+                <strong id="timer">20</strong>
+                <span>Seconds Left</span>
+            </div>
+        </div>
 
-<div class="stat-box">
-<h3>AI OPPONENT</h3>
-<p id="aiScore">0</p>
-</div>
+        <div class="progress-wrap">
+            <div class="progress-bar">
+                <span id="progressBar"></span>
+            </div>
+            <div class="progress-meta">
+                <span id="overallProgressText">Stage 1 of 4</span>
+                <span id="difficultyText">Warm-up difficulty</span>
+            </div>
+        </div>
 
-<div class="stat-box">
-<h3>QUESTION</h3>
-<p id="questionNumber">1 / 10</p>
-</div>
-
-<div class="stat-box">
-<h3>TIMER</h3>
-<p id="timer">15</p>
-</div>
-</div>
-
-<div class="question-box">
-<div class="question" id="questionText"></div>
-
-<div class="answers" id="answersContainer"></div>
-
-<div class="progress">
-<div class="progress-bar" id="progressBar"></div>
-</div>
-</div>
-
-</div>
-</div>
+        <div class="question-card">
+            <h3 id="questionText"></h3>
+            <p class="helper-text">Tap the best answer before the timer runs out.</p>
+            <div id="answersContainer" class="answers"></div>
+            <div id="feedbackText" class="feedback"></div>
+        </div>
+    </div>
 </section>
 
-<!-- RESULT -->
+<section id="transitionScreen" class="screen">
+    <div class="container glass transition-card">
+        <div class="stage-pill" id="transitionPill">Stage Complete</div>
+        <h2 id="transitionTitle">Great work!</h2>
+        <p id="transitionMessage" class="kicker"></p>
+        <div class="hero-highlights" style="margin-top: 22px;">
+            <div class="stage-summary">
+                <strong id="transitionPlayerScore">0</strong>
+                <p>Your score</p>
+            </div>
+            <div class="stage-summary">
+                <strong id="transitionAIScore">0</strong>
+                <p>AI score</p>
+            </div>
+            <div class="stage-summary">
+                <strong id="transitionNextStage">2</strong>
+                <p>Next stage</p>
+            </div>
+        </div>
+        <div class="transition-actions">
+            <button id="nextStageBtn" class="btn btn-primary" onclick="startNextStage()">Continue to Next Stage</button>
+            <button class="btn btn-secondary" onclick="restartGame()">Restart Journey</button>
+        </div>
+    </div>
+</section>
+
 <section id="resultScreen" class="screen">
-<div class="container">
-<div class="glass">
+    <div class="container glass result-card">
+        <div class="result-hero">
+            <div class="eyebrow">🏁 Journey Complete</div>
+            <h2 id="winnerText">Well done!</h2>
+            <p id="resultMessage"></p>
+        </div>
 
-<div class="result-title">
-GAME OVER
-</div>
+        <div class="result-scoreboard">
+            <div class="result-stat">
+                <strong id="finalPlayer">0</strong>
+                <span>Your final score</span>
+            </div>
+            <div class="result-stat">
+                <strong id="finalAI">0</strong>
+                <span>AI final score</span>
+            </div>
+        </div>
 
-<h2 style="text-align:center;">Final Scores</h2>
+        <div class="result-breakdown">
+            <div class="breakdown-card">
+                <h4>Stage breakdown</h4>
+                <ul id="stageBreakdown"></ul>
+            </div>
+            <div class="breakdown-card">
+                <h4>Ministry moment</h4>
+                <p>
+                    Use each stage as a conversation starter with your young adults and youth group:
+                    what stood out, what was new, and what part of Luke they want to revisit together.
+                </p>
+            </div>
+            <div class="breakdown-card">
+                <h4>What changed?</h4>
+                <p>
+                    The journey gets tougher as you go, so every stage rewards deeper understanding and steady focus.
+                </p>
+            </div>
+        </div>
 
-<div class="stats" style="margin-top:20px;">
-<div class="stat-box">
-<h3>YOU</h3>
-<p id="finalPlayer">0</p>
-</div>
-
-<div class="stat-box">
-<h3>AI</h3>
-<p id="finalAI">0</p>
-</div>
-</div>
-
-<div class="winner" id="winnerText"></div>
-
-<button class="btn" onclick="restartGame()">PLAY AGAIN</button>
-
-</div>
-</div>
+        <div class="result-actions">
+            <button class="btn btn-primary" onclick="restartGame()">Play Again</button>
+            <button class="btn btn-secondary" onclick="showRules()">View Rules</button>
+        </div>
+    </div>
 </section>
 
 <script>
-
-const questions = [
-
-{
-question:"Who wrote the Gospel of Luke?",
-answers:["Luke","Peter","Paul","John"],
-correct:0
-},
-
-{
-question:"Who was the mother of John the Baptist?",
-answers:["Elizabeth","Mary","Martha","Anna"],
-correct:0
-},
-
-{
-question:"What angel appeared to Mary?",
-answers:["Michael","Gabriel","Raphael","Uriel"],
-correct:1
-},
-
-{
-question:"Where was Jesus born?",
-answers:["Jerusalem","Nazareth","Bethlehem","Galilee"],
-correct:2
-},
-
-{
-question:"Who baptized Jesus?",
-answers:["Peter","John the Baptist","James","Andrew"],
-correct:1
-},
-
-{
-question:"How many days was Jesus tempted in the wilderness?",
-answers:["7","12","40","50"],
-correct:2
-},
-
-{
-question:"Who climbed a tree to see Jesus?",
-answers:["Nicodemus","Zacchaeus","Matthew","Simon"],
-correct:1
-},
-
-{
-question:"What parable is unique to Luke?",
-answers:["Prodigal Son","Sower","Mustard Seed","Ten Virgins"],
-correct:0
-},
-
-{
-question:"Who helped Jesus carry the cross?",
-answers:["Joseph","Simon of Cyrene","Peter","Thomas"],
-correct:1
-},
-
-{
-question:"What did Jesus say on the cross in Luke?",
-answers:[
-'Father forgive them',
-'It is finished',
-'I thirst',
-'Why have you forsaken me'
-],
-correct:0
-}
-
+const stages = [
+    {
+        name: "Foundations",
+        description: "Warm up with core Luke moments your group will recognize quickly.",
+        difficulty: "Warm-up difficulty",
+        timeLimit: 20,
+        points: 10,
+        // The AI starts supportive in stage 1 so early rounds stay welcoming.
+        aiCorrectProbability: 0.38,
+        questions: [
+            {
+                question: "Who wrote the Gospel of Luke?",
+                answers: ["Luke", "Peter", "Paul", "John"],
+                correct: 0
+            },
+            {
+                question: "Which angel told Mary she would give birth to Jesus?",
+                answers: ["Michael", "Gabriel", "Raphael", "Uriel"],
+                correct: 1
+            },
+            {
+                question: "Where was Jesus born according to Luke?",
+                answers: ["Nazareth", "Bethlehem", "Jerusalem", "Capernaum"],
+                correct: 1
+            },
+            {
+                question: "Who baptized Jesus?",
+                answers: ["John the Baptist", "Andrew", "Peter", "James"],
+                correct: 0
+            },
+            {
+                question: "Who climbed a tree to see Jesus passing by?",
+                answers: ["Matthew", "Zacchaeus", "Bartimaeus", "Nicodemus"],
+                correct: 1
+            }
+        ]
+    },
+    {
+        name: "Growing Deeper",
+        description: "Stage 2 adds stronger recall with miracles, worship, and Jesus' teaching.",
+        difficulty: "Intermediate challenge",
+        timeLimit: 18,
+        points: 12,
+        // The AI gets a modest bump as the player moves into tougher questions.
+        aiCorrectProbability: 0.45,
+        questions: [
+            {
+                question: "In Luke 5, what did Jesus tell Simon Peter to let down?",
+                answers: ["His sail", "His sandals", "His nets", "His anchor"],
+                correct: 2
+            },
+            {
+                question: "Which parable in Luke highlights a father welcoming back his lost son?",
+                answers: ["The Good Samaritan", "The Lost Coin", "The Prodigal Son", "The Sower"],
+                correct: 2
+            },
+            {
+                question: "Who said, 'My soul magnifies the Lord' in Luke's Gospel?",
+                answers: ["Elizabeth", "Mary", "Martha", "Anna"],
+                correct: 1
+            },
+            {
+                question: "What did Jesus calm on the lake?",
+                answers: ["A crowd", "The storm", "A fire", "The darkness"],
+                correct: 1
+            },
+            {
+                question: "When Jesus was 12, where was He found listening and asking questions?",
+                answers: ["In the temple", "On a mountain", "At a wedding", "In Bethlehem"],
+                correct: 0
+            }
+        ]
+    },
+    {
+        name: "Kingdom Focus",
+        description: "Stage 3 pushes into details that reward careful reading and reflection.",
+        difficulty: "Advanced challenge",
+        timeLimit: 16,
+        points: 15,
+        // This stage is more competitive to match the harder material.
+        aiCorrectProbability: 0.5,
+        questions: [
+            {
+                question: "Which disciple's ear was healed after being cut off at Jesus' arrest?",
+                answers: ["Malchus", "Caiaphas", "Cornelius", "Cleopas"],
+                correct: 0
+            },
+            {
+                question: "In the parable of the Good Samaritan, what happened to the traveler on the road to Jericho?",
+                answers: ["He got lost", "He was robbed and beaten", "He found treasure", "He met a tax collector"],
+                correct: 1
+            },
+            {
+                question: "Which two sisters welcomed Jesus into their home in Luke 10?",
+                answers: ["Mary and Elizabeth", "Mary and Martha", "Joanna and Susanna", "Naomi and Ruth"],
+                correct: 1
+            },
+            {
+                question: "What was the name of the rich man in the story with Lazarus?",
+                answers: ["He is not named", "Dives", "Cyrus", "Herod"],
+                correct: 0
+            },
+            {
+                question: "How many lepers returned to thank Jesus after being healed?",
+                answers: ["One", "Two", "Five", "Ten"],
+                correct: 0
+            }
+        ]
+    },
+    {
+        name: "Leadership Level",
+        description: "The final stage is built for your strongest readers and ministry leaders.",
+        difficulty: "Tough finale",
+        timeLimit: 14,
+        points: 18,
+        // The final round gives the AI its toughest profile for a strong finish.
+        aiCorrectProbability: 0.58,
+        questions: [
+            {
+                question: "On the road to Emmaus, what prevented the two disciples from recognizing Jesus at first?",
+                answers: ["It was too dark", "They were kept from recognizing Him", "They were afraid to look up", "They thought He was an angel"],
+                correct: 1
+            },
+            {
+                question: "What did Jesus ask His disciples to stay awake and do on the Mount of Olives?",
+                answers: ["Sing", "Pray", "Wait for food", "Light a fire"],
+                correct: 1
+            },
+            {
+                question: "In Luke 4, Jesus read from which prophet in the synagogue at Nazareth?",
+                answers: ["Jeremiah", "Daniel", "Isaiah", "Ezekiel"],
+                correct: 2
+            },
+            {
+                question: "Who said, 'Surely this was a righteous man' at Jesus' crucifixion?",
+                answers: ["A Pharisee", "A centurion", "Pilate", "Joseph of Arimathea"],
+                correct: 1
+            },
+            {
+                question: "What did Jesus open for His disciples so they could understand the Scriptures?",
+                answers: ["Their ears", "Their hearts", "Their eyes", "Their minds"],
+                correct: 3
+            }
+        ]
+    }
 ];
 
-let currentQuestion = 0;
+let currentStageIndex = 0;
+let currentQuestionIndex = 0;
 let playerScore = 0;
 let aiScore = 0;
-let timer = 15;
+let timer = 0;
 let countdown;
+let awaitingAnswer = false;
+let stageResults = [];
+// Brief pause so players can review the right answer before the next question loads.
+const nextQuestionDelayMs = 1400;
+// The AI gets a small edge on timeouts because the player did not answer in time.
+const aiTimeUpBonus = 0.08;
 
-function startGame(){
-
-document.getElementById("homeScreen").classList.remove("active");
-document.getElementById("resultScreen").classList.remove("active");
-document.getElementById("gameScreen").classList.add("active");
-
-currentQuestion = 0;
-playerScore = 0;
-aiScore = 0;
-
-updateScores();
-loadQuestion();
+function showScreen(screenId) {
+    document.querySelectorAll('.screen').forEach((screen) => screen.classList.remove('active'));
+    document.getElementById(screenId).classList.add('active');
 }
 
-function loadQuestion(){
+function startGame() {
+    clearInterval(countdown);
+    initializeQuizMeta();
+    currentStageIndex = 0;
+    currentQuestionIndex = 0;
+    playerScore = 0;
+    aiScore = 0;
+    awaitingAnswer = false;
+    stageResults = stages.map((stage) => ({
+        name: stage.name,
+        player: 0,
+        ai: 0,
+        points: stage.points
+    }));
 
-clearInterval(countdown);
-
-if(currentQuestion >= questions.length){
-showResults();
-return;
+    updateScores();
+    showScreen('gameScreen');
+    loadQuestion();
 }
 
-timer = 15;
-document.getElementById("timer").innerText = timer;
+function loadQuestion() {
+    clearInterval(countdown);
 
-countdown = setInterval(()=>{
-timer--;
-document.getElementById("timer").innerText = timer;
+    const stage = stages[currentStageIndex];
+    if (!stage) {
+        showResults();
+        return;
+    }
 
-if(timer <= 0){
-clearInterval(countdown);
-aiAnswer();
-}
-},1000);
+    if (currentQuestionIndex >= stage.questions.length) {
+        handleStageComplete();
+        return;
+    }
 
-const q = questions[currentQuestion];
+    awaitingAnswer = true;
+    timer = stage.timeLimit;
 
-document.getElementById("questionNumber").innerText =
-`${currentQuestion + 1} / ${questions.length}`;
+    const question = stage.questions[currentQuestionIndex];
+    const answersContainer = document.getElementById('answersContainer');
+    const answeredCount = getAnsweredQuestionCount();
+    const totalQuestions = getTotalQuestionCount();
 
-document.getElementById("questionText").innerText = q.question;
+    document.getElementById('stagePill').textContent = `Stage ${currentStageIndex + 1} • ${stage.name}`;
+    document.getElementById('stageTitle').textContent = stage.name;
+    document.getElementById('stageDescription').textContent = stage.description;
+    document.getElementById('pointsPill').textContent = `${stage.points} points per correct answer`;
+    document.getElementById('difficultyText').textContent = stage.difficulty;
+    document.getElementById('questionNumber').textContent = `${currentQuestionIndex + 1} / ${stage.questions.length}`;
+    document.getElementById('questionText').textContent = question.question;
+    document.getElementById('timer').textContent = timer;
+    document.getElementById('overallProgressText').textContent = `Question ${answeredCount + 1} of ${totalQuestions}`;
+    document.getElementById('progressBar').style.width = `${(answeredCount / totalQuestions) * 100}%`;
+    document.getElementById('feedbackText').textContent = '';
 
-const answersContainer = document.getElementById("answersContainer");
-answersContainer.innerHTML = "";
+    answersContainer.innerHTML = '';
+    question.answers.forEach((answer, index) => {
+        const button = document.createElement('button');
+        button.className = 'answer-btn';
+        button.textContent = answer;
+        button.onclick = () => selectAnswer(index, button);
+        answersContainer.appendChild(button);
+    });
 
-q.answers.forEach((answer,index)=>{
-
-const button = document.createElement("button");
-button.classList.add("answer-btn");
-button.innerText = answer;
-
-button.onclick = ()=>selectAnswer(index,button);
-
-answersContainer.appendChild(button);
-
-});
-
-document.getElementById("progressBar").style.width =
-`${(currentQuestion/questions.length)*100}%`;
-
-}
-
-function selectAnswer(index,button){
-
-clearInterval(countdown);
-
-const q = questions[currentQuestion];
-const buttons = document.querySelectorAll(".answer-btn");
-
-buttons.forEach(btn=>btn.disabled=true);
-
-if(index === q.correct){
-
-button.classList.add("correct");
-playerScore += 10;
-
-}else{
-
-button.classList.add("wrong");
-buttons[q.correct].classList.add("correct");
-
-if(Math.random() > 0.4){
-aiScore += 10;
+    countdown = setInterval(() => {
+        timer -= 1;
+        document.getElementById('timer').textContent = timer;
+        if (timer <= 0) {
+            clearInterval(countdown);
+            handleTimeUp();
+        }
+    }, 1000);
 }
 
+function selectAnswer(selectedIndex, button) {
+    if (!awaitingAnswer) {
+        return;
+    }
+
+    awaitingAnswer = false;
+    clearInterval(countdown);
+
+    const stage = stages[currentStageIndex];
+    const question = stage.questions[currentQuestionIndex];
+    const buttons = document.querySelectorAll('.answer-btn');
+
+    buttons.forEach((item) => {
+        item.disabled = true;
+    });
+
+    if (selectedIndex === question.correct) {
+        button.classList.add('correct');
+        playerScore += stage.points;
+        stageResults[currentStageIndex].player += stage.points;
+        document.getElementById('feedbackText').textContent = 'Correct! You earned points for this stage.';
+    } else {
+        button.classList.add('wrong');
+        buttons[question.correct].classList.add('correct');
+        if (Math.random() < stage.aiCorrectProbability) {
+            aiScore += stage.points;
+            stageResults[currentStageIndex].ai += stage.points;
+        }
+        document.getElementById('feedbackText').textContent = 'Not quite. Take note of the highlighted answer.';
+    }
+
+    updateScores();
+    moveToNextQuestion();
 }
 
-updateScores();
+function handleTimeUp() {
+    if (!awaitingAnswer) {
+        return;
+    }
 
-setTimeout(()=>{
-currentQuestion++;
-loadQuestion();
-},1500);
+    awaitingAnswer = false;
 
+    const stage = stages[currentStageIndex];
+    const question = stage.questions[currentQuestionIndex];
+    const buttons = document.querySelectorAll('.answer-btn');
+
+    buttons.forEach((button, index) => {
+        button.disabled = true;
+        if (index === question.correct) {
+            button.classList.add('correct');
+        }
+    });
+
+    if (Math.random() < Math.min(1, stage.aiCorrectProbability + aiTimeUpBonus)) {
+        aiScore += stage.points;
+        stageResults[currentStageIndex].ai += stage.points;
+    }
+
+    document.getElementById('feedbackText').textContent = 'Time is up! The right answer is now highlighted.';
+    updateScores();
+    moveToNextQuestion();
 }
 
-function aiAnswer(){
-
-const q = questions[currentQuestion];
-
-if(Math.random() > 0.45){
-aiScore += 10;
+function moveToNextQuestion() {
+    setTimeout(() => {
+        currentQuestionIndex += 1;
+        loadQuestion();
+    }, nextQuestionDelayMs);
 }
 
-updateScores();
+function handleStageComplete() {
+    clearInterval(countdown);
+    const stage = stages[currentStageIndex];
+    const isLastStage = currentStageIndex === stages.length - 1;
 
-currentQuestion++;
-loadQuestion();
+    document.getElementById('transitionPill').textContent = `Stage ${currentStageIndex + 1} complete`;
+    document.getElementById('transitionTitle').textContent = isLastStage
+        ? 'Final stage complete!'
+        : `${stage.name} complete!`;
+    document.getElementById('transitionMessage').textContent = isLastStage
+        ? 'You made it through every round. Review the final results and celebrate the growth.'
+        : `Get ready for ${stages[currentStageIndex + 1].name}. The questions are about to get tougher.`;
+    document.getElementById('transitionPlayerScore').textContent = stageResults[currentStageIndex].player;
+    document.getElementById('transitionAIScore').textContent = stageResults[currentStageIndex].ai;
+    document.getElementById('transitionNextStage').textContent = isLastStage ? 'Done' : currentStageIndex + 2;
+    document.getElementById('nextStageBtn').textContent = isLastStage ? 'See Final Results' : 'Continue to Next Stage';
+
+    showScreen('transitionScreen');
 }
 
-function updateScores(){
+function startNextStage() {
+    if (currentStageIndex >= stages.length - 1) {
+        showResults();
+        return;
+    }
 
-document.getElementById("playerScore").innerText = playerScore;
-document.getElementById("aiScore").innerText = aiScore;
-
+    currentStageIndex += 1;
+    currentQuestionIndex = 0;
+    showScreen('gameScreen');
+    loadQuestion();
 }
 
-function showResults(){
-
-document.getElementById("gameScreen").classList.remove("active");
-document.getElementById("resultScreen").classList.add("active");
-
-document.getElementById("finalPlayer").innerText = playerScore;
-document.getElementById("finalAI").innerText = aiScore;
-
-let resultText = "";
-
-if(playerScore > aiScore){
-
-resultText = "🏆 You defeated the AI Bible Master!";
-
-}else if(aiScore > playerScore){
-
-resultText = "🤖 AI wins this round. Try again!";
-
-}else{
-
-resultText = "⚔️ It's a draw!";
-
+function updateScores() {
+    document.getElementById('playerScore').textContent = playerScore;
+    document.getElementById('aiScore').textContent = aiScore;
 }
 
-document.getElementById("winnerText").innerText = resultText;
+function showResults() {
+    clearInterval(countdown);
+    showScreen('resultScreen');
 
+    document.getElementById('finalPlayer').textContent = playerScore;
+    document.getElementById('finalAI').textContent = aiScore;
+
+    let winnerText = "It's a draw!";
+    let resultMessage = 'You and the AI finished neck and neck—perfect for a rematch with the group.';
+
+    if (playerScore > aiScore) {
+        winnerText = '🏆 You led the Luke Quiz Journey!';
+        resultMessage = 'Excellent work. You stayed strong through each stage and finished ahead of the AI opponent.';
+    } else if (aiScore > playerScore) {
+        winnerText = '🤖 The AI pulled ahead this time.';
+        resultMessage = 'You still completed all four stages—jump back in and see if your group can beat the next run.';
+    }
+
+    document.getElementById('winnerText').textContent = winnerText;
+    document.getElementById('resultMessage').textContent = resultMessage;
+
+    const breakdown = document.getElementById('stageBreakdown');
+    breakdown.innerHTML = '';
+    stageResults.forEach((stage, index) => {
+        const item = document.createElement('li');
+        item.innerHTML = `<span>Stage ${index + 1}: ${stage.name}</span><span>${stage.player} - ${stage.ai}</span>`;
+        breakdown.appendChild(item);
+    });
 }
 
-function restartGame(){
-startGame();
+function restartGame() {
+    startGame();
 }
 
-function showRules(){
-
-alert(
-`
-LUKE QUIZ BATTLE RULES
-
-1. Answer Bible questions from Luke.
-2. Beat the AI opponent.
-3. Each correct answer = 10 points.
-4. You have 15 seconds per question.
-5. Highest score wins.
-
-Good luck!
-`
-);
-
+function getTotalQuestionCount() {
+    return stages.reduce((sum, stage) => sum + stage.questions.length, 0);
 }
 
+function getAnsweredQuestionCount() {
+    return stages
+        .slice(0, currentStageIndex)
+        .reduce((sum, stage) => sum + stage.questions.length, 0) + currentQuestionIndex;
+}
+
+function initializeQuizMeta() {
+    document.getElementById('totalQuestionCount').textContent = getTotalQuestionCount();
+}
+
+function showRules() {
+    alert(
+`LUKE QUIZ JOURNEY RULES
+
+1. The game has 4 stages, and each stage gets a little tougher.
+2. Answer before the timer ends to score points for your team.
+3. Correct answers earn more points in later stages.
+4. If time runs out, the answer is revealed and the AI may score.
+5. Use the stage breaks to pause, reflect, and keep the room engaged.
+
+Perfect for youth nights, young adult hangouts, and ministry competitions!`
+    );
+}
+
+initializeQuizMeta();
 </script>
-
 </body>
 </html>
-```
-
-Inspired by multiplayer Facebook quiz game layouts and trivia mechanics commonly used in social quiz experiences. ([game-ace.com][1])
-
-[1]: https://game-ace.com/game-portfolio/tick-1-facebook-game/?utm_source=chatgpt.com "Tick 1 Facebook Game - Game-Ace"
