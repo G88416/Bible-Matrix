@@ -510,7 +510,7 @@ footer {
                     <span>Progressive stages with rising difficulty.</span>
                 </div>
                 <div class="mini-card">
-                    <strong>20</strong>
+                    <strong id="totalQuestionCount">20</strong>
                     <span>Luke-based questions for fun discipleship moments.</span>
                 </div>
                 <div class="mini-card">
@@ -678,6 +678,7 @@ const stages = [
         difficulty: "Warm-up difficulty",
         timeLimit: 20,
         points: 10,
+        // The AI starts supportive in stage 1 so early rounds stay welcoming.
         aiCorrectProbability: 0.38,
         questions: [
             {
@@ -713,6 +714,7 @@ const stages = [
         difficulty: "Intermediate challenge",
         timeLimit: 18,
         points: 12,
+        // The AI gets a modest bump as the player moves into tougher questions.
         aiCorrectProbability: 0.45,
         questions: [
             {
@@ -748,6 +750,7 @@ const stages = [
         difficulty: "Advanced challenge",
         timeLimit: 16,
         points: 15,
+        // This stage is more competitive to match the harder material.
         aiCorrectProbability: 0.5,
         questions: [
             {
@@ -783,6 +786,7 @@ const stages = [
         difficulty: "Tough finale",
         timeLimit: 14,
         points: 18,
+        // The final round gives the AI its toughest profile for a strong finish.
         aiCorrectProbability: 0.58,
         questions: [
             {
@@ -822,7 +826,9 @@ let timer = 0;
 let countdown;
 let awaitingAnswer = false;
 let stageResults = [];
+// Brief pause so players can review the right answer before the next question loads.
 const nextQuestionDelayMs = 1400;
+// The AI gets a small edge on timeouts because the player did not answer in time.
 const aiTimeUpBonus = 0.08;
 
 function showScreen(screenId) {
@@ -832,6 +838,7 @@ function showScreen(screenId) {
 
 function startGame() {
     clearInterval(countdown);
+    initializeQuizMeta();
     currentStageIndex = 0;
     currentQuestionIndex = 0;
     playerScore = 0;
@@ -955,7 +962,7 @@ function handleTimeUp() {
         }
     });
 
-    if (Math.random() < stage.aiCorrectProbability + aiTimeUpBonus) {
+    if (Math.random() < Math.min(1, stage.aiCorrectProbability + aiTimeUpBonus)) {
         aiScore += stage.points;
         stageResults[currentStageIndex].ai += stage.points;
     }
@@ -1053,6 +1060,10 @@ function getAnsweredQuestionCount() {
         .reduce((sum, stage) => sum + stage.questions.length, 0) + currentQuestionIndex;
 }
 
+function initializeQuizMeta() {
+    document.getElementById('totalQuestionCount').textContent = getTotalQuestionCount();
+}
+
 function showRules() {
     alert(
 `LUKE QUIZ JOURNEY RULES
@@ -1066,6 +1077,8 @@ function showRules() {
 Perfect for youth nights, young adult hangouts, and ministry competitions!`
     );
 }
+
+initializeQuizMeta();
 </script>
 </body>
 </html>
