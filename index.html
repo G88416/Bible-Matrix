@@ -678,7 +678,7 @@ const stages = [
         difficulty: "Warm-up difficulty",
         timeLimit: 20,
         points: 10,
-        aiAccuracy: 0.38,
+        aiCorrectProbability: 0.38,
         questions: [
             {
                 question: "Who wrote the Gospel of Luke?",
@@ -713,7 +713,7 @@ const stages = [
         difficulty: "Intermediate challenge",
         timeLimit: 18,
         points: 12,
-        aiAccuracy: 0.45,
+        aiCorrectProbability: 0.45,
         questions: [
             {
                 question: "In Luke 5, what did Jesus tell Simon Peter to let down?",
@@ -748,7 +748,7 @@ const stages = [
         difficulty: "Advanced challenge",
         timeLimit: 16,
         points: 15,
-        aiAccuracy: 0.5,
+        aiCorrectProbability: 0.5,
         questions: [
             {
                 question: "Which disciple's ear was healed after being cut off at Jesus' arrest?",
@@ -783,7 +783,7 @@ const stages = [
         difficulty: "Tough finale",
         timeLimit: 14,
         points: 18,
-        aiAccuracy: 0.58,
+        aiCorrectProbability: 0.58,
         questions: [
             {
                 question: "On the road to Emmaus, what prevented the two disciples from recognizing Jesus at first?",
@@ -822,7 +822,8 @@ let timer = 0;
 let countdown;
 let awaitingAnswer = false;
 let stageResults = [];
-const NEXT_QUESTION_DELAY_MS = 1400;
+const nextQuestionDelayMs = 1400;
+const aiTimeUpBonus = 0.08;
 
 function showScreen(screenId) {
     document.querySelectorAll('.screen').forEach((screen) => screen.classList.remove('active'));
@@ -925,7 +926,7 @@ function selectAnswer(selectedIndex, button) {
     } else {
         button.classList.add('wrong');
         buttons[question.correct].classList.add('correct');
-        if (Math.random() < stage.aiAccuracy) {
+        if (Math.random() < stage.aiCorrectProbability) {
             aiScore += stage.points;
             stageResults[currentStageIndex].ai += stage.points;
         }
@@ -954,7 +955,7 @@ function handleTimeUp() {
         }
     });
 
-    if (Math.random() < stage.aiAccuracy + 0.08) {
+    if (Math.random() < stage.aiCorrectProbability + aiTimeUpBonus) {
         aiScore += stage.points;
         stageResults[currentStageIndex].ai += stage.points;
     }
@@ -968,7 +969,7 @@ function moveToNextQuestion() {
     setTimeout(() => {
         currentQuestionIndex += 1;
         loadQuestion();
-    }, NEXT_QUESTION_DELAY_MS);
+    }, nextQuestionDelayMs);
 }
 
 function handleStageComplete() {
