@@ -822,6 +822,7 @@ let timer = 0;
 let countdown;
 let awaitingAnswer = false;
 let stageResults = [];
+const NEXT_QUESTION_DELAY_MS = 1400;
 
 function showScreen(screenId) {
     document.querySelectorAll('.screen').forEach((screen) => screen.classList.remove('active'));
@@ -967,7 +968,7 @@ function moveToNextQuestion() {
     setTimeout(() => {
         currentQuestionIndex += 1;
         loadQuestion();
-    }, 1400);
+    }, NEXT_QUESTION_DELAY_MS);
 }
 
 function handleStageComplete() {
@@ -1014,7 +1015,7 @@ function showResults() {
     document.getElementById('finalPlayer').textContent = playerScore;
     document.getElementById('finalAI').textContent = aiScore;
 
-    let winnerText = 'It\'s a draw!';
+    let winnerText = "It's a draw!";
     let resultMessage = 'You and the AI finished neck and neck—perfect for a rematch with the group.';
 
     if (playerScore > aiScore) {
