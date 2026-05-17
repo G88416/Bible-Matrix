@@ -1,430 +1,570 @@
-# Lotto Battle Arena (2 Player Competitive Game)
-
 ```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Lotto Battle Arena</title>
-<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800&display=swap" rel="stylesheet">
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Luke Gospel Quiz Battle</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
 
 <style>
 *{
-  margin:0;
-  padding:0;
-  box-sizing:border-box;
-  font-family:'Orbitron',sans-serif;
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:'Poppins',sans-serif;
 }
 
 body{
-  min-height:100vh;
-  background:linear-gradient(135deg,#070012,#17002b,#240046);
-  color:white;
-  overflow-x:hidden;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  padding:20px;
+    background:linear-gradient(135deg,#07111f,#132238,#1c3558);
+    min-height:100vh;
+    color:white;
+    overflow-x:hidden;
+}
+
+.screen{
+    display:none;
+    padding:20px;
+    min-height:100vh;
+    justify-content:center;
+    align-items:center;
+}
+
+.active{
+    display:flex;
 }
 
 .container{
-  width:100%;
-  max-width:1200px;
+    width:100%;
+    max-width:900px;
+}
+
+.glass{
+    background:rgba(255,255,255,0.08);
+    border:1px solid rgba(255,255,255,0.1);
+    backdrop-filter:blur(12px);
+    border-radius:25px;
+    padding:30px;
+    box-shadow:0 10px 30px rgba(0,0,0,0.4);
 }
 
 .title{
-  text-align:center;
-  font-size:3rem;
-  font-weight:800;
-  margin-bottom:10px;
-  background:linear-gradient(90deg,#00f5ff,#ff00c8);
-  -webkit-background-clip:text;
-  -webkit-text-fill-color:transparent;
+    text-align:center;
+    margin-bottom:20px;
 }
 
-.subtitle{
-  text-align:center;
-  opacity:0.7;
-  margin-bottom:35px;
+.title h1{
+    font-size:3rem;
+    color:#ffd86b;
 }
 
-.arena{
-  display:grid;
-  grid-template-columns:1fr 180px 1fr;
-  gap:20px;
+.title p{
+    opacity:0.8;
+    margin-top:10px;
 }
 
-.player-box{
-  background:rgba(255,255,255,0.06);
-  border:1px solid rgba(255,255,255,0.12);
-  border-radius:30px;
-  padding:25px;
-  backdrop-filter:blur(12px);
-  position:relative;
-  overflow:hidden;
+.btn{
+    border:none;
+    background:linear-gradient(45deg,#ffb347,#ffcc33);
+    color:#111;
+    font-weight:700;
+    padding:14px 22px;
+    border-radius:14px;
+    cursor:pointer;
+    transition:0.3s;
+    width:100%;
+    margin-top:12px;
+    font-size:1rem;
 }
 
-.player-box::before{
-  content:'';
-  position:absolute;
-  width:180%;
-  height:100%;
-  background:linear-gradient(90deg,transparent,rgba(255,255,255,0.07),transparent);
-  top:0;
-  left:-180%;
-  animation:shine 5s infinite;
+.btn:hover{
+    transform:translateY(-3px) scale(1.02);
 }
 
-@keyframes shine{
-  100%{
-    left:180%;
-  }
-}
-
-.player-name{
-  text-align:center;
-  font-size:1.5rem;
-  margin-bottom:20px;
+.menu-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:15px;
+    margin-top:20px;
 }
 
 .stats{
-  display:flex;
-  justify-content:space-between;
-  margin-bottom:25px;
-}
-
-.card{
-  width:48%;
-  background:rgba(255,255,255,0.08);
-  border-radius:20px;
-  padding:15px;
-  text-align:center;
-}
-
-.card h3{
-  font-size:0.8rem;
-  opacity:0.7;
-  margin-bottom:10px;
-}
-
-.card p{
-  font-size:1.5rem;
-  font-weight:700;
-}
-
-.balls{
-  display:flex;
-  justify-content:center;
-  gap:10px;
-  flex-wrap:wrap;
-  min-height:90px;
-}
-
-.ball{
-  width:65px;
-  height:65px;
-  border-radius:50%;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  font-size:1.3rem;
-  font-weight:800;
-  animation:pop .4s forwards;
-  transform:scale(0);
-  box-shadow:0 0 20px rgba(255,255,255,.3);
-}
-
-@keyframes pop{
-  to{
-    transform:scale(1) rotate(360deg);
-  }
-}
-
-.ball:nth-child(1){background:#ff006e;}
-.ball:nth-child(2){background:#8338ec;}
-.ball:nth-child(3){background:#3a86ff;}
-.ball:nth-child(4){background:#06d6a0;}
-.ball:nth-child(5){background:#ffbe0b;}
-.ball:nth-child(6){background:#fb5607;}
-
-.center-panel{
-  display:flex;
-  flex-direction:column;
-  justify-content:center;
-  align-items:center;
-  gap:20px;
-}
-
-.vs{
-  width:140px;
-  height:140px;
-  border-radius:50%;
-  background:linear-gradient(135deg,#ff00c8,#00f5ff);
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  font-size:2.5rem;
-  font-weight:800;
-  box-shadow:0 0 40px rgba(255,0,200,.5);
-  animation:pulse 1s infinite alternate;
-}
-
-@keyframes pulse{
-  from{transform:scale(1);}
-  to{transform:scale(1.08);}
-}
-
-button{
-  border:none;
-  border-radius:50px;
-  padding:16px 22px;
-  font-size:1rem;
-  font-weight:700;
-  cursor:pointer;
-  transition:.25s;
-}
-
-.spin-btn{
-  background:linear-gradient(90deg,#ff00c8,#ff7b00);
-  color:white;
-  box-shadow:0 10px 25px rgba(255,0,200,.4);
-}
-
-.spin-btn:hover{
-  transform:translateY(-3px) scale(1.05);
-}
-
-.reset-btn{
-  background:rgba(255,255,255,0.1);
-  color:white;
-}
-
-.message{
-  margin-top:35px;
-  text-align:center;
-  font-size:1.2rem;
-  font-weight:700;
-  color:#ffe600;
-  min-height:30px;
-}
-
-.history{
-  margin-top:15px;
-  font-size:0.85rem;
-  opacity:0.8;
-  line-height:1.6;
-}
-
-@media(max-width:900px){
-  .arena{
-    grid-template-columns:1fr;
-  }
-
-  .center-panel{
-    order:-1;
+    display:flex;
+    justify-content:space-between;
     margin-bottom:20px;
-  }
+    gap:10px;
+    flex-wrap:wrap;
+}
 
-  .vs{
-    width:100px;
-    height:100px;
+.stat-box{
+    flex:1;
+    min-width:120px;
+    background:rgba(255,255,255,0.08);
+    padding:12px;
+    border-radius:15px;
+    text-align:center;
+}
+
+.question-box{
+    margin-top:20px;
+}
+
+.question{
+    font-size:1.4rem;
+    margin-bottom:20px;
+    line-height:1.5;
+}
+
+.answers{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:15px;
+}
+
+.answer-btn{
+    padding:18px;
+    border:none;
+    border-radius:14px;
+    background:rgba(255,255,255,0.08);
+    color:white;
+    font-size:1rem;
+    cursor:pointer;
+    transition:0.25s;
+    border:2px solid transparent;
+}
+
+.answer-btn:hover{
+    background:#ffd86b;
+    color:#111;
+}
+
+.correct{
+    background:#00c853 !important;
+    color:white !important;
+}
+
+.wrong{
+    background:#ff1744 !important;
+    color:white !important;
+}
+
+.progress{
+    height:12px;
+    background:rgba(255,255,255,0.1);
+    border-radius:50px;
+    overflow:hidden;
+    margin-top:20px;
+}
+
+.progress-bar{
+    height:100%;
+    width:0%;
+    background:linear-gradient(90deg,#ffd86b,#ff9800);
+    transition:0.4s;
+}
+
+.result-title{
+    text-align:center;
     font-size:2rem;
-  }
+    margin-bottom:20px;
+}
+
+.winner{
+    font-size:1.4rem;
+    text-align:center;
+    margin-top:15px;
+    color:#ffd86b;
+}
+
+.badge{
+    display:inline-block;
+    background:#ffd86b;
+    color:#111;
+    padding:6px 14px;
+    border-radius:30px;
+    margin-top:12px;
+    font-weight:700;
+}
+
+footer{
+    margin-top:25px;
+    text-align:center;
+    opacity:0.7;
+    font-size:0.9rem;
+}
+
+@media(max-width:700px){
+
+.answers{
+    grid-template-columns:1fr;
+}
+
+.menu-grid{
+    grid-template-columns:1fr;
+}
+
+.title h1{
+    font-size:2.2rem;
+}
+
+.question{
+    font-size:1.1rem;
+}
+
 }
 </style>
 </head>
+
 <body>
 
+<!-- HOME -->
+<section id="homeScreen" class="screen active">
 <div class="container">
+<div class="glass">
 
-<h1 class="title">LOTTO BATTLE ARENA</h1>
-<p class="subtitle">Player vs Player • Strategy • Lucky Combos • Competitive Gameplay</p>
-
-<div class="arena">
-
-<div class="player-box">
-  <h2 class="player-name">🔴 PLAYER ONE</h2>
-
-  <div class="stats">
-    <div class="card">
-      <h3>SCORE</h3>
-      <p id="score1">0</p>
-    </div>
-
-    <div class="card">
-      <h3>WINS</h3>
-      <p id="wins1">0</p>
-    </div>
-  </div>
-
-  <div class="balls" id="balls1"></div>
-
-  <div class="history" id="history1"></div>
+<div class="title">
+<h1>LUKE QUIZ BATTLE</h1>
+<p>Challenge your Bible knowledge from the Gospel of Luke.</p>
+<div class="badge">Player VS AI</div>
 </div>
 
-<div class="center-panel">
-  <div class="vs">VS</div>
-
-  <button class="spin-btn" onclick="battle()">
-    ⚔️ START BATTLE
-  </button>
-
-  <button class="reset-btn" onclick="resetGame()">
-    🔄 RESET GAME
-  </button>
+<div class="menu-grid">
+<button class="btn" onclick="startGame()">START GAME</button>
+<button class="btn" onclick="showRules()">HOW TO PLAY</button>
 </div>
 
-<div class="player-box">
-  <h2 class="player-name">🔵 PLAYER TWO</h2>
-
-  <div class="stats">
-    <div class="card">
-      <h3>SCORE</h3>
-      <p id="score2">0</p>
-    </div>
-
-    <div class="card">
-      <h3>WINS</h3>
-      <p id="wins2">0</p>
-    </div>
-  </div>
-
-  <div class="balls" id="balls2"></div>
-
-  <div class="history" id="history2"></div>
-</div>
+<footer>
+Ecclesiastes 10:19
+</footer>
 
 </div>
+</div>
+</section>
 
-<div class="message" id="message">
-Press START BATTLE to begin.
+<!-- GAME -->
+<section id="gameScreen" class="screen">
+<div class="container">
+<div class="glass">
+
+<div class="stats">
+<div class="stat-box">
+<h3>YOU</h3>
+<p id="playerScore">0</p>
+</div>
+
+<div class="stat-box">
+<h3>AI OPPONENT</h3>
+<p id="aiScore">0</p>
+</div>
+
+<div class="stat-box">
+<h3>QUESTION</h3>
+<p id="questionNumber">1 / 10</p>
+</div>
+
+<div class="stat-box">
+<h3>TIMER</h3>
+<p id="timer">15</p>
+</div>
+</div>
+
+<div class="question-box">
+<div class="question" id="questionText"></div>
+
+<div class="answers" id="answersContainer"></div>
+
+<div class="progress">
+<div class="progress-bar" id="progressBar"></div>
+</div>
 </div>
 
 </div>
+</div>
+</section>
+
+<!-- RESULT -->
+<section id="resultScreen" class="screen">
+<div class="container">
+<div class="glass">
+
+<div class="result-title">
+GAME OVER
+</div>
+
+<h2 style="text-align:center;">Final Scores</h2>
+
+<div class="stats" style="margin-top:20px;">
+<div class="stat-box">
+<h3>YOU</h3>
+<p id="finalPlayer">0</p>
+</div>
+
+<div class="stat-box">
+<h3>AI</h3>
+<p id="finalAI">0</p>
+</div>
+</div>
+
+<div class="winner" id="winnerText"></div>
+
+<button class="btn" onclick="restartGame()">PLAY AGAIN</button>
+
+</div>
+</div>
+</section>
 
 <script>
-let wins1 = 0;
-let wins2 = 0;
 
-function generateUniqueNumbers(){
-  let nums = [];
+const questions = [
 
-  while(nums.length < 6){
-    let n = Math.floor(Math.random() * 49) + 1;
+{
+question:"Who wrote the Gospel of Luke?",
+answers:["Luke","Peter","Paul","John"],
+correct:0
+},
 
-    if(!nums.includes(n)){
-      nums.push(n);
-    }
-  }
+{
+question:"Who was the mother of John the Baptist?",
+answers:["Elizabeth","Mary","Martha","Anna"],
+correct:0
+},
 
-  return nums.sort((a,b)=>a-b);
+{
+question:"What angel appeared to Mary?",
+answers:["Michael","Gabriel","Raphael","Uriel"],
+correct:1
+},
+
+{
+question:"Where was Jesus born?",
+answers:["Jerusalem","Nazareth","Bethlehem","Galilee"],
+correct:2
+},
+
+{
+question:"Who baptized Jesus?",
+answers:["Peter","John the Baptist","James","Andrew"],
+correct:1
+},
+
+{
+question:"How many days was Jesus tempted in the wilderness?",
+answers:["7","12","40","50"],
+correct:2
+},
+
+{
+question:"Who climbed a tree to see Jesus?",
+answers:["Nicodemus","Zacchaeus","Matthew","Simon"],
+correct:1
+},
+
+{
+question:"What parable is unique to Luke?",
+answers:["Prodigal Son","Sower","Mustard Seed","Ten Virgins"],
+correct:0
+},
+
+{
+question:"Who helped Jesus carry the cross?",
+answers:["Joseph","Simon of Cyrene","Peter","Thomas"],
+correct:1
+},
+
+{
+question:"What did Jesus say on the cross in Luke?",
+answers:[
+'Father forgive them',
+'It is finished',
+'I thirst',
+'Why have you forsaken me'
+],
+correct:0
 }
 
-function renderBalls(containerId,numbers){
-  const container = document.getElementById(containerId);
-  container.innerHTML = '';
+];
 
-  numbers.forEach((num,index)=>{
-    setTimeout(()=>{
-      const ball = document.createElement('div');
-      ball.className = 'ball';
-      ball.innerText = num;
-      container.appendChild(ball);
-    },index * 180);
-  });
+let currentQuestion = 0;
+let playerScore = 0;
+let aiScore = 0;
+let timer = 15;
+let countdown;
+
+function startGame(){
+
+document.getElementById("homeScreen").classList.remove("active");
+document.getElementById("resultScreen").classList.remove("active");
+document.getElementById("gameScreen").classList.add("active");
+
+currentQuestion = 0;
+playerScore = 0;
+aiScore = 0;
+
+updateScores();
+loadQuestion();
 }
 
-function calculatePower(numbers){
-  let even = numbers.filter(n=>n%2===0).length;
-  let odd = numbers.filter(n=>n%2!==0).length;
+function loadQuestion(){
 
-  let comboBonus = 0;
+clearInterval(countdown);
 
-  for(let i=0;i<numbers.length-1;i++){
-    if(numbers[i+1]-numbers[i]===1){
-      comboBonus += 20;
-    }
-  }
-
-  let total = numbers.reduce((a,b)=>a+b,0);
-
-  return total + comboBonus + (even*5) + (odd*3);
+if(currentQuestion >= questions.length){
+showResults();
+return;
 }
 
-function battle(){
+timer = 15;
+document.getElementById("timer").innerText = timer;
 
-  const nums1 = generateUniqueNumbers();
-  const nums2 = generateUniqueNumbers();
+countdown = setInterval(()=>{
+timer--;
+document.getElementById("timer").innerText = timer;
 
-  renderBalls('balls1',nums1);
-  renderBalls('balls2',nums2);
+if(timer <= 0){
+clearInterval(countdown);
+aiAnswer();
+}
+},1000);
 
-  const power1 = calculatePower(nums1);
-  const power2 = calculatePower(nums2);
+const q = questions[currentQuestion];
 
-  document.getElementById('score1').innerText = power1;
-  document.getElementById('score2').innerText = power2;
+document.getElementById("questionNumber").innerText =
+`${currentQuestion + 1} / ${questions.length}`;
 
-  document.getElementById('history1').innerHTML = 'Combo: ' + nums1.join(' • ');
-  document.getElementById('history2').innerHTML = 'Combo: ' + nums2.join(' • ');
+document.getElementById("questionText").innerText = q.question;
 
-  const message = document.getElementById('message');
+const answersContainer = document.getElementById("answersContainer");
+answersContainer.innerHTML = "";
 
-  setTimeout(()=>{
+q.answers.forEach((answer,index)=>{
 
-    if(power1 > power2){
-      wins1++;
-      document.getElementById('wins1').innerText = wins1;
-      message.innerHTML = '🏆 PLAYER ONE dominates the arena!';
-    }
-    else if(power2 > power1){
-      wins2++;
-      document.getElementById('wins2').innerText = wins2;
-      message.innerHTML = '⚡ PLAYER TWO crushes the competition!';
-    }
-    else{
-      message.innerHTML = '🤝 EPIC DRAW! Both players are equally powerful!';
-    }
+const button = document.createElement("button");
+button.classList.add("answer-btn");
+button.innerText = answer;
 
-  },1600);
+button.onclick = ()=>selectAnswer(index,button);
+
+answersContainer.appendChild(button);
+
+});
+
+document.getElementById("progressBar").style.width =
+`${(currentQuestion/questions.length)*100}%`;
+
 }
 
-function resetGame(){
-  wins1 = 0;
-  wins2 = 0;
+function selectAnswer(index,button){
 
-  document.getElementById('wins1').innerText = 0;
-  document.getElementById('wins2').innerText = 0;
+clearInterval(countdown);
 
-  document.getElementById('score1').innerText = 0;
-  document.getElementById('score2').innerText = 0;
+const q = questions[currentQuestion];
+const buttons = document.querySelectorAll(".answer-btn");
 
-  document.getElementById('balls1').innerHTML = '';
-  document.getElementById('balls2').innerHTML = '';
+buttons.forEach(btn=>btn.disabled=true);
 
-  document.getElementById('history1').innerHTML = '';
-  document.getElementById('history2').innerHTML = '';
+if(index === q.correct){
 
-  document.getElementById('message').innerHTML = 'Game reset. Start a new battle!';
+button.classList.add("correct");
+playerScore += 10;
+
+}else{
+
+button.classList.add("wrong");
+buttons[q.correct].classList.add("correct");
+
+if(Math.random() > 0.4){
+aiScore += 10;
 }
+
+}
+
+updateScores();
+
+setTimeout(()=>{
+currentQuestion++;
+loadQuestion();
+},1500);
+
+}
+
+function aiAnswer(){
+
+const q = questions[currentQuestion];
+
+if(Math.random() > 0.45){
+aiScore += 10;
+}
+
+updateScores();
+
+currentQuestion++;
+loadQuestion();
+}
+
+function updateScores(){
+
+document.getElementById("playerScore").innerText = playerScore;
+document.getElementById("aiScore").innerText = aiScore;
+
+}
+
+function showResults(){
+
+document.getElementById("gameScreen").classList.remove("active");
+document.getElementById("resultScreen").classList.add("active");
+
+document.getElementById("finalPlayer").innerText = playerScore;
+document.getElementById("finalAI").innerText = aiScore;
+
+let resultText = "";
+
+if(playerScore > aiScore){
+
+resultText = "🏆 You defeated the AI Bible Master!";
+
+}else if(aiScore > playerScore){
+
+resultText = "🤖 AI wins this round. Try again!";
+
+}else{
+
+resultText = "⚔️ It's a draw!";
+
+}
+
+document.getElementById("winnerText").innerText = resultText;
+
+}
+
+function restartGame(){
+startGame();
+}
+
+function showRules(){
+
+alert(
+`
+LUKE QUIZ BATTLE RULES
+
+1. Answer Bible questions from Luke.
+2. Beat the AI opponent.
+3. Each correct answer = 10 points.
+4. You have 15 seconds per question.
+5. Highest score wins.
+
+Good luck!
+`
+);
+
+}
+
 </script>
 
 </body>
 </html>
 ```
 
-## Advanced Features Included
+Inspired by multiplayer Facebook quiz game layouts and trivia mechanics commonly used in social quiz experiences. ([game-ace.com][1])
 
-* 2-player competitive battle mode
-* Animated lotto battle arena
-* Smart scoring algorithm
-* Combo bonuses for number patterns
-* Win tracking system
-* Neon cyberpunk gaming design
-* Fully mobile responsive
-* Randomized strategic outcomes
-* Animated battle effects
-* Competitive replay gameplay
-* Reset system
-* Dynamic winner announcements
+[1]: https://game-ace.com/game-portfolio/tick-1-facebook-game/?utm_source=chatgpt.com "Tick 1 Facebook Game - Game-Ace"
