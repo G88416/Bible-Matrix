@@ -1136,6 +1136,10 @@ async function saveBestScore() {
     const boundedScore = Math.max(0, Math.min(MAX_QUIZ_SCORE, playerCorrectAnswers));
     const bestScore = Math.max(Number(currentProfile.bestScore || 0), boundedScore);
     await db.collection('users').doc(currentUser.uid).set({
+        uid: currentUser.uid,
+        fullName: currentProfile.fullName || '',
+        gender: currentProfile.gender || '',
+        phoneNumber: currentProfile.phoneNumber || currentUser.phoneNumber || '',
         bestScore,
         updatedAt: firebase.firestore.FieldValue.serverTimestamp()
     }, { merge: true });
@@ -1428,7 +1432,7 @@ function showRules() {
 2. Answer before the timer ends to score points for your team.
 3. Correct answers earn more points in later stages.
 4. If time runs out, the answer is revealed and the AI may score.
-5. Your ranking score is based on correct answers from 1 to 20.
+5. Your ranking score is based on correct answers from 0 to 20.
 
 Perfect for youth nights, young adult hangouts, and ministry competitions!`
     );
