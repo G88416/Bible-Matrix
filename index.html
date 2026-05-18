@@ -1412,7 +1412,7 @@ function applyPausePenalty() {
         return 0;
     }
     const deduction = Math.max(minPausePenalty, Math.floor(stage.points / pausePenaltyDivisor));
-    const reducedBy = Math.min(deduction, playerScore);
+    const reducedBy = Math.min(deduction, playerScore, stageResults[currentStageIndex].player);
     playerScore -= reducedBy;
     stageResults[currentStageIndex].player = Math.max(0, stageResults[currentStageIndex].player - reducedBy);
     updateScores();
