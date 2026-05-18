@@ -48,6 +48,7 @@ service cloud.firestore {
       return !(fieldName in request.resource.data)
         || (
           request.resource.data[fieldName] is string
+          && request.resource.data[fieldName].size() > 0
           && request.resource.data[fieldName].size() <= maxSize
         );
     }

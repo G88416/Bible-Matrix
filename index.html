@@ -1636,6 +1636,10 @@ function openStatusScreen() {
     }
     showScreen('statusScreen');
     closeMenu();
+    if (typeof chatUnsubscribe === 'function') {
+        chatUnsubscribe();
+        chatUnsubscribe = null;
+    }
     subscribeLukeStatuses();
 }
 
@@ -1646,6 +1650,10 @@ function openChatScreen() {
     }
     showScreen('chatScreen');
     closeMenu();
+    if (typeof statusUnsubscribe === 'function') {
+        statusUnsubscribe();
+        statusUnsubscribe = null;
+    }
     subscribeGroupChat();
 }
 
@@ -1731,13 +1739,16 @@ async function postLukeStatus() {
         return;
     }
     try {
-        await db.collection('lukeStatuses').add({
+        const statusPayload = {
             uid: currentUser.uid,
             authorName: currentProfile.fullName || 'Anonymous',
             text: text.slice(0, 280),
-            lukeReference: lukeReference.slice(0, 50),
             createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
+        };
+        if (lukeReference) {
+            statusPayload.lukeReference = lukeReference.slice(0, 50);
+        }
+        await db.collection('lukeStatuses').add(statusPayload);
         statusTextEl.value = '';
         statusLukeRefEl.value = '';
         feedbackEl.textContent = 'Status posted.';
@@ -2014,8 +2025,6 @@ function initFirebase() {
         showScreen('homeScreen');
         updateResumeButton();
         refreshLeaderboard();
-        subscribeLukeStatuses();
-        subscribeGroupChat();
     });
 }
 
@@ -2340,6 +2349,7 @@ function goHome() {
     awaitingAnswer = false;
     isPaused = false;
     closeMenu();
+    teardownCommunityListeners();
     showScreen('homeScreen');
     updateResumeButton();
     refreshLeaderboard();
