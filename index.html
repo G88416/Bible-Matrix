@@ -238,6 +238,17 @@ footer {
     overflow: hidden;
 }
 
+.stage-card.clickable {
+    cursor: pointer;
+    transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+}
+
+.stage-card.clickable:hover {
+    transform: translateY(-2px);
+    background: rgba(245, 196, 81, 0.12);
+    border-color: rgba(245, 196, 81, 0.42);
+}
+
 .stage-card::after {
     content: "";
     position: absolute;
@@ -768,6 +779,7 @@ body {
             </p>
             <div class="hero-actions">
                 <button class="btn btn-primary" onclick="startGame()">Start the 4-Stage Journey</button>
+                <button id="resumeJourneyBtn" class="btn btn-secondary" onclick="resumeGame()" style="display:none;">Resume Journey</button>
                 <button class="btn btn-secondary" onclick="showRules()">How to Play</button>
             </div>
             <footer>“For the Son of Man came to seek and to save the lost.” — Luke 19:10</footer>
@@ -791,22 +803,22 @@ body {
             </table>
             <h2>Stage Journey</h2>
             <div class="stage-overview">
-                <div class="stage-card">
+                <div class="stage-card clickable" role="button" tabindex="0" onclick="startFromStage(0)" onkeydown="handleStageCardKey(event, 0)">
                     <div class="stage-label">Stage 1</div>
                     <h3>Foundations</h3>
                     <p>Start with familiar Luke passages and warm up the room.</p>
                 </div>
-                <div class="stage-card">
+                <div class="stage-card clickable" role="button" tabindex="0" onclick="startFromStage(1)" onkeydown="handleStageCardKey(event, 1)">
                     <div class="stage-label">Stage 2</div>
                     <h3>Growing Deeper</h3>
                     <p>Move into ministry moments, miracles, and meaning.</p>
                 </div>
-                <div class="stage-card">
+                <div class="stage-card clickable" role="button" tabindex="0" onclick="startFromStage(2)" onkeydown="handleStageCardKey(event, 2)">
                     <div class="stage-label">Stage 3</div>
                     <h3>Kingdom Focus</h3>
                     <p>Challenge the group with discipleship and parable details.</p>
                 </div>
-                <div class="stage-card">
+                <div class="stage-card clickable" role="button" tabindex="0" onclick="startFromStage(3)" onkeydown="handleStageCardKey(event, 3)">
                     <div class="stage-label">Stage 4</div>
                     <h3>Leadership Level</h3>
                     <p>Finish strong with tougher resurrection and mission questions.</p>
@@ -1220,6 +1232,7 @@ let auth = null;
 let db = null;
 let currentUser = null;
 let currentProfile = null;
+let resumeState = null;
 let signupConfirmation = null;
 let loginConfirmation = null;
 let signupRecaptcha = null;
@@ -1228,7 +1241,6 @@ let loginRecaptcha = null;
 const nextQuestionDelayMs = 1400;
 // The AI gets a small edge on timeouts because the player did not answer in time.
 const aiTimeUpBonus = 0.08;
-// Pause penalty is stage points divided by this value.
 
 function showScreen(screenId) {
     document.querySelectorAll('.screen').forEach((screen) => screen.classList.remove('active'));
@@ -1253,6 +1265,45 @@ function firebaseReady() {
 
 function setAuthFeedback(id, message) {
     document.getElementById(id).textContent = message;
+}
+
+function cloneStageResults(data) {
+    return (data || []).map((stage, index) => ({
+        name: stage.name || stages[index]?.name || `Stage ${index + 1}`,
+        player: Math.max(0, Number(stage.player) || 0),
+        ai: Math.max(0, Number(stage.ai) || 0),
+        points: 1
+    }));
+}
+
+function setResumeState(stageIndex, questionIndex) {
+    resumeState = {
+        stageIndex,
+        questionIndex,
+        playerScore,
+        aiScore,
+        playerCorrectAnswers,
+        stageResults: cloneStageResults(stageResults)
+    };
+    updateResumeButton();
+}
+
+function clearResumeState() {
+    resumeState = null;
+    updateResumeButton();
+}
+
+function updateResumeButton() {
+    const resumeBtn = document.getElementById('resumeJourneyBtn');
+    if (!resumeBtn) return;
+    const canResume = Boolean(
+        currentUser
+        && resumeState
+        && Number.isInteger(resumeState.stageIndex)
+        && resumeState.stageIndex >= 0
+        && resumeState.stageIndex < stages.length
+    );
+    resumeBtn.style.display = canResume ? 'inline-flex' : 'none';
 }
 
 function getOrCreateRecaptcha(elementId, existingRef) {
@@ -1438,6 +1489,7 @@ function initFirebase() {
         if (!user) {
             currentUser = null;
             currentProfile = null;
+            clearResumeState();
             showScreen('authScreen');
             return;
         }
@@ -1449,18 +1501,23 @@ function initFirebase() {
         }
         currentProfile = profile.data();
         showScreen('homeScreen');
+        updateResumeButton();
         refreshLeaderboard();
     });
 }
 
 function startGame() {
+    startFromStage(0);
+}
+
+function startFromStage(stageIndex) {
     if (!currentUser) {
         showScreen('authScreen');
         return;
     }
     clearInterval(countdown);
     initializeQuizMeta();
-    currentStageIndex = 0;
+    currentStageIndex = Math.max(0, Math.min(Number(stageIndex) || 0, stages.length - 1));
     currentQuestionIndex = 0;
     playerScore = 0;
     aiScore = 0;
@@ -1479,6 +1536,48 @@ function startGame() {
     loadQuestion();
 }
 
+function resumeGame() {
+    if (!currentUser) {
+        showScreen('authScreen');
+        return;
+    }
+    if (!resumeState) {
+        startGame();
+        return;
+    }
+
+    clearInterval(countdown);
+    initializeQuizMeta();
+    currentStageIndex = Math.max(0, Math.min(Number(resumeState.stageIndex) || 0, stages.length - 1));
+    currentQuestionIndex = Math.max(0, Number(resumeState.questionIndex) || 0);
+    playerScore = Math.max(0, Number(resumeState.playerScore) || 0);
+    aiScore = Math.max(0, Number(resumeState.aiScore) || 0);
+    playerCorrectAnswers = Math.max(0, Number(resumeState.playerCorrectAnswers) || 0);
+    stageResults = cloneStageResults(resumeState.stageResults);
+
+    while (stageResults.length < stages.length) {
+        stageResults.push({
+            name: stages[stageResults.length].name,
+            player: 0,
+            ai: 0,
+            points: 1
+        });
+    }
+
+    awaitingAnswer = false;
+    isPaused = false;
+    updateScores();
+    showScreen('gameScreen');
+    loadQuestion();
+}
+
+function handleStageCardKey(event, stageIndex) {
+    if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        startFromStage(stageIndex);
+    }
+}
+
 function loadQuestion() {
     clearInterval(countdown);
 
@@ -1492,6 +1591,8 @@ function loadQuestion() {
         handleStageComplete();
         return;
     }
+
+    setResumeState(currentStageIndex, currentQuestionIndex);
 
     awaitingAnswer = true;
     timer = stage.timeLimit;
@@ -1581,7 +1682,6 @@ function selectAnswer(selectedIndex, button) {
     document.getElementById('pauseBtn').disabled = true;
 
     const stage = stages[currentStageIndex];
-    const question = stage.questions[currentQuestionIndex];
     const buttons = document.querySelectorAll('.answer-btn');
 
     buttons.forEach((item) => {
@@ -1656,6 +1756,11 @@ function handleStageComplete() {
     document.getElementById('transitionAIScore').textContent = stageResults[currentStageIndex].ai;
     document.getElementById('transitionNextStage').textContent = isLastStage ? 'Done' : currentStageIndex + 2;
     document.getElementById('nextStageBtn').textContent = isLastStage ? 'See Final Results' : 'Continue to Next Stage';
+    if (isLastStage) {
+        clearResumeState();
+    } else {
+        setResumeState(currentStageIndex + 1, 0);
+    }
 
     showScreen('transitionScreen');
 }
@@ -1680,6 +1785,7 @@ function updateScores() {
 function showResults() {
     clearInterval(countdown);
     isPaused = false;
+    clearResumeState();
     showScreen('resultScreen');
 
     document.getElementById('finalPlayer').textContent = `${playerCorrectAnswers} / ${getTotalQuestionCount()}`;
@@ -1721,6 +1827,7 @@ function goHome() {
     awaitingAnswer = false;
     isPaused = false;
     showScreen('homeScreen');
+    updateResumeButton();
     refreshLeaderboard();
 }
 
