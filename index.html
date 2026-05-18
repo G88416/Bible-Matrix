@@ -1081,6 +1081,7 @@ let loginRecaptcha = null;
 const nextQuestionDelayMs = 1400;
 // The AI gets a small edge on timeouts because the player did not answer in time.
 const aiTimeUpBonus = 0.08;
+const pausePenaltyDivisor = 2;
 
 function showScreen(screenId) {
     document.querySelectorAll('.screen').forEach((screen) => screen.classList.remove('active'));
@@ -1401,7 +1402,7 @@ function applyPausePenalty() {
     if (!stage || pauseCount <= 1) {
         return 0;
     }
-    const deduction = Math.max(1, Math.floor(stage.points / 2));
+    const deduction = Math.max(1, Math.floor(stage.points / pausePenaltyDivisor));
     const reducedBy = Math.min(deduction, playerScore);
     playerScore -= reducedBy;
     stageResults[currentStageIndex].player = Math.max(0, stageResults[currentStageIndex].player - reducedBy);
