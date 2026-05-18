@@ -572,8 +572,9 @@ footer {
     width: 96px;
     height: 96px;
     border-radius: 22px;
-    box-shadow: 0 8px 32px rgba(0, 200, 255, 0.35);
+    box-shadow: 0 10px 34px rgba(0, 200, 255, 0.26);
     object-fit: cover;
+    background: radial-gradient(circle at top left, #6d5cff, #190a38);
 }
 
 .app-logo-wrap .app-brand {
@@ -585,6 +586,213 @@ footer {
     -webkit-text-fill-color: transparent;
     background-clip: text;
     text-transform: uppercase;
+}
+
+.app-topbar {
+    position: fixed;
+    top: calc(16px + env(safe-area-inset-top));
+    left: max(14px, env(safe-area-inset-left));
+    right: max(14px, env(safe-area-inset-right));
+    z-index: 40;
+    display: flex;
+    justify-content: space-between;
+    pointer-events: none;
+}
+
+.app-topbar .icon-btn {
+    pointer-events: auto;
+}
+
+.icon-btn {
+    width: 48px;
+    height: 48px;
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    background: rgba(21, 14, 49, 0.86);
+    color: var(--text);
+    font-size: 1.25rem;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 10px 26px rgba(0, 0, 0, 0.28);
+}
+
+.status-icon {
+    position: relative;
+}
+
+.status-ring {
+    width: 24px;
+    height: 24px;
+    border-radius: 999px;
+    border: 2px solid #25d366;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #25d366;
+    font-size: 0.9rem;
+    line-height: 1;
+}
+
+.side-menu-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(6, 4, 18, 0.56);
+    z-index: 80;
+    display: none;
+}
+
+.side-menu {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    width: min(84vw, 330px);
+    background: linear-gradient(180deg, rgba(20, 11, 43, 0.98), rgba(28, 17, 60, 0.98));
+    border-right: 1px solid rgba(255, 255, 255, 0.14);
+    box-shadow: 26px 0 52px rgba(0, 0, 0, 0.42);
+    padding: calc(22px + env(safe-area-inset-top)) 18px 20px;
+    transform: translateX(-105%);
+    transition: transform 0.22s ease;
+    z-index: 90;
+}
+
+.side-menu.open {
+    transform: translateX(0);
+}
+
+.side-menu-backdrop.show {
+    display: block;
+}
+
+.menu-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.menu-head strong {
+    font-size: 1rem;
+    letter-spacing: 0.05em;
+}
+
+.menu-actions {
+    display: grid;
+    gap: 10px;
+    margin-top: 14px;
+}
+
+.menu-btn {
+    width: 100%;
+    text-align: left;
+    border-radius: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text);
+    padding: 12px 14px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.community-shell {
+    padding: 30px;
+}
+
+.community-header {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    align-items: center;
+    margin-bottom: 18px;
+}
+
+.community-header p {
+    color: var(--muted);
+    margin-top: 4px;
+}
+
+.community-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+}
+
+.status-form,
+.feed-box,
+.chat-compose {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 18px;
+    padding: 16px;
+}
+
+.status-form input,
+.status-form textarea,
+.chat-compose textarea {
+    width: 100%;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    background: rgba(10, 8, 24, 0.55);
+    color: var(--text);
+    padding: 10px 12px;
+    margin-bottom: 10px;
+}
+
+.status-form textarea,
+.chat-compose textarea {
+    min-height: 88px;
+    resize: vertical;
+}
+
+.feed-list {
+    list-style: none;
+    display: grid;
+    gap: 10px;
+    max-height: 430px;
+    overflow-y: auto;
+    padding-right: 4px;
+}
+
+.feed-item {
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 14px;
+    padding: 11px;
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.feed-meta {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 7px;
+    color: var(--muted);
+    font-size: 0.8rem;
+}
+
+.feed-ref {
+    color: #8eeaff;
+    font-weight: 700;
+    margin-top: 8px;
+    font-size: 0.84rem;
+}
+
+.chat-shell {
+    display: grid;
+    gap: 14px;
+}
+
+.feed-box h3,
+.status-form h3,
+.chat-compose h3 {
+    margin-bottom: 10px;
+}
+
+.muted-note {
+    color: var(--muted);
+    font-size: 0.88rem;
 }
 
 /* ── Install banner ──────────────────────────────────────────── */
@@ -721,6 +929,18 @@ body {
     .app-logo-wrap .app-brand {
         font-size: 1.3rem;
     }
+
+    .community-shell {
+        padding: 18px;
+    }
+
+    .community-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .app-topbar {
+        top: calc(10px + env(safe-area-inset-top));
+    }
 }
 </style>
 </head>
@@ -728,7 +948,7 @@ body {
 <section id="authScreen" class="screen active">
     <div class="container glass auth-shell">
         <div class="app-logo-wrap">
-            <img src="/icons/icon-192.png" alt="Bible Matrix logo" />
+            <img src="/icons/logo-advanced.svg" alt="Bible Matrix logo" />
             <span class="app-brand">Bible Matrix</span>
         </div>
         <div class="eyebrow">🔐 Firebase Portal</div>
@@ -765,10 +985,16 @@ body {
 </section>
 
 <section id="homeScreen" class="screen">
+    <div class="app-topbar">
+        <button class="icon-btn" onclick="toggleMenu()" aria-label="Open navigation menu">☰</button>
+        <button class="icon-btn status-icon" onclick="openStatusScreen()" aria-label="Open Luke status">
+            <span class="status-ring">+</span>
+        </button>
+    </div>
     <div class="container glass hero">
         <div class="hero-copy">
             <div class="app-logo-wrap" style="align-items:flex-start; flex-direction:row; margin-bottom:16px;">
-                <img src="/icons/icon-192.png" alt="Bible Matrix logo" style="width:56px;height:56px;border-radius:14px;" />
+                <img src="/icons/logo-advanced.svg" alt="Bible Matrix logo" style="width:56px;height:56px;border-radius:14px;" />
                 <span class="app-brand" style="align-self:center;margin-left:12px;">Bible Matrix</span>
             </div>
             <div class="eyebrow">✨ Youth and Young Adults Ministry Quiz</div>
@@ -825,6 +1051,71 @@ body {
                 </div>
             </div>
         </aside>
+    </div>
+</section>
+
+<section id="statusScreen" class="screen">
+    <div class="app-topbar">
+        <button class="icon-btn" onclick="toggleMenu()" aria-label="Open navigation menu">☰</button>
+        <button class="icon-btn status-icon" onclick="openStatusScreen()" aria-label="Open Luke status">
+            <span class="status-ring">+</span>
+        </button>
+    </div>
+    <div class="container glass community-shell">
+        <div class="community-header">
+            <div>
+                <h2>Luke Status</h2>
+                <p>Create and view faith updates inspired by the Gospel of Luke.</p>
+            </div>
+            <button class="btn btn-secondary" onclick="goHome()">Home</button>
+        </div>
+        <div class="community-grid">
+            <div class="status-form">
+                <h3>Post a status</h3>
+                <input id="statusLukeRef" type="text" maxlength="50" placeholder="Luke reference (e.g. Luke 15:20)" />
+                <textarea id="statusText" maxlength="280" placeholder="Share your Luke reflection with the group..."></textarea>
+                <button class="btn btn-primary" onclick="postLukeStatus()">Post Status</button>
+                <p id="statusFeedback" class="muted-note"></p>
+            </div>
+            <div class="feed-box">
+                <h3>Recent statuses</h3>
+                <ul id="statusFeed" class="feed-list">
+                    <li class="feed-item muted-note">No statuses yet.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section id="chatScreen" class="screen">
+    <div class="app-topbar">
+        <button class="icon-btn" onclick="toggleMenu()" aria-label="Open navigation menu">☰</button>
+        <button class="icon-btn status-icon" onclick="openStatusScreen()" aria-label="Open Luke status">
+            <span class="status-ring">+</span>
+        </button>
+    </div>
+    <div class="container glass community-shell">
+        <div class="community-header">
+            <div>
+                <h2>Luke Group Chat</h2>
+                <p>Chat together as a group while discussing Luke passages.</p>
+            </div>
+            <button class="btn btn-secondary" onclick="goHome()">Home</button>
+        </div>
+        <div class="chat-shell">
+            <div class="feed-box">
+                <h3>Group conversation</h3>
+                <ul id="chatFeed" class="feed-list">
+                    <li class="feed-item muted-note">No messages yet.</li>
+                </ul>
+            </div>
+            <div class="chat-compose">
+                <h3>Send a message</h3>
+                <textarea id="chatMessage" maxlength="400" placeholder="Share your thought from Luke..."></textarea>
+                <button class="btn btn-primary" onclick="sendGroupMessage()">Send</button>
+                <p id="chatFeedback" class="muted-note"></p>
+            </div>
+        </div>
     </div>
 </section>
 
@@ -1237,6 +1528,8 @@ let signupConfirmation = null;
 let loginConfirmation = null;
 let signupRecaptcha = null;
 let loginRecaptcha = null;
+let statusUnsubscribe = null;
+let chatUnsubscribe = null;
 // Brief pause so players can review the right answer before the next question loads.
 const nextQuestionDelayMs = 1400;
 // The AI gets a small edge on timeouts because the player did not answer in time.
@@ -1308,6 +1601,216 @@ function updateResumeButton() {
         && resumeState.stageIndex < stages.length
     );
     resumeBtn.hidden = !canResume;
+}
+
+function toggleMenu() {
+    const sideMenu = document.getElementById('sideMenu');
+    const backdrop = document.getElementById('menuBackdrop');
+    if (!sideMenu || !backdrop) return;
+    const isOpen = sideMenu.classList.contains('open');
+    if (isOpen) {
+        closeMenu();
+        return;
+    }
+    sideMenu.classList.add('open');
+    backdrop.classList.add('show');
+}
+
+function closeMenu() {
+    const sideMenu = document.getElementById('sideMenu');
+    const backdrop = document.getElementById('menuBackdrop');
+    if (!sideMenu || !backdrop) return;
+    sideMenu.classList.remove('open');
+    backdrop.classList.remove('show');
+}
+
+function logoutFromMenu() {
+    closeMenu();
+    logout().catch((error) => console.error('Logout failed:', error));
+}
+
+function openStatusScreen() {
+    if (!currentUser) {
+        showScreen('authScreen');
+        return;
+    }
+    showScreen('statusScreen');
+    closeMenu();
+    subscribeLukeStatuses();
+}
+
+function openChatScreen() {
+    if (!currentUser) {
+        showScreen('authScreen');
+        return;
+    }
+    showScreen('chatScreen');
+    closeMenu();
+    subscribeGroupChat();
+}
+
+function formatTimestamp(ts) {
+    if (!ts) return 'Just now';
+    const dateValue = typeof ts.toDate === 'function' ? ts.toDate() : new Date(ts);
+    if (Number.isNaN(dateValue.getTime())) return 'Just now';
+    return dateValue.toLocaleString([], {
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+}
+
+function teardownCommunityListeners() {
+    if (typeof statusUnsubscribe === 'function') {
+        statusUnsubscribe();
+    }
+    if (typeof chatUnsubscribe === 'function') {
+        chatUnsubscribe();
+    }
+    statusUnsubscribe = null;
+    chatUnsubscribe = null;
+}
+
+function subscribeLukeStatuses() {
+    if (!firebaseReady() || !currentUser) return;
+    const statusFeed = document.getElementById('statusFeed');
+    if (!statusFeed) return;
+    if (typeof statusUnsubscribe === 'function') {
+        statusUnsubscribe();
+    }
+    statusFeed.innerHTML = '<li class="feed-item muted-note">Loading statuses...</li>';
+    statusUnsubscribe = db.collection('lukeStatuses')
+        .orderBy('createdAt', 'desc')
+        .limit(30)
+        .onSnapshot((snapshot) => {
+            if (snapshot.empty) {
+                statusFeed.innerHTML = '<li class="feed-item muted-note">No statuses yet. Post the first Luke update.</li>';
+                return;
+            }
+            statusFeed.innerHTML = '';
+            snapshot.docs.forEach((doc) => {
+                const data = doc.data();
+                const item = document.createElement('li');
+                item.className = 'feed-item';
+                const meta = document.createElement('div');
+                meta.className = 'feed-meta';
+                const author = document.createElement('span');
+                author.textContent = data.authorName || 'Anonymous';
+                const when = document.createElement('span');
+                when.textContent = formatTimestamp(data.createdAt);
+                meta.appendChild(author);
+                meta.appendChild(when);
+                const text = document.createElement('p');
+                text.textContent = data.text || '';
+                item.appendChild(meta);
+                item.appendChild(text);
+                if (data.lukeReference) {
+                    const reference = document.createElement('div');
+                    reference.className = 'feed-ref';
+                    reference.textContent = data.lukeReference;
+                    item.appendChild(reference);
+                }
+                statusFeed.appendChild(item);
+            });
+        }, (error) => {
+            console.error('Failed to load statuses:', error);
+            statusFeed.innerHTML = '<li class="feed-item muted-note">Failed to load statuses.</li>';
+        });
+}
+
+async function postLukeStatus() {
+    if (!firebaseReady() || !currentUser || !currentProfile) return;
+    const statusTextEl = document.getElementById('statusText');
+    const statusLukeRefEl = document.getElementById('statusLukeRef');
+    const feedbackEl = document.getElementById('statusFeedback');
+    const text = statusTextEl.value.trim();
+    const lukeReference = statusLukeRefEl.value.trim();
+    if (!text) {
+        feedbackEl.textContent = 'Write a status before posting.';
+        return;
+    }
+    try {
+        await db.collection('lukeStatuses').add({
+            uid: currentUser.uid,
+            authorName: currentProfile.fullName || 'Anonymous',
+            text: text.slice(0, 280),
+            lukeReference: lukeReference.slice(0, 50),
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        statusTextEl.value = '';
+        statusLukeRefEl.value = '';
+        feedbackEl.textContent = 'Status posted.';
+    } catch (error) {
+        console.error('Failed to post status:', error);
+        feedbackEl.textContent = 'Unable to post status.';
+    }
+}
+
+function subscribeGroupChat() {
+    if (!firebaseReady() || !currentUser) return;
+    const chatFeed = document.getElementById('chatFeed');
+    if (!chatFeed) return;
+    if (typeof chatUnsubscribe === 'function') {
+        chatUnsubscribe();
+    }
+    chatFeed.innerHTML = '<li class="feed-item muted-note">Loading chat...</li>';
+    chatUnsubscribe = db.collection('groupMessages')
+        .orderBy('createdAt', 'asc')
+        .limit(80)
+        .onSnapshot((snapshot) => {
+            if (snapshot.empty) {
+                chatFeed.innerHTML = '<li class="feed-item muted-note">No messages yet. Say hello to the group.</li>';
+                return;
+            }
+            chatFeed.innerHTML = '';
+            snapshot.docs.forEach((doc) => {
+                const data = doc.data();
+                const item = document.createElement('li');
+                item.className = 'feed-item';
+                const meta = document.createElement('div');
+                meta.className = 'feed-meta';
+                const author = document.createElement('span');
+                author.textContent = data.authorName || 'Anonymous';
+                const when = document.createElement('span');
+                when.textContent = formatTimestamp(data.createdAt);
+                meta.appendChild(author);
+                meta.appendChild(when);
+                const text = document.createElement('p');
+                text.textContent = data.message || '';
+                item.appendChild(meta);
+                item.appendChild(text);
+                chatFeed.appendChild(item);
+            });
+            chatFeed.scrollTop = chatFeed.scrollHeight;
+        }, (error) => {
+            console.error('Failed to load chat:', error);
+            chatFeed.innerHTML = '<li class="feed-item muted-note">Failed to load group chat.</li>';
+        });
+}
+
+async function sendGroupMessage() {
+    if (!firebaseReady() || !currentUser || !currentProfile) return;
+    const chatMessageEl = document.getElementById('chatMessage');
+    const feedbackEl = document.getElementById('chatFeedback');
+    const message = chatMessageEl.value.trim();
+    if (!message) {
+        feedbackEl.textContent = 'Type a message before sending.';
+        return;
+    }
+    try {
+        await db.collection('groupMessages').add({
+            uid: currentUser.uid,
+            authorName: currentProfile.fullName || 'Anonymous',
+            message: message.slice(0, 400),
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        chatMessageEl.value = '';
+        feedbackEl.textContent = 'Message sent.';
+    } catch (error) {
+        console.error('Failed to send message:', error);
+        feedbackEl.textContent = 'Unable to send message.';
+    }
 }
 
 function getOrCreateRecaptcha(elementId, existingRef) {
@@ -1473,6 +1976,8 @@ async function saveBestScore() {
 
 async function logout() {
     if (!auth) return;
+    teardownCommunityListeners();
+    closeMenu();
     await auth.signOut();
 }
 
@@ -1491,9 +1996,11 @@ function initFirebase() {
 
     auth.onAuthStateChanged(async (user) => {
         if (!user) {
+            teardownCommunityListeners();
             currentUser = null;
             currentProfile = null;
             clearResumeState();
+            closeMenu();
             showScreen('authScreen');
             return;
         }
@@ -1507,6 +2014,8 @@ function initFirebase() {
         showScreen('homeScreen');
         updateResumeButton();
         refreshLeaderboard();
+        subscribeLukeStatuses();
+        subscribeGroupChat();
     });
 }
 
@@ -1830,6 +2339,7 @@ function goHome() {
     clearInterval(countdown);
     awaitingAnswer = false;
     isPaused = false;
+    closeMenu();
     showScreen('homeScreen');
     updateResumeButton();
     refreshLeaderboard();
@@ -1869,6 +2379,12 @@ Perfect for youth nights, young adult hangouts, and ministry competitions!`
 
 initializeQuizMeta();
 initFirebase();
+
+window.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') {
+        closeMenu();
+    }
+});
 
 // ── Service Worker registration ───────────────────────────────
 if ('serviceWorker' in navigator) {
@@ -1918,7 +2434,7 @@ if ('serviceWorker' in navigator) {
 
 <!-- ── Install Banner ──────────────────────────────────────── -->
 <div id="installBanner" role="complementary" aria-label="Install Bible Matrix">
-    <img src="/icons/icon-192.png" alt="Bible Matrix" />
+    <img src="/icons/logo-advanced.svg" alt="Bible Matrix" />
     <div class="banner-text">
         <strong>Install Bible Matrix</strong>
         <span>Add to your home screen for the best experience</span>
@@ -1928,5 +2444,20 @@ if ('serviceWorker' in navigator) {
         <button id="dismissBtn" class="btn-dismiss">✕</button>
     </div>
 </div>
+
+<div id="menuBackdrop" class="side-menu-backdrop" onclick="closeMenu()"></div>
+<aside id="sideMenu" class="side-menu" aria-label="App navigation">
+    <div class="menu-head">
+        <strong>BIBLE MATRIX</strong>
+        <button class="icon-btn" onclick="closeMenu()" aria-label="Close menu">✕</button>
+    </div>
+    <p class="muted-note">Navigate to quiz, Luke status, or group chat.</p>
+    <div class="menu-actions">
+        <button class="menu-btn" onclick="goHome()">🏠 Home</button>
+        <button class="menu-btn" onclick="openStatusScreen()">🟢 Luke Status</button>
+        <button class="menu-btn" onclick="openChatScreen()">💬 Group Chat</button>
+        <button class="menu-btn" onclick="logoutFromMenu()">🚪 Log Out</button>
+    </div>
+</aside>
 </body>
 </html>
