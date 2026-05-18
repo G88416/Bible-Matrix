@@ -677,7 +677,7 @@ footer {
                 <p id="stageDescription" class="kicker"></p>
             </div>
             <div class="game-actions">
-                <div class="score-pill" id="pointsPill">Stage points per correct answer</div>
+                <div class="score-pill" id="pointsPill">10 points per correct answer</div>
                 <button id="pauseBtn" class="btn btn-secondary" onclick="togglePause()" aria-label="Pause quiz timer">Pause</button>
                 <button class="btn btn-secondary" onclick="goHome()" aria-label="Return to home screen">Home</button>
             </div>
@@ -1403,8 +1403,11 @@ function startTimer() {
 
 function applyPausePenalty() {
     const stage = stages[currentStageIndex];
+    if (!stage) {
+        return 0;
+    }
     // First pause is free; every extra pause deducts points.
-    if (!stage || pauseCount <= freePauseCount) {
+    if (pauseCount <= freePauseCount) {
         return 0;
     }
     const deduction = Math.max(minPausePenalty, Math.floor(stage.points / pausePenaltyDivisor));
