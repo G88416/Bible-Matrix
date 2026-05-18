@@ -238,6 +238,17 @@ footer {
     overflow: hidden;
 }
 
+.stage-card.clickable {
+    cursor: pointer;
+    transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+}
+
+.stage-card.clickable:hover {
+    transform: translateY(-2px);
+    background: rgba(245, 196, 81, 0.12);
+    border-color: rgba(245, 196, 81, 0.42);
+}
+
 .stage-card::after {
     content: "";
     position: absolute;
@@ -768,6 +779,7 @@ body {
             </p>
             <div class="hero-actions">
                 <button class="btn btn-primary" onclick="startGame()">Start the 4-Stage Journey</button>
+                <button id="resumeJourneyBtn" class="btn btn-secondary" onclick="resumeGame()" hidden>Resume Journey</button>
                 <button class="btn btn-secondary" onclick="showRules()">How to Play</button>
             </div>
             <footer>“For the Son of Man came to seek and to save the lost.” — Luke 19:10</footer>
@@ -791,22 +803,22 @@ body {
             </table>
             <h2>Stage Journey</h2>
             <div class="stage-overview">
-                <div class="stage-card">
+                <div class="stage-card clickable" role="button" tabindex="0" onclick="startFromStage(0)" onkeydown="handleStageCardKey(event, 0)">
                     <div class="stage-label">Stage 1</div>
                     <h3>Foundations</h3>
                     <p>Start with familiar Luke passages and warm up the room.</p>
                 </div>
-                <div class="stage-card">
+                <div class="stage-card clickable" role="button" tabindex="0" onclick="startFromStage(1)" onkeydown="handleStageCardKey(event, 1)">
                     <div class="stage-label">Stage 2</div>
                     <h3>Growing Deeper</h3>
                     <p>Move into ministry moments, miracles, and meaning.</p>
                 </div>
-                <div class="stage-card">
+                <div class="stage-card clickable" role="button" tabindex="0" onclick="startFromStage(2)" onkeydown="handleStageCardKey(event, 2)">
                     <div class="stage-label">Stage 3</div>
                     <h3>Kingdom Focus</h3>
                     <p>Challenge the group with discipleship and parable details.</p>
                 </div>
-                <div class="stage-card">
+                <div class="stage-card clickable" role="button" tabindex="0" onclick="startFromStage(3)" onkeydown="handleStageCardKey(event, 3)">
                     <div class="stage-label">Stage 4</div>
                     <h3>Leadership Level</h3>
                     <p>Finish strong with tougher resurrection and mission questions.</p>
@@ -825,7 +837,7 @@ body {
                 <p id="stageDescription" class="kicker"></p>
             </div>
             <div class="game-actions">
-                <div class="score-pill" id="pointsPill">10 points per correct answer</div>
+                <div class="score-pill" id="pointsPill">1 point per correct answer</div>
                 <button id="pauseBtn" class="btn btn-secondary" onclick="togglePause()" aria-label="Pause quiz timer">Pause</button>
                 <button class="btn btn-secondary" onclick="goHome()" aria-label="Return to home screen">Home</button>
             </div>
@@ -911,7 +923,7 @@ body {
             </div>
             <div class="result-stat">
                 <strong id="finalAI">0</strong>
-                <span>AI final score</span>
+                <span>AI final points</span>
             </div>
         </div>
 
@@ -965,7 +977,7 @@ const stages = [
         description: "Warm up with core Luke moments your group will recognize quickly.",
         difficulty: "Warm-up difficulty",
         timeLimit: 20,
-        points: 10,
+        points: 1,
         // The AI starts supportive in stage 1 so early rounds stay welcoming.
         aiCorrectProbability: 0.38,
         questions: [
@@ -1026,7 +1038,7 @@ const stages = [
         description: "Stage 2 adds stronger recall with miracles, worship, and Jesus' teaching.",
         difficulty: "Intermediate challenge",
         timeLimit: 18,
-        points: 12,
+        points: 1,
         // The AI gets a modest bump as the player moves into tougher questions.
         aiCorrectProbability: 0.45,
         questions: [
@@ -1087,7 +1099,7 @@ const stages = [
         description: "Stage 3 pushes into details that reward careful reading and reflection.",
         difficulty: "Advanced challenge",
         timeLimit: 16,
-        points: 15,
+        points: 1,
         // This stage is more competitive to match the harder material.
         aiCorrectProbability: 0.5,
         questions: [
@@ -1148,7 +1160,7 @@ const stages = [
         description: "The final stage is built for your strongest readers and ministry leaders.",
         difficulty: "Tough finale",
         timeLimit: 14,
-        points: 18,
+        points: 1,
         // The final round gives the AI its toughest profile for a strong finish.
         aiCorrectProbability: 0.58,
         questions: [
@@ -1215,12 +1227,12 @@ let timer = 0;
 let countdown;
 let awaitingAnswer = false;
 let isPaused = false;
-let pauseCount = 0;
 let stageResults = [];
 let auth = null;
 let db = null;
 let currentUser = null;
 let currentProfile = null;
+let resumeState = null;
 let signupConfirmation = null;
 let loginConfirmation = null;
 let signupRecaptcha = null;
@@ -1229,11 +1241,6 @@ let loginRecaptcha = null;
 const nextQuestionDelayMs = 1400;
 // The AI gets a small edge on timeouts because the player did not answer in time.
 const aiTimeUpBonus = 0.08;
-// Pause penalty is stage points divided by this value.
-const pausePenaltyDivisor = 2;
-// Minimum points deducted when a pause penalty applies.
-const minPausePenalty = 1;
-const freePauseCount = 1;
 
 function showScreen(screenId) {
     document.querySelectorAll('.screen').forEach((screen) => screen.classList.remove('active'));
@@ -1258,6 +1265,49 @@ function firebaseReady() {
 
 function setAuthFeedback(id, message) {
     document.getElementById(id).textContent = message;
+}
+
+function cloneStageResults(data) {
+    return (data || []).map((stage, index) => ({
+        name: stage.name || stages[index]?.name || `Stage ${index + 1}`,
+        player: Math.max(0, Number(stage.player) || 0),
+        ai: Math.max(0, Number(stage.ai) || 0),
+        points: stages[index]?.points || 1
+    }));
+}
+
+function getSafeStageIndex(index) {
+    return Math.max(0, Math.min(Number(index) || 0, stages.length - 1));
+}
+
+function setResumeState(stageIndex, questionIndex) {
+    resumeState = {
+        stageIndex,
+        questionIndex,
+        playerScore,
+        aiScore,
+        playerCorrectAnswers,
+        stageResults: cloneStageResults(stageResults)
+    };
+    updateResumeButton();
+}
+
+function clearResumeState() {
+    resumeState = null;
+    updateResumeButton();
+}
+
+function updateResumeButton() {
+    const resumeBtn = document.getElementById('resumeJourneyBtn');
+    if (!resumeBtn) return;
+    const canResume = Boolean(
+        currentUser
+        && resumeState
+        && Number.isInteger(resumeState.stageIndex)
+        && resumeState.stageIndex >= 0
+        && resumeState.stageIndex < stages.length
+    );
+    resumeBtn.hidden = !canResume;
 }
 
 function getOrCreateRecaptcha(elementId, existingRef) {
@@ -1443,6 +1493,7 @@ function initFirebase() {
         if (!user) {
             currentUser = null;
             currentProfile = null;
+            clearResumeState();
             showScreen('authScreen');
             return;
         }
@@ -1454,25 +1505,29 @@ function initFirebase() {
         }
         currentProfile = profile.data();
         showScreen('homeScreen');
+        updateResumeButton();
         refreshLeaderboard();
     });
 }
 
 function startGame() {
+    startFromStage(0);
+}
+
+function startFromStage(stageIndex) {
     if (!currentUser) {
         showScreen('authScreen');
         return;
     }
     clearInterval(countdown);
     initializeQuizMeta();
-    currentStageIndex = 0;
+    currentStageIndex = getSafeStageIndex(stageIndex);
     currentQuestionIndex = 0;
     playerScore = 0;
     aiScore = 0;
     playerCorrectAnswers = 0;
     awaitingAnswer = false;
     isPaused = false;
-    pauseCount = 0;
     stageResults = stages.map((stage) => ({
         name: stage.name,
         player: 0,
@@ -1483,6 +1538,48 @@ function startGame() {
     updateScores();
     showScreen('gameScreen');
     loadQuestion();
+}
+
+function resumeGame() {
+    if (!currentUser) {
+        showScreen('authScreen');
+        return;
+    }
+    if (!resumeState) {
+        startGame();
+        return;
+    }
+
+    clearInterval(countdown);
+    initializeQuizMeta();
+    currentStageIndex = getSafeStageIndex(resumeState.stageIndex);
+    currentQuestionIndex = Math.max(0, Number(resumeState.questionIndex) || 0);
+    playerScore = Math.max(0, Number(resumeState.playerScore) || 0);
+    aiScore = Math.max(0, Number(resumeState.aiScore) || 0);
+    playerCorrectAnswers = Math.max(0, Number(resumeState.playerCorrectAnswers) || 0);
+    stageResults = cloneStageResults(resumeState.stageResults);
+
+    while (stageResults.length < stages.length) {
+        stageResults.push({
+            name: stages[stageResults.length].name,
+            player: 0,
+            ai: 0,
+            points: 1
+        });
+    }
+
+    awaitingAnswer = false;
+    isPaused = false;
+    updateScores();
+    showScreen('gameScreen');
+    loadQuestion();
+}
+
+function handleStageCardKey(event, stageIndex) {
+    if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        startFromStage(stageIndex);
+    }
 }
 
 function loadQuestion() {
@@ -1499,6 +1596,8 @@ function loadQuestion() {
         return;
     }
 
+    setResumeState(currentStageIndex, currentQuestionIndex);
+
     awaitingAnswer = true;
     timer = stage.timeLimit;
 
@@ -1510,7 +1609,7 @@ function loadQuestion() {
     document.getElementById('stagePill').textContent = `Stage ${currentStageIndex + 1} • ${stage.name}`;
     document.getElementById('stageTitle').textContent = stage.name;
     document.getElementById('stageDescription').textContent = stage.description;
-    document.getElementById('pointsPill').textContent = `${stage.points} points per correct answer`;
+    document.getElementById('pointsPill').textContent = '1 point per correct answer';
     document.getElementById('difficultyText').textContent = stage.difficulty;
     document.getElementById('questionNumber').textContent = `${currentQuestionIndex + 1} / ${stage.questions.length}`;
     document.getElementById('questionText').textContent = question.question;
@@ -1550,23 +1649,6 @@ function startTimer() {
     }, 1000);
 }
 
-function applyPausePenalty() {
-    const stage = stages[currentStageIndex];
-    if (!stage) {
-        return 0;
-    }
-    // First pause is free; every extra pause deducts points.
-    if (pauseCount <= freePauseCount) {
-        return 0;
-    }
-    const deduction = Math.max(minPausePenalty, Math.floor(stage.points / pausePenaltyDivisor));
-    const reducedBy = Math.min(deduction, playerScore, stageResults[currentStageIndex].player);
-    playerScore -= reducedBy;
-    stageResults[currentStageIndex].player = Math.max(0, stageResults[currentStageIndex].player - reducedBy);
-    updateScores();
-    return reducedBy;
-}
-
 function togglePause() {
     const pauseBtn = document.getElementById('pauseBtn');
     if (!awaitingAnswer) {
@@ -1578,13 +1660,9 @@ function togglePause() {
     const feedback = document.getElementById('feedbackText');
     if (!isPaused) {
         isPaused = true;
-        pauseCount += 1;
         clearInterval(countdown);
-        const reducedBy = applyPausePenalty();
         feedback.classList.add('paused');
-        feedback.textContent = reducedBy > 0
-            ? `Paused. Penalty applied: -${reducedBy} points for extra pauses.`
-            : 'Paused. Select Resume when you are ready.';
+        feedback.textContent = 'Paused. Select Resume when you are ready.';
         pauseBtn.textContent = 'Resume';
         pauseBtn.setAttribute('aria-label', 'Resume quiz timer');
         return;
@@ -1608,7 +1686,6 @@ function selectAnswer(selectedIndex, button) {
     document.getElementById('pauseBtn').disabled = true;
 
     const stage = stages[currentStageIndex];
-    const question = stage.questions[currentQuestionIndex];
     const buttons = document.querySelectorAll('.answer-btn');
 
     buttons.forEach((item) => {
@@ -1616,19 +1693,16 @@ function selectAnswer(selectedIndex, button) {
     });
 
     if (selectedIndex === question.correct) {
-        button.classList.add('correct');
-        playerScore += stage.points;
+        playerScore += 1;
         playerCorrectAnswers += 1;
-        stageResults[currentStageIndex].player += stage.points;
-        document.getElementById('feedbackText').textContent = 'Correct! You earned points for this stage.';
+        stageResults[currentStageIndex].player += 1;
+        document.getElementById('feedbackText').textContent = 'Correct!';
     } else {
-        button.classList.add('wrong');
-        buttons[question.correct].classList.add('correct');
         if (Math.random() < stage.aiCorrectProbability) {
-            aiScore += stage.points;
-            stageResults[currentStageIndex].ai += stage.points;
+            aiScore += 1;
+            stageResults[currentStageIndex].ai += 1;
         }
-        document.getElementById('feedbackText').textContent = 'Not quite. Take note of the highlighted answer.';
+        document.getElementById('feedbackText').textContent = 'Not quite.';
     }
 
     updateScores();
@@ -1648,19 +1722,16 @@ function handleTimeUp() {
     const question = stage.questions[currentQuestionIndex];
     const buttons = document.querySelectorAll('.answer-btn');
 
-    buttons.forEach((button, index) => {
+    buttons.forEach((button) => {
         button.disabled = true;
-        if (index === question.correct) {
-            button.classList.add('correct');
-        }
     });
 
     if (Math.random() < Math.min(1, stage.aiCorrectProbability + aiTimeUpBonus)) {
-        aiScore += stage.points;
-        stageResults[currentStageIndex].ai += stage.points;
+        aiScore += 1;
+        stageResults[currentStageIndex].ai += 1;
     }
 
-    document.getElementById('feedbackText').textContent = 'Time is up! The right answer is now highlighted.';
+    document.getElementById('feedbackText').textContent = 'Time is up!';
     updateScores();
     moveToNextQuestion();
 }
@@ -1689,6 +1760,11 @@ function handleStageComplete() {
     document.getElementById('transitionAIScore').textContent = stageResults[currentStageIndex].ai;
     document.getElementById('transitionNextStage').textContent = isLastStage ? 'Done' : currentStageIndex + 2;
     document.getElementById('nextStageBtn').textContent = isLastStage ? 'See Final Results' : 'Continue to Next Stage';
+    if (isLastStage) {
+        clearResumeState();
+    } else {
+        setResumeState(currentStageIndex + 1, 0);
+    }
 
     showScreen('transitionScreen');
 }
@@ -1713,6 +1789,7 @@ function updateScores() {
 function showResults() {
     clearInterval(countdown);
     isPaused = false;
+    clearResumeState();
     showScreen('resultScreen');
 
     document.getElementById('finalPlayer').textContent = `${playerCorrectAnswers} / ${getTotalQuestionCount()}`;
@@ -1754,6 +1831,7 @@ function goHome() {
     awaitingAnswer = false;
     isPaused = false;
     showScreen('homeScreen');
+    updateResumeButton();
     refreshLeaderboard();
 }
 
@@ -1779,11 +1857,11 @@ function showRules() {
 `LUKE QUIZ JOURNEY RULES
 
 1. The game has 4 stages, and each stage gets a little tougher.
-2. Answer before the timer ends to score points for your team.
-3. Correct answers earn more points in later stages.
-4. If time runs out, the answer is revealed and the AI may score.
-5. You can pause, but pausing more than once deducts points.
-6. Your ranking score is based on correct answers from 0 to 40.
+2. Answer every question before the timer ends to maximize your score.
+3. Your score is based only on your own correct answers.
+4. If time runs out, the question is marked wrong and the game moves on.
+5. You can pause and resume the timer whenever needed.
+6. Your ranking score is based on correct answers out of 40.
 
 Perfect for youth nights, young adult hangouts, and ministry competitions!`
     );
