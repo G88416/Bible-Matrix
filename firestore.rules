@@ -28,7 +28,8 @@ service cloud.firestore {
     function hasValidPhoneNumber() {
       return request.resource.data.phoneNumber is string
         && request.resource.data.phoneNumber.size() >= 7
-        && request.resource.data.phoneNumber.size() <= 20;
+        && request.resource.data.phoneNumber.size() <= 20
+        && request.resource.data.phoneNumber.matches('^[+0-9()\\-\\s]{7,20}$');
     }
 
     match /users/{userId} {

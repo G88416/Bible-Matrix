@@ -779,7 +779,7 @@ body {
             </p>
             <div class="hero-actions">
                 <button class="btn btn-primary" onclick="startGame()">Start the 4-Stage Journey</button>
-                <button id="resumeJourneyBtn" class="btn btn-secondary" onclick="resumeGame()" style="display:none;">Resume Journey</button>
+                <button id="resumeJourneyBtn" class="btn btn-secondary" onclick="resumeGame()" hidden>Resume Journey</button>
                 <button class="btn btn-secondary" onclick="showRules()">How to Play</button>
             </div>
             <footer>“For the Son of Man came to seek and to save the lost.” — Luke 19:10</footer>
@@ -1272,8 +1272,12 @@ function cloneStageResults(data) {
         name: stage.name || stages[index]?.name || `Stage ${index + 1}`,
         player: Math.max(0, Number(stage.player) || 0),
         ai: Math.max(0, Number(stage.ai) || 0),
-        points: 1
+        points: stages[index]?.points || 1
     }));
+}
+
+function getSafeStageIndex(index) {
+    return Math.max(0, Math.min(Number(index) || 0, stages.length - 1));
 }
 
 function setResumeState(stageIndex, questionIndex) {
@@ -1303,7 +1307,7 @@ function updateResumeButton() {
         && resumeState.stageIndex >= 0
         && resumeState.stageIndex < stages.length
     );
-    resumeBtn.style.display = canResume ? 'inline-flex' : 'none';
+    resumeBtn.hidden = !canResume;
 }
 
 function getOrCreateRecaptcha(elementId, existingRef) {
@@ -1517,7 +1521,7 @@ function startFromStage(stageIndex) {
     }
     clearInterval(countdown);
     initializeQuizMeta();
-    currentStageIndex = Math.max(0, Math.min(Number(stageIndex) || 0, stages.length - 1));
+    currentStageIndex = getSafeStageIndex(stageIndex);
     currentQuestionIndex = 0;
     playerScore = 0;
     aiScore = 0;
@@ -1548,7 +1552,7 @@ function resumeGame() {
 
     clearInterval(countdown);
     initializeQuizMeta();
-    currentStageIndex = Math.max(0, Math.min(Number(resumeState.stageIndex) || 0, stages.length - 1));
+    currentStageIndex = getSafeStageIndex(resumeState.stageIndex);
     currentQuestionIndex = Math.max(0, Number(resumeState.questionIndex) || 0);
     playerScore = Math.max(0, Number(resumeState.playerScore) || 0);
     aiScore = Math.max(0, Number(resumeState.aiScore) || 0);
