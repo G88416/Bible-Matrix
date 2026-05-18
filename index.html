@@ -1413,11 +1413,14 @@ function applyPausePenalty() {
 }
 
 function togglePause() {
+    const pauseBtn = document.getElementById('pauseBtn');
     if (!awaitingAnswer) {
+        if (pauseBtn) {
+            pauseBtn.disabled = true;
+        }
         return;
     }
     const feedback = document.getElementById('feedbackText');
-    const pauseBtn = document.getElementById('pauseBtn');
     if (!isPaused) {
         isPaused = true;
         pauseCount += 1;
