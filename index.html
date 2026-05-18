@@ -1604,8 +1604,8 @@ function selectAnswer(selectedIndex, button) {
         document.getElementById('feedbackText').textContent = 'Correct!';
     } else {
         if (Math.random() < stage.aiCorrectProbability) {
-            aiScore += stage.points;
-            stageResults[currentStageIndex].ai += stage.points;
+            aiScore += 1;
+            stageResults[currentStageIndex].ai += 1;
         }
         document.getElementById('feedbackText').textContent = 'Not quite.';
     }
@@ -1632,8 +1632,8 @@ function handleTimeUp() {
     });
 
     if (Math.random() < Math.min(1, stage.aiCorrectProbability + aiTimeUpBonus)) {
-        aiScore += stage.points;
-        stageResults[currentStageIndex].ai += stage.points;
+        aiScore += 1;
+        stageResults[currentStageIndex].ai += 1;
     }
 
     document.getElementById('feedbackText').textContent = 'Time is up!';
@@ -1758,8 +1758,8 @@ function showRules() {
 2. Answer every question before the timer ends to maximize your score.
 3. Your score is based only on your own correct answers.
 4. If time runs out, the question is marked wrong and the game moves on.
-5. You can pause, but pausing more than once deducts points.
-6. Your ranking score is based on correct answers from 0 to 40.
+5. You can pause and resume the timer whenever needed.
+6. Your ranking score is based on correct answers out of 40.
 
 Perfect for youth nights, young adult hangouts, and ministry competitions!`
     );
