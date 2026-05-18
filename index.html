@@ -1372,6 +1372,7 @@ function loadQuestion() {
     document.getElementById('feedbackText').textContent = '';
     document.getElementById('feedbackText').classList.remove('paused');
     document.getElementById('pauseBtn').textContent = 'Pause';
+    document.getElementById('pauseBtn').setAttribute('aria-label', 'Pause quiz timer');
     document.getElementById('pauseBtn').disabled = false;
 
     answersContainer.innerHTML = '';
@@ -1437,12 +1438,14 @@ function togglePause() {
             ? `Paused. Penalty applied: -${reducedBy} points for extra pauses.`
             : 'Paused. Select Resume when you are ready.';
         pauseBtn.textContent = 'Resume';
+        pauseBtn.setAttribute('aria-label', 'Resume quiz timer');
         return;
     }
     isPaused = false;
     feedback.classList.remove('paused');
     feedback.textContent = '';
     pauseBtn.textContent = 'Pause';
+    pauseBtn.setAttribute('aria-label', 'Pause quiz timer');
     startTimer();
 }
 
