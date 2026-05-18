@@ -1506,7 +1506,7 @@ function loadQuestion() {
     document.getElementById('stagePill').textContent = `Stage ${currentStageIndex + 1} • ${stage.name}`;
     document.getElementById('stageTitle').textContent = stage.name;
     document.getElementById('stageDescription').textContent = stage.description;
-    document.getElementById('pointsPill').textContent = `${stage.points} point${stage.points === 1 ? '' : 's'} per correct answer`;
+    document.getElementById('pointsPill').textContent = '1 point per correct answer';
     document.getElementById('difficultyText').textContent = stage.difficulty;
     document.getElementById('questionNumber').textContent = `${currentQuestionIndex + 1} / ${stage.questions.length}`;
     document.getElementById('questionText').textContent = question.question;
@@ -1591,6 +1591,7 @@ function selectAnswer(selectedIndex, button) {
     document.getElementById('pauseBtn').disabled = true;
 
     const stage = stages[currentStageIndex];
+    const question = stage.questions[currentQuestionIndex];
     const buttons = document.querySelectorAll('.answer-btn');
 
     buttons.forEach((item) => {
