@@ -678,8 +678,8 @@ footer {
             </div>
             <div class="game-actions">
                 <div class="score-pill" id="pointsPill">10 points per correct answer</div>
-                <button id="pauseBtn" class="btn btn-secondary" onclick="togglePause()">Pause</button>
-                <button class="btn btn-secondary" onclick="goHome()">Home</button>
+                <button id="pauseBtn" class="btn btn-secondary" onclick="togglePause()" aria-label="Pause quiz timer">Pause</button>
+                <button class="btn btn-secondary" onclick="goHome()" aria-label="Return to home screen">Home</button>
             </div>
         </div>
 
@@ -1082,6 +1082,7 @@ const nextQuestionDelayMs = 1400;
 // The AI gets a small edge on timeouts because the player did not answer in time.
 const aiTimeUpBonus = 0.08;
 const pausePenaltyDivisor = 2;
+const minPausePenalty = 1;
 
 function showScreen(screenId) {
     document.querySelectorAll('.screen').forEach((screen) => screen.classList.remove('active'));
@@ -1399,10 +1400,11 @@ function startTimer() {
 
 function applyPausePenalty() {
     const stage = stages[currentStageIndex];
+    // First pause is free; every extra pause deducts points.
     if (!stage || pauseCount <= 1) {
         return 0;
     }
-    const deduction = Math.max(1, Math.floor(stage.points / pausePenaltyDivisor));
+    const deduction = Math.max(minPausePenalty, Math.floor(stage.points / pausePenaltyDivisor));
     const reducedBy = Math.min(deduction, playerScore);
     playerScore -= reducedBy;
     stageResults[currentStageIndex].player = Math.max(0, stageResults[currentStageIndex].player - reducedBy);
@@ -1424,7 +1426,7 @@ function togglePause() {
         feedback.classList.add('paused');
         feedback.textContent = reducedBy > 0
             ? `Paused. Penalty applied: -${reducedBy} points for extra pauses.`
-            : 'Paused. Tap Resume when you are ready.';
+            : 'Paused. Select Resume when you are ready.';
         pauseBtn.textContent = 'Resume';
         return;
     }
