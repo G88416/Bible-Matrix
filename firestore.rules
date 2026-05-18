@@ -16,7 +16,7 @@ service cloud.firestore {
     function hasValidScore() {
       return request.resource.data.bestScore is int
         && request.resource.data.bestScore >= 0
-        && request.resource.data.bestScore <= 20;
+        && request.resource.data.bestScore <= 40;
     }
 
     function hasValidName() {
@@ -25,17 +25,25 @@ service cloud.firestore {
         && request.resource.data.fullName.size() <= 80;
     }
 
+    function hasValidPhoneNumber() {
+      return request.resource.data.phoneNumber is string
+        && request.resource.data.phoneNumber.size() >= 7
+        && request.resource.data.phoneNumber.size() <= 20;
+    }
+
     match /users/{userId} {
       allow read: if isSignedIn();
       allow create: if isOwner(userId)
         && request.resource.data.uid == request.auth.uid
         && hasValidName()
         && hasValidGender()
+        && hasValidPhoneNumber()
         && hasValidScore();
       allow update: if isOwner(userId)
         && request.resource.data.uid == resource.data.uid
         && hasValidName()
         && hasValidGender()
+        && hasValidPhoneNumber()
         && hasValidScore()
         && request.resource.data.bestScore >= resource.data.bestScore;
       allow delete: if false;

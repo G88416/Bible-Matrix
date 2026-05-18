@@ -825,7 +825,7 @@ body {
                 <p id="stageDescription" class="kicker"></p>
             </div>
             <div class="game-actions">
-                <div class="score-pill" id="pointsPill">10 points per correct answer</div>
+                <div class="score-pill" id="pointsPill">1 point per correct answer</div>
                 <button id="pauseBtn" class="btn btn-secondary" onclick="togglePause()" aria-label="Pause quiz timer">Pause</button>
                 <button class="btn btn-secondary" onclick="goHome()" aria-label="Return to home screen">Home</button>
             </div>
@@ -911,7 +911,7 @@ body {
             </div>
             <div class="result-stat">
                 <strong id="finalAI">0</strong>
-                <span>AI final score</span>
+                <span>AI final points</span>
             </div>
         </div>
 
@@ -965,7 +965,7 @@ const stages = [
         description: "Warm up with core Luke moments your group will recognize quickly.",
         difficulty: "Warm-up difficulty",
         timeLimit: 20,
-        points: 10,
+        points: 1,
         // The AI starts supportive in stage 1 so early rounds stay welcoming.
         aiCorrectProbability: 0.38,
         questions: [
@@ -1026,7 +1026,7 @@ const stages = [
         description: "Stage 2 adds stronger recall with miracles, worship, and Jesus' teaching.",
         difficulty: "Intermediate challenge",
         timeLimit: 18,
-        points: 12,
+        points: 1,
         // The AI gets a modest bump as the player moves into tougher questions.
         aiCorrectProbability: 0.45,
         questions: [
@@ -1087,7 +1087,7 @@ const stages = [
         description: "Stage 3 pushes into details that reward careful reading and reflection.",
         difficulty: "Advanced challenge",
         timeLimit: 16,
-        points: 15,
+        points: 1,
         // This stage is more competitive to match the harder material.
         aiCorrectProbability: 0.5,
         questions: [
@@ -1148,7 +1148,7 @@ const stages = [
         description: "The final stage is built for your strongest readers and ministry leaders.",
         difficulty: "Tough finale",
         timeLimit: 14,
-        points: 18,
+        points: 1,
         // The final round gives the AI its toughest profile for a strong finish.
         aiCorrectProbability: 0.58,
         questions: [
@@ -1230,10 +1230,6 @@ const nextQuestionDelayMs = 1400;
 // The AI gets a small edge on timeouts because the player did not answer in time.
 const aiTimeUpBonus = 0.08;
 // Pause penalty is stage points divided by this value.
-const pausePenaltyDivisor = 2;
-// Minimum points deducted when a pause penalty applies.
-const minPausePenalty = 1;
-const freePauseCount = 1;
 
 function showScreen(screenId) {
     document.querySelectorAll('.screen').forEach((screen) => screen.classList.remove('active'));
@@ -1510,7 +1506,7 @@ function loadQuestion() {
     document.getElementById('stagePill').textContent = `Stage ${currentStageIndex + 1} • ${stage.name}`;
     document.getElementById('stageTitle').textContent = stage.name;
     document.getElementById('stageDescription').textContent = stage.description;
-    document.getElementById('pointsPill').textContent = `${stage.points} points per correct answer`;
+    document.getElementById('pointsPill').textContent = `${stage.points} point${stage.points === 1 ? '' : 's'} per correct answer`;
     document.getElementById('difficultyText').textContent = stage.difficulty;
     document.getElementById('questionNumber').textContent = `${currentQuestionIndex + 1} / ${stage.questions.length}`;
     document.getElementById('questionText').textContent = question.question;
@@ -1551,20 +1547,7 @@ function startTimer() {
 }
 
 function applyPausePenalty() {
-    const stage = stages[currentStageIndex];
-    if (!stage) {
-        return 0;
-    }
-    // First pause is free; every extra pause deducts points.
-    if (pauseCount <= freePauseCount) {
-        return 0;
-    }
-    const deduction = Math.max(minPausePenalty, Math.floor(stage.points / pausePenaltyDivisor));
-    const reducedBy = Math.min(deduction, playerScore, stageResults[currentStageIndex].player);
-    playerScore -= reducedBy;
-    stageResults[currentStageIndex].player = Math.max(0, stageResults[currentStageIndex].player - reducedBy);
-    updateScores();
-    return reducedBy;
+    return 0;
 }
 
 function togglePause() {
@@ -1608,7 +1591,6 @@ function selectAnswer(selectedIndex, button) {
     document.getElementById('pauseBtn').disabled = true;
 
     const stage = stages[currentStageIndex];
-    const question = stage.questions[currentQuestionIndex];
     const buttons = document.querySelectorAll('.answer-btn');
 
     buttons.forEach((item) => {
@@ -1616,19 +1598,16 @@ function selectAnswer(selectedIndex, button) {
     });
 
     if (selectedIndex === question.correct) {
-        button.classList.add('correct');
-        playerScore += stage.points;
+        playerScore += 1;
         playerCorrectAnswers += 1;
-        stageResults[currentStageIndex].player += stage.points;
-        document.getElementById('feedbackText').textContent = 'Correct! You earned points for this stage.';
+        stageResults[currentStageIndex].player += 1;
+        document.getElementById('feedbackText').textContent = 'Correct!';
     } else {
-        button.classList.add('wrong');
-        buttons[question.correct].classList.add('correct');
         if (Math.random() < stage.aiCorrectProbability) {
             aiScore += stage.points;
             stageResults[currentStageIndex].ai += stage.points;
         }
-        document.getElementById('feedbackText').textContent = 'Not quite. Take note of the highlighted answer.';
+        document.getElementById('feedbackText').textContent = 'Not quite.';
     }
 
     updateScores();
@@ -1648,11 +1627,8 @@ function handleTimeUp() {
     const question = stage.questions[currentQuestionIndex];
     const buttons = document.querySelectorAll('.answer-btn');
 
-    buttons.forEach((button, index) => {
+    buttons.forEach((button) => {
         button.disabled = true;
-        if (index === question.correct) {
-            button.classList.add('correct');
-        }
     });
 
     if (Math.random() < Math.min(1, stage.aiCorrectProbability + aiTimeUpBonus)) {
@@ -1660,7 +1636,7 @@ function handleTimeUp() {
         stageResults[currentStageIndex].ai += stage.points;
     }
 
-    document.getElementById('feedbackText').textContent = 'Time is up! The right answer is now highlighted.';
+    document.getElementById('feedbackText').textContent = 'Time is up!';
     updateScores();
     moveToNextQuestion();
 }
@@ -1779,9 +1755,9 @@ function showRules() {
 `LUKE QUIZ JOURNEY RULES
 
 1. The game has 4 stages, and each stage gets a little tougher.
-2. Answer before the timer ends to score points for your team.
-3. Correct answers earn more points in later stages.
-4. If time runs out, the answer is revealed and the AI may score.
+2. Answer every question before the timer ends to maximize your score.
+3. Your score is based only on your own correct answers.
+4. If time runs out, the question is marked wrong and the game moves on.
 5. You can pause, but pausing more than once deducts points.
 6. Your ranking score is based on correct answers from 0 to 40.
 
