@@ -9,16 +9,16 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 :root {
-    --bg: #081120;
-    --bg-soft: #12203a;
-    --card: rgba(11, 23, 43, 0.78);
-    --card-border: rgba(255, 255, 255, 0.1);
+    --bg: #140b2b;
+    --bg-soft: #23164a;
+    --card: rgba(32, 20, 71, 0.76);
+    --card-border: rgba(255, 255, 255, 0.18);
     --text: #eef4ff;
     --muted: #b7c6e3;
-    --accent: #f5c451;
-    --accent-strong: #ff9f43;
-    --success: #2ecc71;
-    --danger: #ff5d73;
+    --accent: #ffd84d;
+    --accent-strong: #ff7cc8;
+    --success: #28e38b;
+    --danger: #ff5f8f;
     --shadow: 0 24px 60px rgba(0, 0, 0, 0.32);
 }
 
@@ -33,9 +33,10 @@ body {
     min-height: 100vh;
     color: var(--text);
     background:
-        radial-gradient(circle at top, rgba(245, 196, 81, 0.18), transparent 30%),
-        radial-gradient(circle at bottom right, rgba(108, 99, 255, 0.16), transparent 25%),
-        linear-gradient(160deg, #050b16 0%, #0d1830 45%, #14284a 100%);
+        radial-gradient(circle at 10% 8%, rgba(255, 216, 77, 0.25), transparent 32%),
+        radial-gradient(circle at 88% 12%, rgba(255, 124, 200, 0.28), transparent 28%),
+        radial-gradient(circle at 78% 82%, rgba(95, 211, 255, 0.2), transparent 30%),
+        linear-gradient(160deg, #120827 0%, #26124e 45%, #1e3d72 100%);
 }
 
 body::before {
@@ -266,6 +267,13 @@ footer {
     flex-wrap: wrap;
 }
 
+.game-actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
 .game-header h2 {
     font-size: clamp(1.6rem, 3vw, 2.3rem);
     margin: 12px 0 10px;
@@ -378,6 +386,10 @@ footer {
     margin-top: 18px;
     color: #ffe39f;
     font-weight: 600;
+}
+
+.feedback.paused {
+    color: #ffd84d;
 }
 
 .transition-card,
@@ -550,7 +562,8 @@ footer {
 
     .hero-actions,
     .transition-actions,
-    .result-actions {
+    .result-actions,
+    .game-actions {
         flex-direction: column;
     }
 
@@ -663,7 +676,11 @@ footer {
                 <h2 id="stageTitle">Foundations</h2>
                 <p id="stageDescription" class="kicker"></p>
             </div>
-            <div class="score-pill" id="pointsPill">10 points per correct answer</div>
+            <div class="game-actions">
+                <div class="score-pill" id="pointsPill">10 points per correct answer</div>
+                <button id="pauseBtn" class="btn btn-secondary" onclick="togglePause()">Pause</button>
+                <button class="btn btn-secondary" onclick="goHome()">Home</button>
+            </div>
         </div>
 
         <div class="stat-grid">
@@ -676,7 +693,7 @@ footer {
                 <span>AI Opponent</span>
             </div>
             <div class="stat-card">
-                <strong id="questionNumber">1 / 5</strong>
+                <strong id="questionNumber">1 / 10</strong>
                 <span>Stage Question</span>
             </div>
             <div class="stat-card">
@@ -726,6 +743,7 @@ footer {
         <div class="transition-actions">
             <button id="nextStageBtn" class="btn btn-primary" onclick="startNextStage()">Continue to Next Stage</button>
             <button class="btn btn-secondary" onclick="restartGame()">Restart Journey</button>
+            <button class="btn btn-secondary" onclick="goHome()">Home</button>
         </div>
     </div>
 </section>
@@ -772,6 +790,7 @@ footer {
         <div class="result-actions">
             <button class="btn btn-primary" onclick="restartGame()">Play Again</button>
             <button class="btn btn-secondary" onclick="showRules()">View Rules</button>
+            <button class="btn btn-secondary" onclick="goHome()">Home</button>
         </div>
     </div>
 </section>
@@ -790,7 +809,7 @@ const firebaseConfig = {
     measurementId: "G-JV415H1MB5"
 };
 // Firebase web app configuration.
-const MAX_QUIZ_SCORE = 20;
+const MAX_QUIZ_SCORE = 40;
 
 const stages = [
     {
@@ -825,6 +844,31 @@ const stages = [
             {
                 question: "Who climbed a tree to see Jesus passing by?",
                 answers: ["Matthew", "Zacchaeus", "Bartimaeus", "Nicodemus"],
+                correct: 1
+            },
+            {
+                question: "Who prophesied over baby Jesus in the temple and spoke of redemption?",
+                answers: ["Anna", "Martha", "Joanna", "Salome"],
+                correct: 0
+            },
+            {
+                question: "What city did Joseph and Mary travel from before Jesus was born?",
+                answers: ["Jericho", "Nazareth", "Bethany", "Tyre"],
+                correct: 1
+            },
+            {
+                question: "What sign was given to shepherds to identify baby Jesus?",
+                answers: ["A star over a palace", "Wrapped in cloth and lying in a manger", "An angel standing at the door", "A trumpet sound"],
+                correct: 1
+            },
+            {
+                question: "After His baptism, where was Jesus led by the Spirit?",
+                answers: ["To the synagogue", "To Jerusalem", "Into the wilderness", "To Galilee by boat"],
+                correct: 2
+            },
+            {
+                question: "In Luke, what was Levi's occupation before following Jesus?",
+                answers: ["Fisherman", "Tax collector", "Tentmaker", "Soldier"],
                 correct: 1
             }
         ]
@@ -862,6 +906,31 @@ const stages = [
                 question: "When Jesus was 12, where was He found listening and asking questions?",
                 answers: ["In the temple", "On a mountain", "At a wedding", "In Bethlehem"],
                 correct: 0
+            },
+            {
+                question: "Which woman in Luke 8 was healed of evil spirits and later followed Jesus?",
+                answers: ["Lydia", "Mary Magdalene", "Priscilla", "Tabitha"],
+                correct: 1
+            },
+            {
+                question: "What request did the disciples make in Luke 11?",
+                answers: ["Teach us to sing", "Teach us to pray", "Teach us to fast", "Teach us to lead armies"],
+                correct: 1
+            },
+            {
+                question: "In the feeding miracle, how many loaves were used according to Luke?",
+                answers: ["Three", "Five", "Seven", "Twelve"],
+                correct: 1
+            },
+            {
+                question: "Who did Jesus raise from the dead in the town of Nain?",
+                answers: ["A synagogue ruler", "A widow's son", "Lazarus", "A Roman soldier"],
+                correct: 1
+            },
+            {
+                question: "In Luke 7, who anointed Jesus' feet with perfume and tears?",
+                answers: ["A sinful woman", "Mary, mother of Jesus", "Martha", "Joanna"],
+                correct: 0
             }
         ]
     },
@@ -898,6 +967,31 @@ const stages = [
                 question: "How many lepers returned to thank Jesus after being healed?",
                 answers: ["One", "Two", "Five", "Ten"],
                 correct: 0
+            },
+            {
+                question: "What did the younger son in the prodigal son parable ask for?",
+                answers: ["A new robe", "His share of the inheritance", "A farm", "A servant"],
+                correct: 1
+            },
+            {
+                question: "In Luke 15, what did the shepherd do after finding the lost sheep?",
+                answers: ["Sold it", "Left it outside", "Carried it home rejoicing", "Gave it to a neighbor"],
+                correct: 2
+            },
+            {
+                question: "Who was the tax collector that prayed, 'God, have mercy on me, a sinner'?",
+                answers: ["Zacchaeus", "An unnamed tax collector", "Levi", "Simon"],
+                correct: 1
+            },
+            {
+                question: "In Luke 18, what did Jesus say children should not be hindered from doing?",
+                answers: ["Learning the law", "Coming to Him", "Giving offerings", "Visiting the temple"],
+                correct: 1
+            },
+            {
+                question: "Which direction did Jesus set His face toward in Luke 9:51?",
+                answers: ["Nazareth", "Samaria", "Jerusalem", "Bethlehem"],
+                correct: 2
             }
         ]
     },
@@ -934,6 +1028,31 @@ const stages = [
                 question: "What did Jesus open for His disciples so they could understand the Scriptures?",
                 answers: ["Their ears", "Their hearts", "Their eyes", "Their minds"],
                 correct: 3
+            },
+            {
+                question: "Who helped carry Jesus' cross?",
+                answers: ["Joseph of Arimathea", "Simon of Cyrene", "Nicodemus", "John Mark"],
+                correct: 1
+            },
+            {
+                question: "What criminal asked Jesus to remember him in His kingdom?",
+                answers: ["The mocking criminal", "The repentant criminal", "Barabbas", "A Roman guard"],
+                correct: 1
+            },
+            {
+                question: "Which women found the tomb empty early on the first day of the week?",
+                answers: ["Mary Magdalene and others", "Only Mary mother of Jesus", "Only Martha and Mary", "No women were present"],
+                correct: 0
+            },
+            {
+                question: "What did Jesus eat to show His disciples He was physically risen?",
+                answers: ["Bread only", "Honeycomb only", "Broiled fish", "Roasted lamb"],
+                correct: 2
+            },
+            {
+                question: "Where were the disciples told to stay until clothed with power from on high?",
+                answers: ["Galilee", "Jericho", "Jerusalem", "Emmaus"],
+                correct: 2
             }
         ]
     }
@@ -947,6 +1066,8 @@ let playerCorrectAnswers = 0;
 let timer = 0;
 let countdown;
 let awaitingAnswer = false;
+let isPaused = false;
+let pauseCount = 0;
 let stageResults = [];
 let auth = null;
 let db = null;
@@ -1197,6 +1318,8 @@ function startGame() {
     aiScore = 0;
     playerCorrectAnswers = 0;
     awaitingAnswer = false;
+    isPaused = false;
+    pauseCount = 0;
     stageResults = stages.map((stage) => ({
         name: stage.name,
         player: 0,
@@ -1242,6 +1365,9 @@ function loadQuestion() {
     document.getElementById('overallProgressText').textContent = `Question ${answeredCount + 1} of ${totalQuestions}`;
     document.getElementById('progressBar').style.width = `${(answeredCount / totalQuestions) * 100}%`;
     document.getElementById('feedbackText').textContent = '';
+    document.getElementById('feedbackText').classList.remove('paused');
+    document.getElementById('pauseBtn').textContent = 'Pause';
+    document.getElementById('pauseBtn').disabled = false;
 
     answersContainer.innerHTML = '';
     question.answers.forEach((answer, index) => {
@@ -1252,7 +1378,15 @@ function loadQuestion() {
         answersContainer.appendChild(button);
     });
 
+    startTimer();
+}
+
+function startTimer() {
+    clearInterval(countdown);
     countdown = setInterval(() => {
+        if (isPaused) {
+            return;
+        }
         timer -= 1;
         document.getElementById('timer').textContent = timer;
         if (timer <= 0) {
@@ -1262,13 +1396,53 @@ function loadQuestion() {
     }, 1000);
 }
 
+function applyPausePenalty() {
+    const stage = stages[currentStageIndex];
+    if (!stage || pauseCount <= 1) {
+        return 0;
+    }
+    const deduction = Math.max(1, Math.floor(stage.points / 2));
+    const reducedBy = Math.min(deduction, playerScore);
+    playerScore -= reducedBy;
+    stageResults[currentStageIndex].player = Math.max(0, stageResults[currentStageIndex].player - reducedBy);
+    updateScores();
+    return reducedBy;
+}
+
+function togglePause() {
+    if (!awaitingAnswer) {
+        return;
+    }
+    const feedback = document.getElementById('feedbackText');
+    const pauseBtn = document.getElementById('pauseBtn');
+    if (!isPaused) {
+        isPaused = true;
+        pauseCount += 1;
+        clearInterval(countdown);
+        const reducedBy = applyPausePenalty();
+        feedback.classList.add('paused');
+        feedback.textContent = reducedBy > 0
+            ? `Paused. Penalty applied: -${reducedBy} points for extra pauses.`
+            : 'Paused. Tap Resume when you are ready.';
+        pauseBtn.textContent = 'Resume';
+        return;
+    }
+    isPaused = false;
+    feedback.classList.remove('paused');
+    feedback.textContent = '';
+    pauseBtn.textContent = 'Pause';
+    startTimer();
+}
+
 function selectAnswer(selectedIndex, button) {
     if (!awaitingAnswer) {
         return;
     }
 
     awaitingAnswer = false;
+    isPaused = false;
     clearInterval(countdown);
+    document.getElementById('pauseBtn').disabled = true;
 
     const stage = stages[currentStageIndex];
     const question = stage.questions[currentQuestionIndex];
@@ -1304,6 +1478,8 @@ function handleTimeUp() {
     }
 
     awaitingAnswer = false;
+    isPaused = false;
+    document.getElementById('pauseBtn').disabled = true;
 
     const stage = stages[currentStageIndex];
     const question = stage.questions[currentQuestionIndex];
@@ -1335,6 +1511,7 @@ function moveToNextQuestion() {
 
 function handleStageComplete() {
     clearInterval(countdown);
+    isPaused = false;
     const stage = stages[currentStageIndex];
     const isLastStage = currentStageIndex === stages.length - 1;
 
@@ -1372,6 +1549,7 @@ function updateScores() {
 
 function showResults() {
     clearInterval(countdown);
+    isPaused = false;
     showScreen('resultScreen');
 
     document.getElementById('finalPlayer').textContent = `${playerCorrectAnswers} / ${getTotalQuestionCount()}`;
@@ -1408,6 +1586,14 @@ function restartGame() {
     startGame();
 }
 
+function goHome() {
+    clearInterval(countdown);
+    awaitingAnswer = false;
+    isPaused = false;
+    showScreen('homeScreen');
+    refreshLeaderboard();
+}
+
 function getTotalQuestionCount() {
     return stages.reduce((sum, stage) => sum + stage.questions.length, 0);
 }
@@ -1433,7 +1619,8 @@ function showRules() {
 2. Answer before the timer ends to score points for your team.
 3. Correct answers earn more points in later stages.
 4. If time runs out, the answer is revealed and the AI may score.
-5. Your ranking score is based on correct answers from 0 to 20.
+5. You can pause, but pausing more than once deducts points.
+6. Your ranking score is based on correct answers from 0 to 40.
 
 Perfect for youth nights, young adult hangouts, and ministry competitions!`
     );
