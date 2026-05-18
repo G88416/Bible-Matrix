@@ -1,0 +1,148 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 620 200" role="img" aria-label="Bible Matrix – Divine Insights | Digital Structure">
+  <defs>
+    <!-- Left page gradient: dark-navy top to deeper navy bottom -->
+    <linearGradient id="pgL" x1="1" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#4fc3f7"/>
+      <stop offset="55%" stop-color="#1565c0"/>
+      <stop offset="100%" stop-color="#0d2d6b"/>
+    </linearGradient>
+    <!-- Right page gradient: lighter sky-blue -->
+    <linearGradient id="pgR" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#90caf9"/>
+      <stop offset="55%" stop-color="#42a5f5"/>
+      <stop offset="100%" stop-color="#1565c0"/>
+    </linearGradient>
+    <!-- Book cover base gradient -->
+    <linearGradient id="coverG" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1565c0"/>
+      <stop offset="100%" stop-color="#071540"/>
+    </linearGradient>
+    <!-- MATRIX word gradient (horizontal) -->
+    <linearGradient id="mxG" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#42a5f5"/>
+      <stop offset="100%" stop-color="#00e5ff"/>
+    </linearGradient>
+    <!-- Glow for network nodes -->
+    <filter id="ng" x="-80%" y="-80%" width="260%" height="260%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="3" result="b"/>
+      <feMerge>
+        <feMergeNode in="b"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <!-- Drop shadow for whole book -->
+    <filter id="bks" x="-18%" y="-8%" width="136%" height="136%">
+      <feDropShadow dx="2" dy="8" stdDeviation="8" flood-color="#0a1e60" flood-opacity="0.45"/>
+    </filter>
+    <!-- Clip paths to contain grid lines inside each page -->
+    <clipPath id="clL">
+      <polygon points="88,18 88,143 17,132 23,34"/>
+    </clipPath>
+    <clipPath id="clR">
+      <polygon points="88,18 88,143 159,132 153,34"/>
+    </clipPath>
+  </defs>
+
+  <!-- ── BOOK ICON ─────────────────────────────────────────── -->
+  <g transform="translate(10,12)" filter="url(#bks)">
+
+    <!-- Left-page depth layers (simulate stacked pages) -->
+    <polygon points="86,21 86,143 12,131 19,35" fill="#081540" opacity="0.55"/>
+    <polygon points="87,20 87,143 15,131 21,34" fill="#0f2878" opacity="0.70"/>
+
+    <!-- Left page face -->
+    <polygon points="88,18 88,143 17,132 23,34" fill="url(#pgL)"/>
+
+    <!-- Right-page depth layers -->
+    <polygon points="90,21 90,143 164,131 157,35" fill="#1a4e90" opacity="0.55"/>
+    <polygon points="89,20 89,143 161,131 155,34" fill="#2878c8" opacity="0.70"/>
+
+    <!-- Right page face -->
+    <polygon points="88,18 88,143 159,132 153,34" fill="url(#pgR)"/>
+
+    <!-- Matrix grid – left page -->
+    <g clip-path="url(#clL)" stroke="white" stroke-width="0.8" opacity="0.22" fill="none">
+      <line x1="14" y1="58"  x2="89" y2="58"/>
+      <line x1="15" y1="78"  x2="89" y2="78"/>
+      <line x1="16" y1="98"  x2="89" y2="98"/>
+      <line x1="17" y1="118" x2="89" y2="118"/>
+      <line x1="39" y1="34" x2="36" y2="132"/>
+      <line x1="55" y1="33" x2="53" y2="132"/>
+      <line x1="71" y1="32" x2="70" y2="132"/>
+    </g>
+
+    <!-- Matrix grid – right page -->
+    <g clip-path="url(#clR)" stroke="white" stroke-width="0.8" opacity="0.22" fill="none">
+      <line x1="87" y1="58"  x2="160" y2="58"/>
+      <line x1="87" y1="78"  x2="159" y2="78"/>
+      <line x1="87" y1="98"  x2="158" y2="98"/>
+      <line x1="87" y1="118" x2="157" y2="118"/>
+      <line x1="107" y1="34" x2="109" y2="132"/>
+      <line x1="123" y1="33" x2="126" y2="132"/>
+      <line x1="139" y1="32" x2="143" y2="132"/>
+    </g>
+
+    <!-- Network connections + nodes -->
+    <g filter="url(#ng)">
+      <!-- Left page lines -->
+      <line x1="35" y1="76" x2="55" y2="58" stroke="#00d4ff" stroke-width="1.4" opacity="0.9"/>
+      <line x1="55" y1="58" x2="75" y2="73" stroke="#00d4ff" stroke-width="1.4" opacity="0.9"/>
+      <line x1="35" y1="76" x2="25" y2="99" stroke="#00d4ff" stroke-width="1.4" opacity="0.7"/>
+      <line x1="55" y1="58" x2="88" y2="80" stroke="#00d4ff" stroke-width="1.4" opacity="0.5"/>
+      <!-- Right page lines -->
+      <line x1="88" y1="80" x2="109" y2="62" stroke="#00d4ff" stroke-width="1.4" opacity="0.9"/>
+      <line x1="109" y1="62" x2="131" y2="77" stroke="#00d4ff" stroke-width="1.4" opacity="0.9"/>
+      <line x1="131" y1="77" x2="150" y2="60" stroke="#00d4ff" stroke-width="1.4" opacity="0.7"/>
+      <!-- Nodes -->
+      <circle cx="35"  cy="76"  r="5"   fill="#00c8ff" stroke="white" stroke-width="1.2"/>
+      <circle cx="55"  cy="58"  r="3.5" fill="#4fc3f7" stroke="white" stroke-width="0.9"/>
+      <circle cx="75"  cy="73"  r="3"   fill="#81d4fa" stroke="white" stroke-width="0.8"/>
+      <circle cx="25"  cy="99"  r="3"   fill="#4fc3f7" stroke="white" stroke-width="0.8"/>
+      <circle cx="88"  cy="80"  r="4"   fill="#00c8ff" stroke="white" stroke-width="1.0"/>
+      <circle cx="109" cy="62"  r="3.5" fill="#4fc3f7" stroke="white" stroke-width="0.9"/>
+      <circle cx="131" cy="77"  r="5"   fill="#00c8ff" stroke="white" stroke-width="1.2"/>
+      <circle cx="150" cy="60"  r="3"   fill="#81d4fa" stroke="white" stroke-width="0.8"/>
+    </g>
+
+    <!-- Book cover (curved base) -->
+    <path d="M13,132 Q88,151 159,132 L159,143 Q88,165 13,143 Z" fill="url(#coverG)"/>
+
+    <!-- Spine -->
+    <rect x="84" y="18" width="8" height="128" rx="1.5" fill="#071540"/>
+
+    <!-- Digital index tabs above left page -->
+    <rect x="28" y="5"  width="7" height="18" rx="1.5" fill="#1565c0" stroke="#4fc3f7" stroke-width="0.6" opacity="0.85"/>
+    <rect x="43" y="1"  width="7" height="21" rx="1.5" fill="#1976d2" stroke="#4fc3f7" stroke-width="0.6" opacity="0.9"/>
+    <rect x="58" y="0"  width="7" height="22" rx="1.5" fill="#1565c0" stroke="#64b5f6" stroke-width="0.6" opacity="0.85"/>
+
+    <!-- Digital index tabs above right page -->
+    <rect x="101" y="0"  width="7" height="22" rx="1.5" fill="#42a5f5" stroke="#90caf9" stroke-width="0.6" opacity="0.85"/>
+    <rect x="116" y="1"  width="7" height="21" rx="1.5" fill="#64b5f6" stroke="#90caf9" stroke-width="0.6" opacity="0.9"/>
+    <rect x="131" y="5"  width="7" height="18" rx="1.5" fill="#42a5f5" stroke="#90caf9" stroke-width="0.6" opacity="0.85"/>
+
+    <!-- Ground shadow -->
+    <ellipse cx="88" cy="158" rx="70" ry="9" fill="#0a2060" opacity="0.20"/>
+  </g>
+
+  <!-- ── LOGOTYPE ──────────────────────────────────────────── -->
+  <!-- "BIBLE" – white for visibility on dark backgrounds -->
+  <text
+    x="196" y="108"
+    font-family="'Segoe UI Black', 'Arial Black', 'Helvetica Neue', Arial, sans-serif"
+    font-size="46" font-weight="900" letter-spacing="2"
+    fill="#ffffff">BIBLE</text>
+
+  <!-- "MATRIX" – vivid blue gradient -->
+  <text
+    x="356" y="108"
+    font-family="'Segoe UI Black', 'Arial Black', 'Helvetica Neue', Arial, sans-serif"
+    font-size="46" font-weight="900" letter-spacing="2"
+    fill="url(#mxG)">MATRIX</text>
+
+  <!-- Tagline -->
+  <text
+    x="196" y="132"
+    font-family="'Segoe UI', Arial, sans-serif"
+    font-size="14" font-weight="400" letter-spacing="2.8"
+    fill="#90b8d8">DIVINE INSIGHTS | DIGITAL STRUCTURE</text>
+</svg>

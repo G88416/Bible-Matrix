@@ -569,11 +569,10 @@ footer {
 }
 
 .app-logo-wrap img {
-    width: 96px;
-    height: 96px;
-    border-radius: 22px;
-    box-shadow: 0 8px 32px rgba(0, 200, 255, 0.35);
-    object-fit: cover;
+    max-width: 280px;
+    width: 100%;
+    height: auto;
+    object-fit: contain;
 }
 
 .app-logo-wrap .app-brand {
@@ -714,8 +713,7 @@ body {
     }
 
     .app-logo-wrap img {
-        width: 80px;
-        height: 80px;
+        max-width: 220px;
     }
 
     .app-logo-wrap .app-brand {
@@ -728,8 +726,7 @@ body {
 <section id="authScreen" class="screen active">
     <div class="container glass auth-shell">
         <div class="app-logo-wrap">
-            <img src="/icons/icon-192.png" alt="Bible Matrix logo" />
-            <span class="app-brand">Bible Matrix</span>
+            <img src="/icons/logo.svg" alt="Bible Matrix logo" />
         </div>
         <div class="eyebrow">🔐 Firebase Portal</div>
         <h2>Phone Sign Up and Login</h2>
@@ -768,8 +765,7 @@ body {
     <div class="container glass hero">
         <div class="hero-copy">
             <div class="app-logo-wrap" style="align-items:flex-start; flex-direction:row; margin-bottom:16px;">
-                <img src="/icons/icon-192.png" alt="Bible Matrix logo" style="width:56px;height:56px;border-radius:14px;" />
-                <span class="app-brand" style="align-self:center;margin-left:12px;">Bible Matrix</span>
+                <img src="/icons/logo.svg" alt="Bible Matrix logo" style="max-width:240px;width:100%;height:auto;" />
             </div>
             <div class="eyebrow">✨ Youth and Young Adults Ministry Quiz</div>
             <h1>Luke Quiz Journey</h1>
