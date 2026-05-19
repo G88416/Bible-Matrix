@@ -12,7 +12,7 @@ const readRequiredFile = (fileName) => {
   try {
     return fs.readFileSync(filePath, 'utf8');
   } catch (error) {
-    console.error(`Failed to read required file: ${fileName}`);
+    console.error(`Failed to read required file: ${fileName}`, error);
     throw error;
   }
 };
