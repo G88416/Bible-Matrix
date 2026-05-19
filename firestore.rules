@@ -54,8 +54,8 @@ service cloud.firestore {
     }
 
     function hasTrustedStorageUrl(fieldName) {
-      return request.resource.data[fieldName].url.matches('^https://firebasestorage\\.googleapis\\.com/v0/b/bible-matrix\\.firebasestorage\\.app/o/.*$')
-        || request.resource.data[fieldName].url.matches('^https://storage\\.googleapis\\.com/bible-matrix\\.firebasestorage\\.app/.*$');
+      return request.resource.data[fieldName].url.matches('^https://firebasestorage\\.googleapis\\.com/v0/b/bible-matrix\\.(firebasestorage\\.app|appspot\\.com)/o/.*$')
+        || request.resource.data[fieldName].url.matches('^https://storage\\.googleapis\\.com/bible-matrix\\.(firebasestorage\\.app|appspot\\.com)/.*$');
     }
 
     function hasValidOptionalAttachment() {
