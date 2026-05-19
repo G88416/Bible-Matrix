@@ -1324,7 +1324,7 @@ body {
                     <button id="clearVoiceRecordBtn" class="record-btn" type="button" onclick="clearRecordedVoiceNote()" disabled>🗑 Clear</button>
                 </div>
                 <div id="groupCallPanel" class="call-panel">
-                    <p class="muted-note">Use this in-app audio panel to enable your mic for group call preparation on this device.</p>
+                    <p class="muted-note">Use this in-app audio panel to set up and test your local microphone on this device.</p>
                     <div class="call-controls">
                         <button class="record-btn" type="button" onclick="joinGroupAudioCall()">Join Call</button>
                         <button id="muteCallBtn" class="record-btn" type="button" onclick="toggleGroupCallMute()" disabled>Mute Mic</button>
@@ -2386,7 +2386,7 @@ async function joinGroupAudioCall() {
             muteBtn.textContent = 'Mute Mic';
         }
         if (leaveBtn) leaveBtn.disabled = false;
-        if (feedbackEl) feedbackEl.textContent = 'Microphone enabled locally on this device. This does not connect to other users by itself.';
+        if (feedbackEl) feedbackEl.textContent = 'Microphone enabled locally on this device. To connect multiple users, a real-time call backend must be configured.';
     } catch (error) {
         activeGroupCallStream = null;
         if (feedbackEl) feedbackEl.textContent = 'Unable to start call. Please allow microphone access.';
