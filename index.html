@@ -657,6 +657,8 @@ footer {
     transform: translateX(-105%);
     transition: transform 0.22s ease;
     z-index: 90;
+    overflow-y: auto;
+    overscroll-behavior: contain;
 }
 
 .side-menu.open {
@@ -695,6 +697,12 @@ footer {
     padding: 12px 14px;
     font-weight: 600;
     cursor: pointer;
+    min-height: 48px;
+}
+
+body.menu-lock {
+    overflow: hidden;
+    touch-action: none;
 }
 
 .community-shell {
@@ -793,6 +801,55 @@ footer {
 .muted-note {
     color: var(--muted);
     font-size: 0.88rem;
+}
+
+.file-input-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    background: rgba(10, 8, 24, 0.55);
+    color: var(--text);
+    font-size: 0.9rem;
+    padding: 10px 12px;
+    margin-bottom: 10px;
+    cursor: pointer;
+}
+
+.file-input-label input {
+    display: none;
+}
+
+.status-attachment-name {
+    color: var(--muted);
+    font-size: 0.84rem;
+    margin-bottom: 10px;
+    word-break: break-word;
+}
+
+.feed-attachment {
+    margin-top: 10px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(10, 8, 24, 0.42);
+    padding: 10px;
+}
+
+.feed-attachment-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: #8eeaff;
+    font-weight: 700;
+}
+
+.feed-attachment img,
+.feed-attachment video {
+    width: 100%;
+    border-radius: 10px;
+    max-height: 280px;
+    object-fit: cover;
 }
 
 /* ── Install banner ──────────────────────────────────────────── */
@@ -941,6 +998,25 @@ body {
     .app-topbar {
         top: calc(10px + env(safe-area-inset-top));
     }
+
+    .side-menu {
+        width: calc(100vw - env(safe-area-inset-left));
+        max-width: none;
+        padding-left: max(16px, env(safe-area-inset-left));
+        padding-right: max(16px, env(safe-area-inset-right));
+        padding-bottom: calc(20px + env(safe-area-inset-bottom));
+    }
+
+    .menu-head .icon-btn,
+    .app-topbar .icon-btn {
+        width: 46px;
+        height: 46px;
+    }
+
+    .menu-btn {
+        font-size: 0.95rem;
+        min-height: 50px;
+    }
 }
 </style>
 </head>
@@ -1074,6 +1150,15 @@ body {
                 <h3>Post a status</h3>
                 <input id="statusLukeRef" type="text" maxlength="50" placeholder="Luke reference (e.g. Luke 15:20)" />
                 <textarea id="statusText" maxlength="280" placeholder="Share your Luke reflection with the group..."></textarea>
+                <label class="file-input-label">
+                    <span>📎 Add media/file</span>
+                    <input
+                        id="statusAttachment"
+                        type="file"
+                        onchange="handleStatusAttachmentChange()"
+                        accept=".pdf,.doc,.docx,.xls,.xlsx,image/*,video/*" />
+                </label>
+                <p id="statusAttachmentName" class="status-attachment-name">No file selected.</p>
                 <button class="btn btn-primary" onclick="postLukeStatus()">Post Status</button>
                 <p id="statusFeedback" class="muted-note"></p>
             </div>
@@ -1249,6 +1334,7 @@ body {
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-storage-compat.js"></script>
 <script>
 const firebaseConfig = {
     apiKey: "AIzaSyArcOg23xvCo7QmhkXAhzPgUuAt8VdIICw",
@@ -1521,6 +1607,7 @@ let isPaused = false;
 let stageResults = [];
 let auth = null;
 let db = null;
+let storage = null;
 let currentUser = null;
 let currentProfile = null;
 let resumeState = null;
@@ -1530,6 +1617,22 @@ let signupRecaptcha = null;
 let loginRecaptcha = null;
 let statusUnsubscribe = null;
 let chatUnsubscribe = null;
+let statusAttachmentFile = null;
+const MAX_STATUS_ATTACHMENT_BYTES = 20 * 1024 * 1024;
+const ALLOWED_STATUS_ATTACHMENT_TYPES = new Set([
+    'application/pdf',
+    'application/msword',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'application/vnd.ms-excel',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    'image/jpeg',
+    'image/png',
+    'image/webp',
+    'image/gif',
+    'video/mp4',
+    'video/quicktime',
+    'video/webm'
+]);
 // Brief pause so players can review the right answer before the next question loads.
 const nextQuestionDelayMs = 1400;
 // The AI gets a small edge on timeouts because the player did not answer in time.
@@ -1608,20 +1711,20 @@ function toggleMenu() {
     const backdrop = document.getElementById('menuBackdrop');
     if (!sideMenu || !backdrop) return;
     const isOpen = sideMenu.classList.contains('open');
-    if (isOpen) {
-        closeMenu();
-        return;
-    }
-    sideMenu.classList.add('open');
-    backdrop.classList.add('show');
+    setMenuOpen(!isOpen);
 }
 
-function closeMenu() {
+function setMenuOpen(isOpen) {
     const sideMenu = document.getElementById('sideMenu');
     const backdrop = document.getElementById('menuBackdrop');
     if (!sideMenu || !backdrop) return;
-    sideMenu.classList.remove('open');
-    backdrop.classList.remove('show');
+    sideMenu.classList.toggle('open', isOpen);
+    backdrop.classList.toggle('show', isOpen);
+    document.body.classList.toggle('menu-lock', isOpen);
+}
+
+function closeMenu() {
+    setMenuOpen(false);
 }
 
 function logoutFromMenu() {
@@ -1667,6 +1770,51 @@ function formatTimestamp(ts) {
         hour: '2-digit',
         minute: '2-digit'
     });
+}
+
+function formatFileSize(sizeInBytes) {
+    const size = Number(sizeInBytes) || 0;
+    if (size < 1024) return `${size} B`;
+    if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`;
+    return `${(size / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function getAttachmentKind(contentType) {
+    const type = String(contentType || '').toLowerCase();
+    if (type.startsWith('image/')) return 'image';
+    if (type.startsWith('video/')) return 'video';
+    return 'document';
+}
+
+function handleStatusAttachmentChange() {
+    const attachmentEl = document.getElementById('statusAttachment');
+    const attachmentNameEl = document.getElementById('statusAttachmentName');
+    const feedbackEl = document.getElementById('statusFeedback');
+    const file = attachmentEl?.files?.[0] || null;
+    if (!file) {
+        statusAttachmentFile = null;
+        if (attachmentNameEl) attachmentNameEl.textContent = 'No file selected.';
+        return;
+    }
+    if (!ALLOWED_STATUS_ATTACHMENT_TYPES.has(file.type)) {
+        statusAttachmentFile = null;
+        attachmentEl.value = '';
+        if (attachmentNameEl) attachmentNameEl.textContent = 'No file selected.';
+        if (feedbackEl) feedbackEl.textContent = 'Unsupported file type. Use PDF, Word, Excel, image, or video.';
+        return;
+    }
+    if (file.size > MAX_STATUS_ATTACHMENT_BYTES) {
+        statusAttachmentFile = null;
+        attachmentEl.value = '';
+        if (attachmentNameEl) attachmentNameEl.textContent = 'No file selected.';
+        if (feedbackEl) feedbackEl.textContent = 'File is too large. Maximum size is 20 MB.';
+        return;
+    }
+    statusAttachmentFile = file;
+    if (attachmentNameEl) {
+        attachmentNameEl.textContent = `${file.name} (${formatFileSize(file.size)})`;
+    }
+    if (feedbackEl) feedbackEl.textContent = '';
 }
 
 function teardownCommunityListeners() {
@@ -1719,6 +1867,37 @@ function subscribeLukeStatuses() {
                     reference.textContent = data.lukeReference;
                     item.appendChild(reference);
                 }
+                if (data.attachment && data.attachment.url && data.attachment.type) {
+                    const attachmentBox = document.createElement('div');
+                    attachmentBox.className = 'feed-attachment';
+                    const safeUrl = String(data.attachment.url || '');
+                    if (safeUrl.startsWith('https://') || safeUrl.startsWith('http://')) {
+                        const kind = getAttachmentKind(data.attachment.type);
+                        if (kind === 'image') {
+                            const image = document.createElement('img');
+                            image.src = safeUrl;
+                            image.alt = data.attachment.name || 'Status image';
+                            image.loading = 'lazy';
+                            attachmentBox.appendChild(image);
+                        } else if (kind === 'video') {
+                            const video = document.createElement('video');
+                            video.src = safeUrl;
+                            video.controls = true;
+                            video.preload = 'metadata';
+                            attachmentBox.appendChild(video);
+                        }
+                        const fileLink = document.createElement('a');
+                        fileLink.className = 'feed-attachment-link';
+                        fileLink.href = safeUrl;
+                        fileLink.target = '_blank';
+                        fileLink.rel = 'noopener noreferrer';
+                        const label = data.attachment.name || 'Open attachment';
+                        const sizeLabel = data.attachment.size ? ` (${formatFileSize(data.attachment.size)})` : '';
+                        fileLink.textContent = `📎 ${label}${sizeLabel}`;
+                        attachmentBox.appendChild(fileLink);
+                        item.appendChild(attachmentBox);
+                    }
+                }
                 statusFeed.appendChild(item);
             });
         }, (error) => {
@@ -1732,13 +1911,33 @@ async function postLukeStatus() {
     const statusTextEl = document.getElementById('statusText');
     const statusLukeRefEl = document.getElementById('statusLukeRef');
     const feedbackEl = document.getElementById('statusFeedback');
+    const attachmentEl = document.getElementById('statusAttachment');
+    const attachmentNameEl = document.getElementById('statusAttachmentName');
     const text = statusTextEl.value.trim();
     const lukeReference = statusLukeRefEl.value.trim();
-    if (!text) {
-        feedbackEl.textContent = 'Write a status before posting.';
+    if (!text && !statusAttachmentFile) {
+        feedbackEl.textContent = 'Write a status or choose a file before posting.';
         return;
     }
     try {
+        let attachmentData = null;
+        if (statusAttachmentFile) {
+            if (!storage) {
+                feedbackEl.textContent = 'File upload is unavailable right now.';
+                return;
+            }
+            const attachmentPath = `lukeStatuses/${currentUser.uid}/${Date.now()}-${statusAttachmentFile.name}`;
+            const uploadTask = await storage.ref().child(attachmentPath).put(statusAttachmentFile, {
+                contentType: statusAttachmentFile.type
+            });
+            const downloadURL = await uploadTask.ref.getDownloadURL();
+            attachmentData = {
+                name: statusAttachmentFile.name.slice(0, 120),
+                type: statusAttachmentFile.type,
+                size: Number(statusAttachmentFile.size) || 0,
+                url: downloadURL
+            };
+        }
         const statusPayload = {
             uid: currentUser.uid,
             authorName: currentProfile.fullName || 'Anonymous',
@@ -1748,9 +1947,15 @@ async function postLukeStatus() {
         if (lukeReference) {
             statusPayload.lukeReference = lukeReference.slice(0, 50);
         }
+        if (attachmentData) {
+            statusPayload.attachment = attachmentData;
+        }
         await db.collection('lukeStatuses').add(statusPayload);
         statusTextEl.value = '';
         statusLukeRefEl.value = '';
+        if (attachmentEl) attachmentEl.value = '';
+        if (attachmentNameEl) attachmentNameEl.textContent = 'No file selected.';
+        statusAttachmentFile = null;
         feedbackEl.textContent = 'Status posted.';
     } catch (error) {
         console.error('Failed to post status:', error);
@@ -2004,6 +2209,7 @@ function initFirebase() {
     firebase.initializeApp(firebaseConfig);
     auth = firebase.auth();
     db = firebase.firestore();
+    storage = firebase.storage();
 
     auth.onAuthStateChanged(async (user) => {
         if (!user) {
