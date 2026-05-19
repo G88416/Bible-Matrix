@@ -863,6 +863,13 @@ body.menu-lock {
     margin-bottom: 10px;
 }
 
+.attendance-first-time-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin: 8px 0 12px;
+}
+
 .call-link-btn {
     border: 1px solid rgba(255, 255, 255, 0.16);
     background: rgba(10, 8, 24, 0.55);
@@ -1241,6 +1248,59 @@ body {
                 <textarea id="chatMessage" maxlength="400" placeholder="Type a message, or send a voice note..."></textarea>
                 <button class="btn btn-primary" onclick="sendGroupMessage()">Send</button>
                 <p id="chatFeedback" class="muted-note"></p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section id="attendanceScreen" class="screen">
+    <div class="app-topbar">
+        <button class="icon-btn" onclick="toggleMenu()" aria-label="Open navigation menu">☰</button>
+        <button class="icon-btn status-icon" onclick="openStatusScreen()" aria-label="Open Luke status">
+            <span class="status-ring">+</span>
+        </button>
+    </div>
+    <div class="container glass community-shell">
+        <div class="community-header">
+            <div>
+                <h2>Sunday Service Attendance Register</h2>
+                <p>Capture Sunday attendance and keep a simple register list.</p>
+            </div>
+            <button class="btn btn-secondary" onclick="goHome()">Home</button>
+        </div>
+        <div class="community-grid">
+            <div class="status-form">
+                <h3>Add attendance</h3>
+                <input id="attendanceDate" type="date" />
+                <input id="attendanceName" type="text" maxlength="80" placeholder="Full name" />
+                <input id="attendancePhone" type="tel" maxlength="20" placeholder="Phone number (optional)" />
+                <label class="attendance-first-time-row">
+                    <input id="attendanceFirstTime" type="checkbox" />
+                    <span>First-time guest</span>
+                </label>
+                <textarea id="attendanceNotes" maxlength="160" placeholder="Notes (optional)"></textarea>
+                <button class="btn btn-primary" onclick="addAttendanceEntry()">Add to Register</button>
+                <p id="attendanceFeedback" class="muted-note"></p>
+            </div>
+            <div class="feed-box">
+                <h3>Attendance entries</h3>
+                <p id="attendanceCount" class="muted-note">0 entries</p>
+                <table class="rank-table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Name</th>
+                            <th>Phone</th>
+                            <th>First-time</th>
+                            <th>Notes</th>
+                        </tr>
+                    </thead>
+                    <tbody id="attendanceTableBody">
+                        <tr>
+                            <td colspan="5">No attendance entries yet.</td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
@@ -1661,11 +1721,14 @@ let statusUnsubscribe = null;
 let chatUnsubscribe = null;
 let statusAttachmentFile = null;
 let chatVoiceNoteFile = null;
+let attendanceEntries = [];
 const STATUS_ATTACHMENT_BUCKET = String(firebaseConfig.storageBucket || '').trim();
 const MAX_STATUS_ATTACHMENT_BYTES = 20 * 1024 * 1024;
 const MAX_STATUS_ATTACHMENT_NAME_LENGTH = 120;
 const MAX_CHAT_VOICE_NOTE_BYTES = 12 * 1024 * 1024;
+const MILLISECONDS_PER_MINUTE = 60000;
 const GROUP_AUDIO_CALL_URL = 'https://meet.jit.si/BibleMatrixLukeGroupAudioCall';
+const ATTENDANCE_STORAGE_KEY = 'bibleMatrixSundayAttendanceEntries';
 const ALLOWED_STATUS_ATTACHMENT_TYPES = new Set([
     'application/pdf',
     'application/msword',
@@ -1816,6 +1879,131 @@ function openChatScreen() {
         statusUnsubscribe = null;
     }
     subscribeGroupChat();
+}
+
+function openAttendanceScreen() {
+    if (!currentUser) {
+        showScreen('authScreen');
+        return;
+    }
+    showScreen('attendanceScreen');
+    closeMenu();
+    teardownCommunityListeners();
+    setAttendanceDefaultDate();
+    renderAttendanceEntries();
+}
+
+function setAttendanceDefaultDate() {
+    const dateInput = document.getElementById('attendanceDate');
+    if (!dateInput || dateInput.value) return;
+    const today = new Date();
+    const localDate = new Date(today.getTime() - (today.getTimezoneOffset() * MILLISECONDS_PER_MINUTE));
+    dateInput.value = localDate.toISOString().slice(0, 10);
+}
+
+function loadAttendanceEntries() {
+    try {
+        const raw = localStorage.getItem(ATTENDANCE_STORAGE_KEY);
+        const parsed = raw ? JSON.parse(raw) : [];
+        attendanceEntries = Array.isArray(parsed) ? parsed : [];
+    } catch {
+        attendanceEntries = [];
+    }
+}
+
+function saveAttendanceEntries() {
+    try {
+        localStorage.setItem(ATTENDANCE_STORAGE_KEY, JSON.stringify(attendanceEntries));
+    } catch {
+        // Ignore storage quota/private mode errors and continue with in-memory entries.
+    }
+}
+
+function formatAttendanceDate(dateValue) {
+    if (!dateValue) return '-';
+    const parsed = new Date(dateValue);
+    if (Number.isNaN(parsed.getTime())) return dateValue;
+    return parsed.toLocaleDateString([], {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+    });
+}
+
+function renderAttendanceEntries() {
+    const tableBody = document.getElementById('attendanceTableBody');
+    const countEl = document.getElementById('attendanceCount');
+    if (!tableBody || !countEl) return;
+    countEl.textContent = `${attendanceEntries.length} ${attendanceEntries.length === 1 ? 'entry' : 'entries'}`;
+    if (!attendanceEntries.length) {
+        tableBody.innerHTML = '<tr><td colspan="5">No attendance entries yet.</td></tr>';
+        return;
+    }
+    tableBody.innerHTML = '';
+    attendanceEntries.forEach((entry) => {
+        const row = document.createElement('tr');
+        const dateCell = document.createElement('td');
+        dateCell.textContent = formatAttendanceDate(entry.date);
+        const nameCell = document.createElement('td');
+        nameCell.textContent = entry.name || '-';
+        const phoneCell = document.createElement('td');
+        phoneCell.textContent = entry.phone || '-';
+        const guestCell = document.createElement('td');
+        guestCell.textContent = entry.firstTime ? 'Yes' : 'No';
+        const notesCell = document.createElement('td');
+        notesCell.textContent = entry.notes || '-';
+        row.appendChild(dateCell);
+        row.appendChild(nameCell);
+        row.appendChild(phoneCell);
+        row.appendChild(guestCell);
+        row.appendChild(notesCell);
+        tableBody.appendChild(row);
+    });
+}
+
+function addAttendanceEntry() {
+    if (!currentUser) {
+        showScreen('authScreen');
+        return;
+    }
+    const dateEl = document.getElementById('attendanceDate');
+    const nameEl = document.getElementById('attendanceName');
+    const phoneEl = document.getElementById('attendancePhone');
+    const firstTimeEl = document.getElementById('attendanceFirstTime');
+    const notesEl = document.getElementById('attendanceNotes');
+    const feedbackEl = document.getElementById('attendanceFeedback');
+    if (!dateEl || !nameEl || !phoneEl || !firstTimeEl || !notesEl || !feedbackEl) return;
+
+    const date = (dateEl.value || '').trim();
+    const name = nameEl.value.trim();
+    const phone = phoneEl.value.trim();
+    const notes = notesEl.value.trim();
+
+    if (!name) {
+        feedbackEl.textContent = 'Full name is required.';
+        return;
+    }
+    if (!date) {
+        feedbackEl.textContent = 'Service date is required.';
+        return;
+    }
+
+    attendanceEntries.unshift({
+        date,
+        name,
+        phone,
+        firstTime: firstTimeEl.checked,
+        notes,
+        createdAt: Date.now()
+    });
+    saveAttendanceEntries();
+    renderAttendanceEntries();
+
+    nameEl.value = '';
+    phoneEl.value = '';
+    firstTimeEl.checked = false;
+    notesEl.value = '';
+    feedbackEl.textContent = 'Attendance saved.';
 }
 
 function formatTimestamp(ts) {
@@ -2800,6 +2988,7 @@ Perfect for youth nights, young adult hangouts, and ministry competitions!`
 }
 
 initializeQuizMeta();
+loadAttendanceEntries();
 initFirebase();
 
 window.addEventListener('keydown', (event) => {
@@ -2873,11 +3062,12 @@ if ('serviceWorker' in navigator) {
         <strong>BIBLE MATRIX</strong>
         <button class="icon-btn" onclick="closeMenu()" aria-label="Close menu">✕</button>
     </div>
-    <p class="muted-note">Navigate to quiz, Luke status, or group chat.</p>
+    <p class="muted-note">Navigate to quiz, Luke status, group chat, or Sunday service attendance register.</p>
     <div class="menu-actions">
         <button class="menu-btn" onclick="goHome()">🏠 Home</button>
         <button class="menu-btn" onclick="openStatusScreen()">🟢 Luke Status</button>
         <button class="menu-btn" onclick="openChatScreen()">💬 Group Chat</button>
+        <button class="menu-btn" onclick="openAttendanceScreen()">📝 Sunday Service Attendance Register</button>
         <button class="menu-btn" onclick="logoutFromMenu()">🚪 Log Out</button>
     </div>
 </aside>
