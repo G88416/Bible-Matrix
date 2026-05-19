@@ -3085,8 +3085,7 @@ function loadQuestion() {
         button.type = 'button';
         button.className = 'answer-btn';
         button.textContent = answer;
-        button.onclick = (event) => {
-            event.preventDefault();
+        button.onclick = () => {
             selectAnswer(index, button);
         };
         answersContainer.appendChild(button);
