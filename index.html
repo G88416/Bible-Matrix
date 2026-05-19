@@ -419,7 +419,7 @@ footer {
 }
 
 #gameScreen {
-    padding-bottom: calc(36px + env(safe-area-inset-bottom));
+    padding-bottom: calc(24px + env(safe-area-inset-bottom));
 }
 
 .feedback {
@@ -1869,7 +1869,11 @@ const aiTimeUpBonus = 0.08;
 function showScreen(screenId) {
     document.querySelectorAll('.screen').forEach((screen) => screen.classList.remove('active'));
     document.getElementById(screenId).classList.add('active');
-    document.body.classList.toggle('gameplay-active', screenId === 'gameScreen');
+    if (screenId === 'gameScreen') {
+        document.body.classList.add('gameplay-active');
+        return;
+    }
+    document.body.classList.remove('gameplay-active');
 }
 
 function firebaseConfigured() {
