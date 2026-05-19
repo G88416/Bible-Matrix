@@ -1618,6 +1618,7 @@ let loginRecaptcha = null;
 let statusUnsubscribe = null;
 let chatUnsubscribe = null;
 let statusAttachmentFile = null;
+const STATUS_ATTACHMENT_BUCKET = String(firebaseConfig.storageBucket || '').trim();
 const MAX_STATUS_ATTACHMENT_BYTES = 20 * 1024 * 1024;
 const MAX_STATUS_ATTACHMENT_NAME_LENGTH = 120;
 const ALLOWED_STATUS_ATTACHMENT_TYPES = new Set([
@@ -1792,6 +1793,11 @@ function isTrustedAttachmentUrl(value) {
     try {
         const parsed = new URL(String(value || ''));
         if (parsed.protocol !== 'https:') return false;
+        if (!STATUS_ATTACHMENT_BUCKET) return false;
+        const decodedPath = decodeURIComponent(parsed.pathname || '');
+        const hasBucketInPath = decodedPath.includes(`/b/${STATUS_ATTACHMENT_BUCKET}/`)
+            || decodedPath.startsWith(`/${STATUS_ATTACHMENT_BUCKET}/`);
+        if (!hasBucketInPath) return false;
         return parsed.hostname === 'firebasestorage.googleapis.com'
             || parsed.hostname === 'storage.googleapis.com';
     } catch (error) {
