@@ -657,6 +657,8 @@ footer {
     transform: translateX(-105%);
     transition: transform 0.22s ease;
     z-index: 90;
+    overflow-y: auto;
+    overscroll-behavior: contain;
 }
 
 .side-menu.open {
@@ -695,6 +697,12 @@ footer {
     padding: 12px 14px;
     font-weight: 600;
     cursor: pointer;
+    min-height: 48px;
+}
+
+body.menu-lock {
+    overflow: hidden;
+    touch-action: none;
 }
 
 .community-shell {
@@ -793,6 +801,76 @@ footer {
 .muted-note {
     color: var(--muted);
     font-size: 0.88rem;
+}
+
+.file-input-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    background: rgba(10, 8, 24, 0.55);
+    color: var(--text);
+    font-size: 0.9rem;
+    padding: 10px 12px;
+    margin-bottom: 10px;
+    cursor: pointer;
+}
+
+.file-input-label input {
+    display: none;
+}
+
+.status-attachment-name {
+    color: var(--muted);
+    font-size: 0.84rem;
+    margin-bottom: 10px;
+    word-break: break-word;
+}
+
+.feed-attachment {
+    margin-top: 10px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(10, 8, 24, 0.42);
+    padding: 10px;
+}
+
+.feed-attachment-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: #8eeaff;
+    font-weight: 700;
+}
+
+.feed-attachment img,
+.feed-attachment video {
+    width: 100%;
+    border-radius: 10px;
+    max-height: 280px;
+    object-fit: cover;
+}
+
+.feed-attachment audio {
+    width: 100%;
+}
+
+.chat-actions-row {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 10px;
+}
+
+.call-link-btn {
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    background: rgba(10, 8, 24, 0.55);
+    color: var(--text);
+    border-radius: 12px;
+    padding: 10px 12px;
+    font-weight: 600;
+    cursor: pointer;
 }
 
 /* ── Install banner ──────────────────────────────────────────── */
@@ -941,6 +1019,34 @@ body {
     .app-topbar {
         top: calc(10px + env(safe-area-inset-top));
     }
+
+    .side-menu {
+        width: calc(100vw - env(safe-area-inset-left));
+        max-width: none;
+        padding-left: max(16px, env(safe-area-inset-left));
+        padding-right: max(16px, env(safe-area-inset-right));
+        padding-bottom: calc(20px + env(safe-area-inset-bottom));
+    }
+
+    .menu-head .icon-btn,
+    .app-topbar .icon-btn {
+        width: 46px;
+        height: 46px;
+    }
+
+    .menu-btn {
+        font-size: 0.95rem;
+        min-height: 50px;
+    }
+
+    .chat-actions-row {
+        flex-direction: column;
+    }
+
+    .call-link-btn {
+        width: 100%;
+        min-height: 46px;
+    }
 }
 </style>
 </head>
@@ -1073,7 +1179,16 @@ body {
             <div class="status-form">
                 <h3>Post a status</h3>
                 <input id="statusLukeRef" type="text" maxlength="50" placeholder="Luke reference (e.g. Luke 15:20)" />
-                <textarea id="statusText" maxlength="280" placeholder="Share your Luke reflection with the group..."></textarea>
+                <textarea id="statusText" maxlength="280" placeholder="Share your Luke reflection, or attach a file..."></textarea>
+                <label class="file-input-label">
+                    <span>📎 Add media/file</span>
+                    <input
+                        id="statusAttachment"
+                        type="file"
+                        onchange="handleStatusAttachmentChange()"
+                        accept=".pdf,.doc,.docx,.xls,.xlsx,image/*,video/*" />
+                </label>
+                <p id="statusAttachmentName" class="status-attachment-name">No file selected.</p>
                 <button class="btn btn-primary" onclick="postLukeStatus()">Post Status</button>
                 <p id="statusFeedback" class="muted-note"></p>
             </div>
@@ -1111,7 +1226,19 @@ body {
             </div>
             <div class="chat-compose">
                 <h3>Send a message</h3>
-                <textarea id="chatMessage" maxlength="400" placeholder="Share your thought from Luke..."></textarea>
+                <div class="chat-actions-row">
+                    <button class="call-link-btn" onclick="openGroupAudioCall()">🎙️ Join Audio Group Call</button>
+                    <label class="file-input-label" style="margin-bottom:0;">
+                        <span>🎤 Add voice note</span>
+                        <input
+                            id="chatVoiceNote"
+                            type="file"
+                            onchange="handleChatVoiceNoteChange()"
+                            accept="audio/mpeg,audio/mp3,audio/wav,audio/x-wav,audio/webm,audio/ogg,audio/mp4,audio/aac,audio/x-m4a" />
+                    </label>
+                </div>
+                <p id="chatVoiceNoteName" class="status-attachment-name">No voice note selected.</p>
+                <textarea id="chatMessage" maxlength="400" placeholder="Type a message, or send a voice note..."></textarea>
                 <button class="btn btn-primary" onclick="sendGroupMessage()">Send</button>
                 <p id="chatFeedback" class="muted-note"></p>
             </div>
@@ -1249,6 +1376,7 @@ body {
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-storage-compat.js"></script>
 <script>
 const firebaseConfig = {
     apiKey: "AIzaSyArcOg23xvCo7QmhkXAhzPgUuAt8VdIICw",
@@ -1521,6 +1649,7 @@ let isPaused = false;
 let stageResults = [];
 let auth = null;
 let db = null;
+let storage = null;
 let currentUser = null;
 let currentProfile = null;
 let resumeState = null;
@@ -1530,6 +1659,38 @@ let signupRecaptcha = null;
 let loginRecaptcha = null;
 let statusUnsubscribe = null;
 let chatUnsubscribe = null;
+let statusAttachmentFile = null;
+let chatVoiceNoteFile = null;
+const STATUS_ATTACHMENT_BUCKET = String(firebaseConfig.storageBucket || '').trim();
+const MAX_STATUS_ATTACHMENT_BYTES = 20 * 1024 * 1024;
+const MAX_STATUS_ATTACHMENT_NAME_LENGTH = 120;
+const MAX_CHAT_VOICE_NOTE_BYTES = 12 * 1024 * 1024;
+const GROUP_AUDIO_CALL_URL = 'https://meet.jit.si/BibleMatrixLukeGroupAudioCall';
+const ALLOWED_STATUS_ATTACHMENT_TYPES = new Set([
+    'application/pdf',
+    'application/msword',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'application/vnd.ms-excel',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    'image/jpeg',
+    'image/png',
+    'image/webp',
+    'image/gif',
+    'video/mp4',
+    'video/quicktime',
+    'video/webm'
+]);
+const ALLOWED_CHAT_VOICE_TYPES = new Set([
+    'audio/mpeg',
+    'audio/mp3',
+    'audio/wav',
+    'audio/x-wav',
+    'audio/webm',
+    'audio/ogg',
+    'audio/mp4',
+    'audio/aac',
+    'audio/x-m4a'
+]);
 // Brief pause so players can review the right answer before the next question loads.
 const nextQuestionDelayMs = 1400;
 // The AI gets a small edge on timeouts because the player did not answer in time.
@@ -1608,20 +1769,20 @@ function toggleMenu() {
     const backdrop = document.getElementById('menuBackdrop');
     if (!sideMenu || !backdrop) return;
     const isOpen = sideMenu.classList.contains('open');
-    if (isOpen) {
-        closeMenu();
-        return;
-    }
-    sideMenu.classList.add('open');
-    backdrop.classList.add('show');
+    setMenuOpen(!isOpen);
 }
 
-function closeMenu() {
+function setMenuOpen(isOpen) {
     const sideMenu = document.getElementById('sideMenu');
     const backdrop = document.getElementById('menuBackdrop');
     if (!sideMenu || !backdrop) return;
-    sideMenu.classList.remove('open');
-    backdrop.classList.remove('show');
+    sideMenu.classList.toggle('open', isOpen);
+    backdrop.classList.toggle('show', isOpen);
+    document.body.classList.toggle('menu-lock', isOpen);
+}
+
+function closeMenu() {
+    setMenuOpen(false);
 }
 
 function logoutFromMenu() {
@@ -1667,6 +1828,134 @@ function formatTimestamp(ts) {
         hour: '2-digit',
         minute: '2-digit'
     });
+}
+
+function formatFileSize(sizeInBytes) {
+    const numericSize = Number(sizeInBytes);
+    const size = Number.isFinite(numericSize) && numericSize > 0 ? numericSize : 0;
+    if (size < 1024) return `${size} B`;
+    if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`;
+    return `${(size / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function getAttachmentKind(contentType) {
+    const type = String(contentType || '').toLowerCase();
+    if (type.startsWith('image/')) return 'image';
+    if (type.startsWith('video/')) return 'video';
+    return 'document';
+}
+
+function isTrustedAttachmentUrl(value) {
+    try {
+        const parsed = new URL(String(value || ''));
+        if (parsed.protocol !== 'https:') return false;
+        if (!STATUS_ATTACHMENT_BUCKET) return false;
+        const decodedPath = decodeURIComponent(parsed.pathname || '');
+        const hasBucketInPath = decodedPath.includes(`/b/${STATUS_ATTACHMENT_BUCKET}/`)
+            || decodedPath.startsWith(`/${STATUS_ATTACHMENT_BUCKET}/`);
+        if (!hasBucketInPath) return false;
+        return parsed.hostname === 'firebasestorage.googleapis.com'
+            || parsed.hostname === 'storage.googleapis.com';
+    } catch (error) {
+        return false;
+    }
+}
+
+function sanitizeAttachmentFileName(fileName) {
+    const raw = String(fileName || 'file');
+    const lastDot = raw.lastIndexOf('.');
+    const basePart = (lastDot > 0 ? raw.slice(0, lastDot) : raw)
+        .replace(/[^\w\- ]+/g, '_')
+        .replace(/\s+/g, '-')
+        .slice(0, MAX_STATUS_ATTACHMENT_NAME_LENGTH);
+    const extension = lastDot > 0
+        ? raw.slice(lastDot + 1).toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 10)
+        : '';
+    if (!extension) return basePart || 'file';
+    return `${basePart || 'file'}.${extension}`;
+}
+
+function clampAttachmentName(fileName) {
+    const safeName = String(fileName || 'attachment');
+    return Array.from(safeName).slice(0, MAX_STATUS_ATTACHMENT_NAME_LENGTH).join('');
+}
+
+function handleStatusAttachmentChange() {
+    const attachmentEl = document.getElementById('statusAttachment');
+    const attachmentNameEl = document.getElementById('statusAttachmentName');
+    const feedbackEl = document.getElementById('statusFeedback');
+    const file = attachmentEl?.files?.[0] || null;
+    if (!file) {
+        statusAttachmentFile = null;
+        if (attachmentNameEl) attachmentNameEl.textContent = 'No file selected.';
+        return;
+    }
+    if (!ALLOWED_STATUS_ATTACHMENT_TYPES.has(file.type)) {
+        statusAttachmentFile = null;
+        attachmentEl.value = '';
+        if (attachmentNameEl) attachmentNameEl.textContent = 'No file selected.';
+        if (feedbackEl) feedbackEl.textContent = 'Unsupported file type. Use PDF, Word, Excel, image, or video.';
+        return;
+    }
+    if (file.size > MAX_STATUS_ATTACHMENT_BYTES) {
+        statusAttachmentFile = null;
+        attachmentEl.value = '';
+        if (attachmentNameEl) attachmentNameEl.textContent = 'No file selected.';
+        if (feedbackEl) feedbackEl.textContent = 'File is too large. Maximum size is 20 MB.';
+        return;
+    }
+    if (file.size <= 0) {
+        statusAttachmentFile = null;
+        attachmentEl.value = '';
+        if (attachmentNameEl) attachmentNameEl.textContent = 'No file selected.';
+        if (feedbackEl) feedbackEl.textContent = 'File is empty. Choose a file with content.';
+        return;
+    }
+    statusAttachmentFile = file;
+    if (attachmentNameEl) {
+        attachmentNameEl.textContent = `${file.name} (${formatFileSize(file.size)})`;
+    }
+    if (feedbackEl) feedbackEl.textContent = '';
+}
+
+function openGroupAudioCall() {
+    window.open(GROUP_AUDIO_CALL_URL, '_blank', 'noopener,noreferrer');
+}
+
+function handleChatVoiceNoteChange() {
+    const voiceEl = document.getElementById('chatVoiceNote');
+    const voiceNameEl = document.getElementById('chatVoiceNoteName');
+    const feedbackEl = document.getElementById('chatFeedback');
+    const file = voiceEl?.files?.[0] || null;
+    if (!file) {
+        chatVoiceNoteFile = null;
+        if (voiceNameEl) voiceNameEl.textContent = 'No voice note selected.';
+        return;
+    }
+    if (!ALLOWED_CHAT_VOICE_TYPES.has(file.type)) {
+        chatVoiceNoteFile = null;
+        voiceEl.value = '';
+        if (voiceNameEl) voiceNameEl.textContent = 'No voice note selected.';
+        if (feedbackEl) feedbackEl.textContent = 'Unsupported voice note type.';
+        return;
+    }
+    if (file.size <= 0) {
+        chatVoiceNoteFile = null;
+        voiceEl.value = '';
+        if (voiceNameEl) voiceNameEl.textContent = 'No voice note selected.';
+        if (feedbackEl) feedbackEl.textContent = 'Voice note is empty.';
+        return;
+    }
+    if (file.size > MAX_CHAT_VOICE_NOTE_BYTES) {
+        chatVoiceNoteFile = null;
+        voiceEl.value = '';
+        if (voiceNameEl) voiceNameEl.textContent = 'No voice note selected.';
+        if (feedbackEl) feedbackEl.textContent = 'Voice note is too large. Maximum size is 12 MB.';
+        return;
+    }
+    chatVoiceNoteFile = file;
+    if (voiceNameEl) voiceNameEl.textContent = `${file.name} (${formatFileSize(file.size)})`;
+    if (feedbackEl) feedbackEl.textContent = '';
 }
 
 function teardownCommunityListeners() {
@@ -1719,6 +2008,37 @@ function subscribeLukeStatuses() {
                     reference.textContent = data.lukeReference;
                     item.appendChild(reference);
                 }
+                if (data.attachment && data.attachment.url && data.attachment.type) {
+                    const attachmentBox = document.createElement('div');
+                    attachmentBox.className = 'feed-attachment';
+                    const safeUrl = String(data.attachment.url || '');
+                    if (isTrustedAttachmentUrl(safeUrl)) {
+                        const kind = getAttachmentKind(data.attachment.type);
+                        if (kind === 'image') {
+                            const image = document.createElement('img');
+                            image.src = safeUrl;
+                            image.alt = data.attachment.name || 'Status image';
+                            image.loading = 'lazy';
+                            attachmentBox.appendChild(image);
+                        } else if (kind === 'video') {
+                            const video = document.createElement('video');
+                            video.src = safeUrl;
+                            video.controls = true;
+                            video.preload = 'metadata';
+                            attachmentBox.appendChild(video);
+                        }
+                        const fileLink = document.createElement('a');
+                        fileLink.className = 'feed-attachment-link';
+                        fileLink.href = safeUrl;
+                        fileLink.target = '_blank';
+                        fileLink.rel = 'noopener noreferrer';
+                        const label = data.attachment.name || 'Open attachment';
+                        const sizeLabel = data.attachment.size ? ` (${formatFileSize(data.attachment.size)})` : '';
+                        fileLink.textContent = `📎 ${label}${sizeLabel}`;
+                        attachmentBox.appendChild(fileLink);
+                        item.appendChild(attachmentBox);
+                    }
+                }
                 statusFeed.appendChild(item);
             });
         }, (error) => {
@@ -1732,13 +2052,39 @@ async function postLukeStatus() {
     const statusTextEl = document.getElementById('statusText');
     const statusLukeRefEl = document.getElementById('statusLukeRef');
     const feedbackEl = document.getElementById('statusFeedback');
+    const attachmentEl = document.getElementById('statusAttachment');
+    const attachmentNameEl = document.getElementById('statusAttachmentName');
     const text = statusTextEl.value.trim();
     const lukeReference = statusLukeRefEl.value.trim();
-    if (!text) {
-        feedbackEl.textContent = 'Write a status before posting.';
+    if (!text && !statusAttachmentFile) {
+        feedbackEl.textContent = 'Write a status or choose a file before posting.';
         return;
     }
     try {
+        let attachmentData = null;
+        if (statusAttachmentFile) {
+            if (!storage) {
+                feedbackEl.textContent = 'File upload is unavailable right now.';
+                return;
+            }
+            const safeFileName = sanitizeAttachmentFileName(statusAttachmentFile.name);
+            const attachmentPath = `lukeStatuses/${currentUser.uid}/${Date.now()}-${safeFileName}`;
+            let downloadURL = '';
+            try {
+                const uploadTask = await storage.ref().child(attachmentPath).put(statusAttachmentFile);
+                downloadURL = await uploadTask.ref.getDownloadURL();
+            } catch (uploadError) {
+                console.error('Failed to upload status attachment:', uploadError);
+                feedbackEl.textContent = 'Failed to upload file. Check your connection and try again.';
+                return;
+            }
+            attachmentData = {
+                name: clampAttachmentName(statusAttachmentFile.name),
+                type: statusAttachmentFile.type,
+                size: Number.isFinite(statusAttachmentFile.size) ? statusAttachmentFile.size : 0,
+                url: downloadURL
+            };
+        }
         const statusPayload = {
             uid: currentUser.uid,
             authorName: currentProfile.fullName || 'Anonymous',
@@ -1748,9 +2094,15 @@ async function postLukeStatus() {
         if (lukeReference) {
             statusPayload.lukeReference = lukeReference.slice(0, 50);
         }
+        if (attachmentData) {
+            statusPayload.attachment = attachmentData;
+        }
         await db.collection('lukeStatuses').add(statusPayload);
         statusTextEl.value = '';
         statusLukeRefEl.value = '';
+        if (attachmentEl) attachmentEl.value = '';
+        if (attachmentNameEl) attachmentNameEl.textContent = 'No file selected.';
+        statusAttachmentFile = null;
         feedbackEl.textContent = 'Status posted.';
     } catch (error) {
         console.error('Failed to post status:', error);
@@ -1787,10 +2139,34 @@ function subscribeGroupChat() {
                 when.textContent = formatTimestamp(data.createdAt);
                 meta.appendChild(author);
                 meta.appendChild(when);
-                const text = document.createElement('p');
-                text.textContent = data.message || '';
                 item.appendChild(meta);
-                item.appendChild(text);
+                if (data.message) {
+                    const text = document.createElement('p');
+                    text.textContent = data.message;
+                    item.appendChild(text);
+                }
+                if (data.voiceNote && data.voiceNote.url && data.voiceNote.type) {
+                    const safeUrl = String(data.voiceNote.url || '');
+                    if (isTrustedAttachmentUrl(safeUrl)) {
+                        const voiceWrap = document.createElement('div');
+                        voiceWrap.className = 'feed-attachment';
+                        const audio = document.createElement('audio');
+                        audio.controls = true;
+                        audio.preload = 'metadata';
+                        audio.src = safeUrl;
+                        voiceWrap.appendChild(audio);
+                        const voiceLink = document.createElement('a');
+                        voiceLink.className = 'feed-attachment-link';
+                        voiceLink.href = safeUrl;
+                        voiceLink.target = '_blank';
+                        voiceLink.rel = 'noopener noreferrer';
+                        const voiceName = data.voiceNote.name || 'Open voice note';
+                        const voiceSize = data.voiceNote.size ? ` (${formatFileSize(data.voiceNote.size)})` : '';
+                        voiceLink.textContent = `🎤 ${voiceName}${voiceSize}`;
+                        voiceWrap.appendChild(voiceLink);
+                        item.appendChild(voiceWrap);
+                    }
+                }
                 chatFeed.appendChild(item);
             });
             chatFeed.scrollTop = chatFeed.scrollHeight;
@@ -1804,19 +2180,54 @@ async function sendGroupMessage() {
     if (!firebaseReady() || !currentUser || !currentProfile) return;
     const chatMessageEl = document.getElementById('chatMessage');
     const feedbackEl = document.getElementById('chatFeedback');
+    const voiceEl = document.getElementById('chatVoiceNote');
+    const voiceNameEl = document.getElementById('chatVoiceNoteName');
     const message = chatMessageEl.value.trim();
-    if (!message) {
-        feedbackEl.textContent = 'Type a message before sending.';
+    if (!message && !chatVoiceNoteFile) {
+        feedbackEl.textContent = 'Type a message or attach a voice note before sending.';
         return;
     }
     try {
-        await db.collection('groupMessages').add({
+        let voiceNote = null;
+        if (chatVoiceNoteFile) {
+            if (!storage) {
+                feedbackEl.textContent = 'Voice note upload is unavailable right now.';
+                return;
+            }
+            const safeFileName = sanitizeAttachmentFileName(chatVoiceNoteFile.name);
+            const voicePath = `groupVoiceNotes/${currentUser.uid}/${Date.now()}-${safeFileName}`;
+            let downloadURL = '';
+            try {
+                const uploadTask = await storage.ref().child(voicePath).put(chatVoiceNoteFile);
+                downloadURL = await uploadTask.ref.getDownloadURL();
+            } catch (uploadError) {
+                console.error('Failed to upload voice note:', uploadError);
+                feedbackEl.textContent = 'Failed to upload voice note. Check your connection and try again.';
+                return;
+            }
+            voiceNote = {
+                name: clampAttachmentName(chatVoiceNoteFile.name),
+                type: chatVoiceNoteFile.type,
+                size: Number.isFinite(chatVoiceNoteFile.size) ? chatVoiceNoteFile.size : 0,
+                url: downloadURL
+            };
+        }
+        const messagePayload = {
             uid: currentUser.uid,
             authorName: currentProfile.fullName || 'Anonymous',
-            message: message.slice(0, 400),
             createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
+        };
+        if (message) {
+            messagePayload.message = message.slice(0, 400);
+        }
+        if (voiceNote) {
+            messagePayload.voiceNote = voiceNote;
+        }
+        await db.collection('groupMessages').add(messagePayload);
         chatMessageEl.value = '';
+        if (voiceEl) voiceEl.value = '';
+        if (voiceNameEl) voiceNameEl.textContent = 'No voice note selected.';
+        chatVoiceNoteFile = null;
         feedbackEl.textContent = 'Message sent.';
     } catch (error) {
         console.error('Failed to send message:', error);
@@ -2004,6 +2415,7 @@ function initFirebase() {
     firebase.initializeApp(firebaseConfig);
     auth = firebase.auth();
     db = firebase.firestore();
+    storage = firebase.storage();
 
     auth.onAuthStateChanged(async (user) => {
         if (!user) {
