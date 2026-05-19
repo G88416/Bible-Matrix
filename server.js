@@ -5,9 +5,22 @@ const path = require('path');
 const app = express();
 const port = process.env.PORT || 8080;
 const rootDir = __dirname;
-const indexHtml = fs.readFileSync(path.join(rootDir, 'index.html'), 'utf8');
-const manifestJson = fs.readFileSync(path.join(rootDir, 'manifest.json'), 'utf8');
-const serviceWorkerJs = fs.readFileSync(path.join(rootDir, 'sw.js'), 'utf8');
+const SPA_ROUTE_PATTERN = /^\/(?!.*\.).*/;
+
+const readRequiredFile = (fileName) => {
+  const filePath = path.join(rootDir, fileName);
+
+  try {
+    return fs.readFileSync(filePath, 'utf8');
+  } catch (error) {
+    console.error(`Failed to read required file: ${fileName}`);
+    throw error;
+  }
+};
+
+const indexHtml = readRequiredFile('index.html');
+const manifestJson = readRequiredFile('manifest.json');
+const serviceWorkerJs = readRequiredFile('sw.js');
 
 app.disable('x-powered-by');
 
@@ -25,7 +38,7 @@ app.get('/sw.js', (_req, res) => {
   res.type('application/javascript').send(serviceWorkerJs);
 });
 
-app.get(/^\/(?!.*\.).*/, (_req, res) => {
+app.get(SPA_ROUTE_PATTERN, (_req, res) => {
   res.type('html').send(indexHtml);
 });
 
