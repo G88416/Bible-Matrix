@@ -2386,7 +2386,7 @@ async function joinGroupAudioCall() {
             muteBtn.textContent = 'Mute Mic';
         }
         if (leaveBtn) leaveBtn.disabled = false;
-        if (feedbackEl) feedbackEl.textContent = 'Microphone active on this device for group call preparation.';
+        if (feedbackEl) feedbackEl.textContent = 'Microphone enabled locally on this device. This does not connect to other users by itself.';
     } catch (error) {
         activeGroupCallStream = null;
         if (feedbackEl) feedbackEl.textContent = 'Unable to start call. Please allow microphone access.';
