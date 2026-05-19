@@ -1255,7 +1255,7 @@ body {
         <div class="community-header">
             <div>
                 <div class="community-title">
-                    <img src="/icons/logo-advanced.svg" alt="Bible Matrix logo" />
+                    <img src="/icons/logo-advanced.svg" alt="" role="presentation" />
                     <h2>Luke Status</h2>
                 </div>
                 <p>Create and view faith updates inspired by the Gospel of Luke.</p>
@@ -1301,7 +1301,7 @@ body {
         <div class="community-header">
             <div>
                 <div class="community-title">
-                    <img src="/icons/logo-advanced.svg" alt="Bible Matrix logo" />
+                    <img src="/icons/logo-advanced.svg" alt="" role="presentation" />
                     <h2>Luke Group Chat</h2>
                 </div>
                 <p>Chat together as a group while discussing Luke passages.</p>
@@ -1324,7 +1324,7 @@ body {
                     <button id="clearVoiceRecordBtn" class="record-btn" type="button" onclick="clearRecordedVoiceNote()" disabled>🗑 Clear</button>
                 </div>
                 <div id="groupCallPanel" class="call-panel">
-                    <p class="muted-note">Use this in-app audio call panel for your group instead of external call links.</p>
+                    <p class="muted-note">Use this in-app audio call panel and room name coordination instead of external call links.</p>
                     <input id="groupCallRoom" type="text" maxlength="50" placeholder="Room name (default: luke-group-room)" />
                     <div class="call-controls">
                         <button class="record-btn" type="button" onclick="joinGroupAudioCall()">Join Call</button>
@@ -1354,7 +1354,7 @@ body {
         <div class="community-header">
             <div>
                 <div class="community-title">
-                    <img src="/icons/logo-advanced.svg" alt="Bible Matrix logo" />
+                    <img src="/icons/logo-advanced.svg" alt="" role="presentation" />
                     <h2>Sunday Service Attendance Register</h2>
                 </div>
                 <p>Capture Sunday attendance and keep a simple register list.</p>
@@ -2219,7 +2219,7 @@ function viewSelectedStatusAttachment() {
     try {
         const objectUrl = URL.createObjectURL(statusAttachmentFile);
         window.open(objectUrl, '_blank', 'noopener,noreferrer');
-        setTimeout(() => URL.revokeObjectURL(objectUrl), 30000);
+        setTimeout(() => URL.revokeObjectURL(objectUrl), 300000);
     } catch (error) {
         const feedbackEl = document.getElementById('statusFeedback');
         if (feedbackEl) feedbackEl.textContent = 'Unable to preview selected file.';
@@ -2383,7 +2383,7 @@ async function joinGroupAudioCall() {
             muteBtn.textContent = 'Mute Mic';
         }
         if (leaveBtn) leaveBtn.disabled = false;
-        if (feedbackEl) feedbackEl.textContent = `Joined "${roomName}" audio room. Ask your group to join with the same room name.`;
+        if (feedbackEl) feedbackEl.textContent = `Microphone active for "${roomName}". Share the room name with your group.`;
     } catch (error) {
         activeGroupCallStream = null;
         if (feedbackEl) feedbackEl.textContent = 'Unable to start call. Please allow microphone access.';
@@ -2399,7 +2399,7 @@ function toggleGroupCallMute() {
         track.enabled = !isGroupCallMuted;
     });
     if (muteBtn) muteBtn.textContent = isGroupCallMuted ? 'Unmute Mic' : 'Mute Mic';
-    if (feedbackEl) feedbackEl.textContent = isGroupCallMuted ? 'Microphone muted.' : 'Microphone unmuted.';
+    if (feedbackEl) feedbackEl.textContent = isGroupCallMuted ? 'Microphone muted on this device.' : 'Microphone unmuted on this device.';
 }
 
 function leaveGroupAudioCall() {
@@ -2424,7 +2424,7 @@ function teardownCallAndRecording() {
         try {
             chatVoiceRecorder?.stop();
         } catch (error) {
-            // Ignore recorder shutdown race conditions.
+            console.debug('Voice recorder stop warning:', error);
         }
     }
     isChatVoiceRecording = false;
