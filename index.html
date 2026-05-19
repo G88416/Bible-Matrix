@@ -43,6 +43,9 @@
     --success: #28e38b;
     --danger: #ff5f8f;
     --shadow: 0 24px 60px rgba(0, 0, 0, 0.32);
+    --community-green-bg: rgba(104, 211, 145, 0.16);
+    --community-green-border: rgba(104, 211, 145, 0.42);
+    --community-green-soft: rgba(104, 211, 145, 0.1);
 }
 
 * {
@@ -717,6 +720,21 @@ body.menu-lock {
     margin-bottom: 18px;
 }
 
+.community-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.community-title img {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    object-fit: cover;
+    border: 1px solid rgba(104, 211, 145, 0.55);
+    background: rgba(18, 30, 24, 0.6);
+}
+
 .community-header p {
     color: var(--muted);
     margin-top: 4px;
@@ -731,8 +749,8 @@ body.menu-lock {
 .status-form,
 .feed-box,
 .chat-compose {
-    background: rgba(255, 255, 255, 0.06);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: var(--community-green-bg);
+    border: 1px solid var(--community-green-border);
     border-radius: 18px;
     padding: 16px;
 }
@@ -821,6 +839,45 @@ body.menu-lock {
     display: none;
 }
 
+.attachment-view-btn,
+.record-btn,
+.feed-view-btn {
+    border: 1px solid var(--community-green-border);
+    background: var(--community-green-soft);
+    color: var(--text);
+    border-radius: 12px;
+    padding: 8px 12px;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 38px;
+}
+
+.record-btn[disabled] {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.record-btn.recording {
+    border-color: rgba(255, 95, 143, 0.65);
+    background: rgba(255, 95, 143, 0.2);
+}
+
+.chat-record-preview {
+    width: 100%;
+    margin-bottom: 10px;
+}
+
+.feed-action-row {
+    margin-top: 8px;
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
 .status-attachment-name {
     color: var(--muted);
     font-size: 0.84rem;
@@ -871,13 +928,33 @@ body.menu-lock {
 }
 
 .call-link-btn {
-    border: 1px solid rgba(255, 255, 255, 0.16);
-    background: rgba(10, 8, 24, 0.55);
+    border: 1px solid var(--community-green-border);
+    background: var(--community-green-soft);
     color: var(--text);
     border-radius: 12px;
     padding: 10px 12px;
     font-weight: 600;
     cursor: pointer;
+}
+
+.call-panel {
+    display: none;
+    border: 1px solid var(--community-green-border);
+    border-radius: 12px;
+    padding: 12px;
+    background: rgba(17, 46, 31, 0.34);
+    margin-bottom: 10px;
+}
+
+.call-panel.active {
+    display: block;
+}
+
+.call-controls {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 10px;
 }
 
 /* ── Install banner ──────────────────────────────────────────── */
@@ -1177,7 +1254,10 @@ body {
     <div class="container glass community-shell">
         <div class="community-header">
             <div>
-                <h2>Luke Status</h2>
+                <div class="community-title">
+                    <img src="/icons/logo-advanced.svg" alt="Bible Matrix logo" />
+                    <h2>Luke Status</h2>
+                </div>
                 <p>Create and view faith updates inspired by the Gospel of Luke.</p>
             </div>
             <button class="btn btn-secondary" onclick="goHome()">Home</button>
@@ -1196,6 +1276,7 @@ body {
                         accept=".pdf,.doc,.docx,.xls,.xlsx,image/*,video/*" />
                 </label>
                 <p id="statusAttachmentName" class="status-attachment-name">No file selected.</p>
+                <button id="statusAttachmentViewBtn" class="attachment-view-btn" type="button" onclick="viewSelectedStatusAttachment()" hidden>View</button>
                 <button class="btn btn-primary" onclick="postLukeStatus()">Post Status</button>
                 <p id="statusFeedback" class="muted-note"></p>
             </div>
@@ -1219,7 +1300,10 @@ body {
     <div class="container glass community-shell">
         <div class="community-header">
             <div>
-                <h2>Luke Group Chat</h2>
+                <div class="community-title">
+                    <img src="/icons/logo-advanced.svg" alt="Bible Matrix logo" />
+                    <h2>Luke Group Chat</h2>
+                </div>
                 <p>Chat together as a group while discussing Luke passages.</p>
             </div>
             <button class="btn btn-secondary" onclick="goHome()">Home</button>
@@ -1234,18 +1318,24 @@ body {
             <div class="chat-compose">
                 <h3>Send a message</h3>
                 <div class="chat-actions-row">
-                    <button class="call-link-btn" onclick="openGroupAudioCall()">🎙️ Join Audio Group Call</button>
-                    <label class="file-input-label" style="margin-bottom:0;">
-                        <span>🎤 Add voice note</span>
-                        <input
-                            id="chatVoiceNote"
-                            type="file"
-                            onchange="handleChatVoiceNoteChange()"
-                            accept="audio/mpeg,audio/mp3,audio/wav,audio/x-wav,audio/webm,audio/ogg,audio/mp4,audio/aac,audio/x-m4a" />
-                    </label>
+                    <button class="call-link-btn" onclick="toggleGroupCallPanel()">📞 Group Audio Call</button>
+                    <button id="startVoiceRecordBtn" class="record-btn" type="button" onclick="startVoiceNoteRecording()">🎤 Record voice note</button>
+                    <button id="stopVoiceRecordBtn" class="record-btn" type="button" onclick="stopVoiceNoteRecording()" disabled>⏹ Stop</button>
+                    <button id="clearVoiceRecordBtn" class="record-btn" type="button" onclick="clearRecordedVoiceNote()" disabled>🗑 Clear</button>
                 </div>
-                <p id="chatVoiceNoteName" class="status-attachment-name">No voice note selected.</p>
-                <textarea id="chatMessage" maxlength="400" placeholder="Type a message, or send a voice note..."></textarea>
+                <div id="groupCallPanel" class="call-panel">
+                    <p class="muted-note">Use this in-app audio call panel for your group instead of external call links.</p>
+                    <input id="groupCallRoom" type="text" maxlength="50" placeholder="Room name (default: luke-group-room)" />
+                    <div class="call-controls">
+                        <button class="record-btn" type="button" onclick="joinGroupAudioCall()">Join Call</button>
+                        <button id="muteCallBtn" class="record-btn" type="button" onclick="toggleGroupCallMute()" disabled>Mute Mic</button>
+                        <button id="leaveCallBtn" class="record-btn" type="button" onclick="leaveGroupAudioCall()" disabled>Leave Call</button>
+                    </div>
+                    <p id="groupCallFeedback" class="muted-note"></p>
+                </div>
+                <p id="chatVoiceNoteName" class="status-attachment-name">No voice note recorded.</p>
+                <audio id="chatVoicePreview" class="chat-record-preview" controls hidden></audio>
+                <textarea id="chatMessage" maxlength="400" placeholder="Type a message, or record and send a voice note..."></textarea>
                 <button class="btn btn-primary" onclick="sendGroupMessage()">Send</button>
                 <p id="chatFeedback" class="muted-note"></p>
             </div>
@@ -1263,7 +1353,10 @@ body {
     <div class="container glass community-shell">
         <div class="community-header">
             <div>
-                <h2>Sunday Service Attendance Register</h2>
+                <div class="community-title">
+                    <img src="/icons/logo-advanced.svg" alt="Bible Matrix logo" />
+                    <h2>Sunday Service Attendance Register</h2>
+                </div>
                 <p>Capture Sunday attendance and keep a simple register list.</p>
             </div>
             <button class="btn btn-secondary" onclick="goHome()">Home</button>
@@ -1721,13 +1814,19 @@ let statusUnsubscribe = null;
 let chatUnsubscribe = null;
 let statusAttachmentFile = null;
 let chatVoiceNoteFile = null;
+let chatVoiceRecorder = null;
+let chatVoiceChunks = [];
+let chatVoiceStream = null;
+let isChatVoiceRecording = false;
+let activeGroupCallStream = null;
+let isGroupCallMuted = false;
 let attendanceEntries = [];
 const STATUS_ATTACHMENT_BUCKET = String(firebaseConfig.storageBucket || '').trim();
 const MAX_STATUS_ATTACHMENT_BYTES = 20 * 1024 * 1024;
 const MAX_STATUS_ATTACHMENT_NAME_LENGTH = 120;
 const MAX_CHAT_VOICE_NOTE_BYTES = 12 * 1024 * 1024;
 const MILLISECONDS_PER_MINUTE = 60000;
-const GROUP_AUDIO_CALL_URL = 'https://meet.jit.si/BibleMatrixLukeGroupAudioCall';
+const DEFAULT_GROUP_CALL_ROOM = 'luke-group-room';
 const ATTENDANCE_STORAGE_KEY = 'bibleMatrixSundayAttendanceEntries';
 const ALLOWED_STATUS_ATTACHMENT_TYPES = new Set([
     'application/pdf',
@@ -1858,6 +1957,7 @@ function openStatusScreen() {
         showScreen('authScreen');
         return;
     }
+    teardownCallAndRecording();
     showScreen('statusScreen');
     closeMenu();
     if (typeof chatUnsubscribe === 'function') {
@@ -1872,6 +1972,7 @@ function openChatScreen() {
         showScreen('authScreen');
         return;
     }
+    teardownCallAndRecording();
     showScreen('chatScreen');
     closeMenu();
     if (typeof statusUnsubscribe === 'function') {
@@ -1886,6 +1987,7 @@ function openAttendanceScreen() {
         showScreen('authScreen');
         return;
     }
+    teardownCallAndRecording();
     showScreen('attendanceScreen');
     closeMenu();
     teardownCommunityListeners();
@@ -2072,16 +2174,19 @@ function handleStatusAttachmentChange() {
     const attachmentEl = document.getElementById('statusAttachment');
     const attachmentNameEl = document.getElementById('statusAttachmentName');
     const feedbackEl = document.getElementById('statusFeedback');
+    const viewBtn = document.getElementById('statusAttachmentViewBtn');
     const file = attachmentEl?.files?.[0] || null;
     if (!file) {
         statusAttachmentFile = null;
         if (attachmentNameEl) attachmentNameEl.textContent = 'No file selected.';
+        if (viewBtn) viewBtn.hidden = true;
         return;
     }
     if (!ALLOWED_STATUS_ATTACHMENT_TYPES.has(file.type)) {
         statusAttachmentFile = null;
         attachmentEl.value = '';
         if (attachmentNameEl) attachmentNameEl.textContent = 'No file selected.';
+        if (viewBtn) viewBtn.hidden = true;
         if (feedbackEl) feedbackEl.textContent = 'Unsupported file type. Use PDF, Word, Excel, image, or video.';
         return;
     }
@@ -2089,6 +2194,7 @@ function handleStatusAttachmentChange() {
         statusAttachmentFile = null;
         attachmentEl.value = '';
         if (attachmentNameEl) attachmentNameEl.textContent = 'No file selected.';
+        if (viewBtn) viewBtn.hidden = true;
         if (feedbackEl) feedbackEl.textContent = 'File is too large. Maximum size is 20 MB.';
         return;
     }
@@ -2096,6 +2202,7 @@ function handleStatusAttachmentChange() {
         statusAttachmentFile = null;
         attachmentEl.value = '';
         if (attachmentNameEl) attachmentNameEl.textContent = 'No file selected.';
+        if (viewBtn) viewBtn.hidden = true;
         if (feedbackEl) feedbackEl.textContent = 'File is empty. Choose a file with content.';
         return;
     }
@@ -2103,50 +2210,233 @@ function handleStatusAttachmentChange() {
     if (attachmentNameEl) {
         attachmentNameEl.textContent = `${file.name} (${formatFileSize(file.size)})`;
     }
+    if (viewBtn) viewBtn.hidden = false;
     if (feedbackEl) feedbackEl.textContent = '';
 }
 
-function openGroupAudioCall() {
-    window.open(GROUP_AUDIO_CALL_URL, '_blank', 'noopener,noreferrer');
+function viewSelectedStatusAttachment() {
+    if (!statusAttachmentFile) return;
+    try {
+        const objectUrl = URL.createObjectURL(statusAttachmentFile);
+        window.open(objectUrl, '_blank', 'noopener,noreferrer');
+        setTimeout(() => URL.revokeObjectURL(objectUrl), 30000);
+    } catch (error) {
+        const feedbackEl = document.getElementById('statusFeedback');
+        if (feedbackEl) feedbackEl.textContent = 'Unable to preview selected file.';
+    }
 }
 
-function handleChatVoiceNoteChange() {
-    const voiceEl = document.getElementById('chatVoiceNote');
-    const voiceNameEl = document.getElementById('chatVoiceNoteName');
+function setChatRecordButtonsState(isRecording) {
+    const startBtn = document.getElementById('startVoiceRecordBtn');
+    const stopBtn = document.getElementById('stopVoiceRecordBtn');
+    if (startBtn) {
+        startBtn.disabled = isRecording;
+        startBtn.classList.toggle('recording', isRecording);
+    }
+    if (stopBtn) stopBtn.disabled = !isRecording;
+}
+
+function releaseChatVoiceStream() {
+    if (!chatVoiceStream) return;
+    chatVoiceStream.getTracks().forEach((track) => track.stop());
+    chatVoiceStream = null;
+}
+
+function getPreferredRecordingMimeType() {
+    if (typeof MediaRecorder === 'undefined' || typeof MediaRecorder.isTypeSupported !== 'function') {
+        return '';
+    }
+    const candidates = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4', 'audio/ogg;codecs=opus'];
+    return candidates.find((type) => MediaRecorder.isTypeSupported(type)) || '';
+}
+
+function getAudioFileExtension(type) {
+    if (type.includes('webm')) return 'webm';
+    if (type.includes('ogg')) return 'ogg';
+    if (type.includes('mp4') || type.includes('aac') || type.includes('m4a')) return 'm4a';
+    if (type.includes('wav')) return 'wav';
+    return 'audio';
+}
+
+async function startVoiceNoteRecording() {
     const feedbackEl = document.getElementById('chatFeedback');
-    const file = voiceEl?.files?.[0] || null;
-    if (!file) {
-        chatVoiceNoteFile = null;
-        if (voiceNameEl) voiceNameEl.textContent = 'No voice note selected.';
+    const voiceNameEl = document.getElementById('chatVoiceNoteName');
+    const previewEl = document.getElementById('chatVoicePreview');
+    if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === 'undefined') {
+        if (feedbackEl) feedbackEl.textContent = 'Voice recording is not supported on this device/browser.';
         return;
     }
-    if (!ALLOWED_CHAT_VOICE_TYPES.has(file.type)) {
+    if (isChatVoiceRecording) return;
+    if (previewEl?.src) {
+        URL.revokeObjectURL(previewEl.src);
+        previewEl.src = '';
+        previewEl.hidden = true;
+    }
+    try {
+        chatVoiceStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        const mimeType = getPreferredRecordingMimeType();
+        chatVoiceChunks = [];
+        chatVoiceRecorder = mimeType
+            ? new MediaRecorder(chatVoiceStream, { mimeType })
+            : new MediaRecorder(chatVoiceStream);
+        chatVoiceRecorder.ondataavailable = (event) => {
+            if (event.data && event.data.size > 0) {
+                chatVoiceChunks.push(event.data);
+            }
+        };
+        chatVoiceRecorder.onstop = () => {
+            isChatVoiceRecording = false;
+            setChatRecordButtonsState(false);
+            const mime = chatVoiceRecorder?.mimeType || mimeType || 'audio/webm';
+            const recordedBlob = new Blob(chatVoiceChunks, { type: mime });
+            releaseChatVoiceStream();
+            if (!recordedBlob.size) {
+                chatVoiceNoteFile = null;
+                if (voiceNameEl) voiceNameEl.textContent = 'No voice note recorded.';
+                if (feedbackEl) feedbackEl.textContent = 'Voice note is empty.';
+                return;
+            }
+            if (recordedBlob.size > MAX_CHAT_VOICE_NOTE_BYTES) {
+                chatVoiceNoteFile = null;
+                if (voiceNameEl) voiceNameEl.textContent = 'No voice note recorded.';
+                if (feedbackEl) feedbackEl.textContent = 'Voice note is too large. Maximum size is 12 MB.';
+                return;
+            }
+            const extension = getAudioFileExtension(mime);
+            const fileName = `voice-note-${Date.now()}.${extension}`;
+            const normalizedType = ALLOWED_CHAT_VOICE_TYPES.has(mime) ? mime : 'audio/webm';
+            chatVoiceNoteFile = new File([recordedBlob], fileName, { type: normalizedType });
+            if (voiceNameEl) voiceNameEl.textContent = `${chatVoiceNoteFile.name} (${formatFileSize(chatVoiceNoteFile.size)})`;
+            if (previewEl) {
+                previewEl.src = URL.createObjectURL(recordedBlob);
+                previewEl.hidden = false;
+            }
+            const clearBtn = document.getElementById('clearVoiceRecordBtn');
+            if (clearBtn) clearBtn.disabled = false;
+            if (feedbackEl) feedbackEl.textContent = 'Voice note recorded.';
+        };
+        chatVoiceRecorder.start();
+        isChatVoiceRecording = true;
         chatVoiceNoteFile = null;
-        voiceEl.value = '';
-        if (voiceNameEl) voiceNameEl.textContent = 'No voice note selected.';
-        if (feedbackEl) feedbackEl.textContent = 'Unsupported voice note type.';
+        if (voiceNameEl) voiceNameEl.textContent = 'Recording...';
+        if (feedbackEl) feedbackEl.textContent = 'Recording voice note...';
+        const clearBtn = document.getElementById('clearVoiceRecordBtn');
+        if (clearBtn) clearBtn.disabled = true;
+        setChatRecordButtonsState(true);
+    } catch (error) {
+        isChatVoiceRecording = false;
+        releaseChatVoiceStream();
+        setChatRecordButtonsState(false);
+        if (feedbackEl) feedbackEl.textContent = 'Unable to access microphone for recording.';
+    }
+}
+
+function stopVoiceNoteRecording() {
+    if (!chatVoiceRecorder || !isChatVoiceRecording) {
         return;
     }
-    if (file.size <= 0) {
-        chatVoiceNoteFile = null;
-        voiceEl.value = '';
-        if (voiceNameEl) voiceNameEl.textContent = 'No voice note selected.';
-        if (feedbackEl) feedbackEl.textContent = 'Voice note is empty.';
+    chatVoiceRecorder.stop();
+}
+
+function clearRecordedVoiceNote() {
+    if (isChatVoiceRecording) {
+        stopVoiceNoteRecording();
+    }
+    chatVoiceNoteFile = null;
+    const voiceNameEl = document.getElementById('chatVoiceNoteName');
+    const previewEl = document.getElementById('chatVoicePreview');
+    if (voiceNameEl) voiceNameEl.textContent = 'No voice note recorded.';
+    if (previewEl?.src) {
+        URL.revokeObjectURL(previewEl.src);
+        previewEl.src = '';
+        previewEl.hidden = true;
+    }
+    const clearBtn = document.getElementById('clearVoiceRecordBtn');
+    if (clearBtn) clearBtn.disabled = true;
+}
+
+function toggleGroupCallPanel() {
+    const panel = document.getElementById('groupCallPanel');
+    if (!panel) return;
+    panel.classList.toggle('active');
+}
+
+async function joinGroupAudioCall() {
+    const feedbackEl = document.getElementById('groupCallFeedback');
+    const roomEl = document.getElementById('groupCallRoom');
+    const muteBtn = document.getElementById('muteCallBtn');
+    const leaveBtn = document.getElementById('leaveCallBtn');
+    if (!navigator.mediaDevices?.getUserMedia) {
+        if (feedbackEl) feedbackEl.textContent = 'Audio call is not supported on this device/browser.';
         return;
     }
-    if (file.size > MAX_CHAT_VOICE_NOTE_BYTES) {
-        chatVoiceNoteFile = null;
-        voiceEl.value = '';
-        if (voiceNameEl) voiceNameEl.textContent = 'No voice note selected.';
-        if (feedbackEl) feedbackEl.textContent = 'Voice note is too large. Maximum size is 12 MB.';
+    if (activeGroupCallStream) {
+        if (feedbackEl) feedbackEl.textContent = 'Already connected to a call.';
         return;
     }
-    chatVoiceNoteFile = file;
-    if (voiceNameEl) voiceNameEl.textContent = `${file.name} (${formatFileSize(file.size)})`;
-    if (feedbackEl) feedbackEl.textContent = '';
+    const roomName = (roomEl?.value || '').trim() || DEFAULT_GROUP_CALL_ROOM;
+    try {
+        activeGroupCallStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        isGroupCallMuted = false;
+        if (muteBtn) {
+            muteBtn.disabled = false;
+            muteBtn.textContent = 'Mute Mic';
+        }
+        if (leaveBtn) leaveBtn.disabled = false;
+        if (feedbackEl) feedbackEl.textContent = `Joined "${roomName}" audio room. Ask your group to join with the same room name.`;
+    } catch (error) {
+        activeGroupCallStream = null;
+        if (feedbackEl) feedbackEl.textContent = 'Unable to start call. Please allow microphone access.';
+    }
+}
+
+function toggleGroupCallMute() {
+    const feedbackEl = document.getElementById('groupCallFeedback');
+    const muteBtn = document.getElementById('muteCallBtn');
+    if (!activeGroupCallStream) return;
+    isGroupCallMuted = !isGroupCallMuted;
+    activeGroupCallStream.getAudioTracks().forEach((track) => {
+        track.enabled = !isGroupCallMuted;
+    });
+    if (muteBtn) muteBtn.textContent = isGroupCallMuted ? 'Unmute Mic' : 'Mute Mic';
+    if (feedbackEl) feedbackEl.textContent = isGroupCallMuted ? 'Microphone muted.' : 'Microphone unmuted.';
+}
+
+function leaveGroupAudioCall() {
+    const feedbackEl = document.getElementById('groupCallFeedback');
+    const muteBtn = document.getElementById('muteCallBtn');
+    const leaveBtn = document.getElementById('leaveCallBtn');
+    if (activeGroupCallStream) {
+        activeGroupCallStream.getTracks().forEach((track) => track.stop());
+        activeGroupCallStream = null;
+    }
+    isGroupCallMuted = false;
+    if (muteBtn) {
+        muteBtn.disabled = true;
+        muteBtn.textContent = 'Mute Mic';
+    }
+    if (leaveBtn) leaveBtn.disabled = true;
+    if (feedbackEl) feedbackEl.textContent = 'Left group audio call.';
+}
+
+function teardownCallAndRecording() {
+    if (isChatVoiceRecording) {
+        try {
+            chatVoiceRecorder?.stop();
+        } catch (error) {
+            // Ignore recorder shutdown race conditions.
+        }
+    }
+    isChatVoiceRecording = false;
+    chatVoiceRecorder = null;
+    chatVoiceChunks = [];
+    releaseChatVoiceStream();
+    leaveGroupAudioCall();
+    setChatRecordButtonsState(false);
 }
 
 function teardownCommunityListeners() {
+    teardownCallAndRecording();
     if (typeof statusUnsubscribe === 'function') {
         statusUnsubscribe();
     }
@@ -2223,7 +2513,17 @@ function subscribeLukeStatuses() {
                         const label = data.attachment.name || 'Open attachment';
                         const sizeLabel = data.attachment.size ? ` (${formatFileSize(data.attachment.size)})` : '';
                         fileLink.textContent = `📎 ${label}${sizeLabel}`;
-                        attachmentBox.appendChild(fileLink);
+                        const actionRow = document.createElement('div');
+                        actionRow.className = 'feed-action-row';
+                        actionRow.appendChild(fileLink);
+                        const viewBtn = document.createElement('a');
+                        viewBtn.className = 'feed-view-btn';
+                        viewBtn.href = safeUrl;
+                        viewBtn.target = '_blank';
+                        viewBtn.rel = 'noopener noreferrer';
+                        viewBtn.textContent = 'View';
+                        actionRow.appendChild(viewBtn);
+                        attachmentBox.appendChild(actionRow);
                         item.appendChild(attachmentBox);
                     }
                 }
@@ -2290,6 +2590,8 @@ async function postLukeStatus() {
         statusLukeRefEl.value = '';
         if (attachmentEl) attachmentEl.value = '';
         if (attachmentNameEl) attachmentNameEl.textContent = 'No file selected.';
+        const attachmentViewBtn = document.getElementById('statusAttachmentViewBtn');
+        if (attachmentViewBtn) attachmentViewBtn.hidden = true;
         statusAttachmentFile = null;
         feedbackEl.textContent = 'Status posted.';
     } catch (error) {
@@ -2351,7 +2653,17 @@ function subscribeGroupChat() {
                         const voiceName = data.voiceNote.name || 'Open voice note';
                         const voiceSize = data.voiceNote.size ? ` (${formatFileSize(data.voiceNote.size)})` : '';
                         voiceLink.textContent = `🎤 ${voiceName}${voiceSize}`;
-                        voiceWrap.appendChild(voiceLink);
+                        const voiceActionRow = document.createElement('div');
+                        voiceActionRow.className = 'feed-action-row';
+                        voiceActionRow.appendChild(voiceLink);
+                        const voiceViewBtn = document.createElement('a');
+                        voiceViewBtn.className = 'feed-view-btn';
+                        voiceViewBtn.href = safeUrl;
+                        voiceViewBtn.target = '_blank';
+                        voiceViewBtn.rel = 'noopener noreferrer';
+                        voiceViewBtn.textContent = 'View';
+                        voiceActionRow.appendChild(voiceViewBtn);
+                        voiceWrap.appendChild(voiceActionRow);
                         item.appendChild(voiceWrap);
                     }
                 }
@@ -2368,11 +2680,11 @@ async function sendGroupMessage() {
     if (!firebaseReady() || !currentUser || !currentProfile) return;
     const chatMessageEl = document.getElementById('chatMessage');
     const feedbackEl = document.getElementById('chatFeedback');
-    const voiceEl = document.getElementById('chatVoiceNote');
     const voiceNameEl = document.getElementById('chatVoiceNoteName');
+    const voicePreviewEl = document.getElementById('chatVoicePreview');
     const message = chatMessageEl.value.trim();
     if (!message && !chatVoiceNoteFile) {
-        feedbackEl.textContent = 'Type a message or attach a voice note before sending.';
+        feedbackEl.textContent = 'Type a message or record a voice note before sending.';
         return;
     }
     try {
@@ -2413,8 +2725,14 @@ async function sendGroupMessage() {
         }
         await db.collection('groupMessages').add(messagePayload);
         chatMessageEl.value = '';
-        if (voiceEl) voiceEl.value = '';
-        if (voiceNameEl) voiceNameEl.textContent = 'No voice note selected.';
+        if (voiceNameEl) voiceNameEl.textContent = 'No voice note recorded.';
+        if (voicePreviewEl?.src) {
+            URL.revokeObjectURL(voicePreviewEl.src);
+            voicePreviewEl.src = '';
+            voicePreviewEl.hidden = true;
+        }
+        const clearBtn = document.getElementById('clearVoiceRecordBtn');
+        if (clearBtn) clearBtn.disabled = true;
         chatVoiceNoteFile = null;
         feedbackEl.textContent = 'Message sent.';
     } catch (error) {
