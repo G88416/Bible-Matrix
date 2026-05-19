@@ -43,6 +43,7 @@
     --success: #28e38b;
     --danger: #ff5f8f;
     --shadow: 0 24px 60px rgba(0, 0, 0, 0.32);
+    --game-screen-bottom-padding: 24px;
     --community-green-bg: rgba(120, 232, 159, 0.24);
     --community-green-border: rgba(120, 232, 159, 0.58);
     --community-green-soft: rgba(120, 232, 159, 0.16);
@@ -416,6 +417,10 @@ footer {
 .answer-btn.wrong {
     background: rgba(255, 93, 115, 0.24);
     border-color: rgba(255, 93, 115, 0.55);
+}
+
+#gameScreen {
+    padding-bottom: calc(var(--game-screen-bottom-padding) + env(safe-area-inset-bottom));
 }
 
 .feedback {
@@ -980,6 +985,11 @@ body.menu-lock {
     display: flex;
 }
 
+body.gameplay-active #installBanner,
+body.gameplay-active #installBanner.show {
+    display: none;
+}
+
 #installBanner img {
     width: 48px;
     height: 48px;
@@ -1427,7 +1437,7 @@ body {
                 <span>Stage Question</span>
             </div>
             <div class="stat-card">
-                <strong id="timer">20</strong>
+                <strong id="timer">30</strong>
                 <span>Seconds Left</span>
             </div>
         </div>
@@ -1541,13 +1551,14 @@ const firebaseConfig = {
 };
 // Firebase web app configuration.
 const MAX_QUIZ_SCORE = 40;
+const QUIZ_TIME_LIMIT_SECONDS = 30;
 
 const stages = [
     {
         name: "Foundations",
         description: "Warm up with core Luke moments your group will recognize quickly.",
         difficulty: "Warm-up difficulty",
-        timeLimit: 20,
+        timeLimit: QUIZ_TIME_LIMIT_SECONDS,
         points: 1,
         // The AI starts supportive in stage 1 so early rounds stay welcoming.
         aiCorrectProbability: 0.38,
@@ -1608,7 +1619,7 @@ const stages = [
         name: "Growing Deeper",
         description: "Stage 2 adds stronger recall with miracles, worship, and Jesus' teaching.",
         difficulty: "Intermediate challenge",
-        timeLimit: 18,
+        timeLimit: QUIZ_TIME_LIMIT_SECONDS,
         points: 1,
         // The AI gets a modest bump as the player moves into tougher questions.
         aiCorrectProbability: 0.45,
@@ -1669,7 +1680,7 @@ const stages = [
         name: "Kingdom Focus",
         description: "Stage 3 pushes into details that reward careful reading and reflection.",
         difficulty: "Advanced challenge",
-        timeLimit: 16,
+        timeLimit: QUIZ_TIME_LIMIT_SECONDS,
         points: 1,
         // This stage is more competitive to match the harder material.
         aiCorrectProbability: 0.5,
@@ -1730,7 +1741,7 @@ const stages = [
         name: "Leadership Level",
         description: "The final stage is built for your strongest readers and ministry leaders.",
         difficulty: "Tough finale",
-        timeLimit: 14,
+        timeLimit: QUIZ_TIME_LIMIT_SECONDS,
         points: 1,
         // The final round gives the AI its toughest profile for a strong finish.
         aiCorrectProbability: 0.58,
@@ -1860,6 +1871,11 @@ const aiTimeUpBonus = 0.08;
 function showScreen(screenId) {
     document.querySelectorAll('.screen').forEach((screen) => screen.classList.remove('active'));
     document.getElementById(screenId).classList.add('active');
+    if (screenId === 'gameScreen') {
+        document.body.classList.add('gameplay-active');
+    } else {
+        document.body.classList.remove('gameplay-active');
+    }
 }
 
 function firebaseConfigured() {
