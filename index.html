@@ -1291,7 +1291,7 @@ body {
                             <th>Date</th>
                             <th>Name</th>
                             <th>Phone</th>
-                            <th>Guest</th>
+                            <th>First-Time</th>
                         </tr>
                     </thead>
                     <tbody id="attendanceTableBody">
@@ -1984,12 +1984,7 @@ function addAttendanceEntry() {
         return;
     }
 
-    const entryId = typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
-        ? crypto.randomUUID()
-        : `${Date.now()}-${Math.random().toString(36).slice(2, 12)}`;
-
     attendanceEntries.unshift({
-        id: entryId,
         date,
         name,
         phone,
