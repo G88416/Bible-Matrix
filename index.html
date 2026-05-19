@@ -1149,7 +1149,7 @@ body {
             <div class="status-form">
                 <h3>Post a status</h3>
                 <input id="statusLukeRef" type="text" maxlength="50" placeholder="Luke reference (e.g. Luke 15:20)" />
-                <textarea id="statusText" maxlength="280" placeholder="Share your Luke reflection with the group..."></textarea>
+                <textarea id="statusText" maxlength="280" placeholder="Share your Luke reflection (optional with attachment)..."></textarea>
                 <label class="file-input-label">
                     <span>📎 Add media/file</span>
                     <input
@@ -1774,8 +1774,8 @@ function formatTimestamp(ts) {
 }
 
 function formatFileSize(sizeInBytes) {
-    const parsed = Number(sizeInBytes);
-    const size = Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
+    const numericSize = Number(sizeInBytes);
+    const size = Number.isFinite(numericSize) && numericSize > 0 ? numericSize : 0;
     if (size < 1024) return `${size} B`;
     if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`;
     return `${(size / (1024 * 1024)).toFixed(1)} MB`;
@@ -1960,10 +1960,17 @@ async function postLukeStatus() {
             }
             const safeFileName = sanitizeAttachmentFileName(statusAttachmentFile.name);
             const attachmentPath = `lukeStatuses/${currentUser.uid}/${Date.now()}-${safeFileName}`;
-            const uploadTask = await storage.ref().child(attachmentPath).put(statusAttachmentFile, {
-                contentType: statusAttachmentFile.type
-            });
-            const downloadURL = await uploadTask.ref.getDownloadURL();
+            let downloadURL = '';
+            try {
+                const uploadTask = await storage.ref().child(attachmentPath).put(statusAttachmentFile, {
+                    contentType: statusAttachmentFile.type
+                });
+                downloadURL = await uploadTask.ref.getDownloadURL();
+            } catch (uploadError) {
+                console.error('Failed to upload status attachment:', uploadError);
+                feedbackEl.textContent = 'Failed to upload file. Check your connection and try again.';
+                return;
+            }
             attachmentData = {
                 name: clampAttachmentName(statusAttachmentFile.name),
                 type: statusAttachmentFile.type,
