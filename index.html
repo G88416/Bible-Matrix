@@ -43,6 +43,7 @@
     --success: #28e38b;
     --danger: #ff5f8f;
     --shadow: 0 24px 60px rgba(0, 0, 0, 0.32);
+    --game-screen-bottom-padding: 24px;
     --community-green-bg: rgba(120, 232, 159, 0.24);
     --community-green-border: rgba(120, 232, 159, 0.58);
     --community-green-soft: rgba(120, 232, 159, 0.16);
@@ -419,7 +420,7 @@ footer {
 }
 
 #gameScreen {
-    padding-bottom: calc(24px + env(safe-area-inset-bottom));
+    padding-bottom: calc(var(--game-screen-bottom-padding) + env(safe-area-inset-bottom));
 }
 
 .feedback {
@@ -984,8 +985,9 @@ body.menu-lock {
     display: flex;
 }
 
-body.gameplay-active #installBanner {
-    display: none !important;
+body.gameplay-active #installBanner,
+body.gameplay-active #installBanner.show {
+    display: none;
 }
 
 #installBanner img {
