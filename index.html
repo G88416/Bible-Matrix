@@ -2256,7 +2256,10 @@ function renderLukeStatuses() {
         visibleStatuses.push({ doc, data });
     });
     if (!visibleStatuses.length) {
-        statusFeed.innerHTML = '<li class="feed-item muted-note">No active statuses in the last 24 hours.</li>';
+        const emptyMessage = latestStatusDocs.length
+            ? 'No active statuses in the last 24 hours.'
+            : 'No statuses yet. Post the first Luke update.';
+        statusFeed.innerHTML = `<li class="feed-item muted-note">${emptyMessage}</li>`;
         return;
     }
     statusFeed.innerHTML = '';
@@ -2342,7 +2345,7 @@ function renderLukeStatuses() {
     if (nextExpiryDelay !== null) {
         statusExpiryRerenderTimeout = setTimeout(() => {
             renderLukeStatuses();
-        }, Math.max(1000, nextExpiryDelay + 250));
+        }, Math.max(1000, nextExpiryDelay + 50));
     }
 }
 
