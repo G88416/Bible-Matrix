@@ -1725,6 +1725,7 @@ const STATUS_ATTACHMENT_BUCKET = String(firebaseConfig.storageBucket || '').trim
 const MAX_STATUS_ATTACHMENT_BYTES = 20 * 1024 * 1024;
 const MAX_STATUS_ATTACHMENT_NAME_LENGTH = 120;
 const MAX_CHAT_VOICE_NOTE_BYTES = 12 * 1024 * 1024;
+const MILLISECONDS_PER_MINUTE = 60000;
 const GROUP_AUDIO_CALL_URL = 'https://meet.jit.si/BibleMatrixLukeGroupAudioCall';
 const ATTENDANCE_STORAGE_KEY = 'bibleMatrixSundayAttendanceEntries';
 const ALLOWED_STATUS_ATTACHMENT_TYPES = new Set([
@@ -1895,7 +1896,7 @@ function setAttendanceDefaultDate() {
     const dateInput = document.getElementById('attendanceDate');
     if (!dateInput || dateInput.value) return;
     const today = new Date();
-    const localDate = new Date(today.getTime() - (today.getTimezoneOffset() * 60000));
+    const localDate = new Date(today.getTime() - (today.getTimezoneOffset() * MILLISECONDS_PER_MINUTE));
     dateInput.value = localDate.toISOString().slice(0, 10);
 }
 
