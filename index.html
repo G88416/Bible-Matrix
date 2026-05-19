@@ -1292,11 +1292,12 @@ body {
                             <th>Name</th>
                             <th>Phone</th>
                             <th>First-time</th>
+                            <th>Notes</th>
                         </tr>
                     </thead>
                     <tbody id="attendanceTableBody">
                         <tr>
-                            <td colspan="4">No attendance entries yet.</td>
+                            <td colspan="5">No attendance entries yet.</td>
                         </tr>
                     </tbody>
                 </table>
@@ -1935,7 +1936,7 @@ function renderAttendanceEntries() {
     if (!tableBody || !countEl) return;
     countEl.textContent = `${attendanceEntries.length} ${attendanceEntries.length === 1 ? 'entry' : 'entries'}`;
     if (!attendanceEntries.length) {
-        tableBody.innerHTML = '<tr><td colspan="4">No attendance entries yet.</td></tr>';
+        tableBody.innerHTML = '<tr><td colspan="5">No attendance entries yet.</td></tr>';
         return;
     }
     tableBody.innerHTML = '';
@@ -1949,10 +1950,13 @@ function renderAttendanceEntries() {
         phoneCell.textContent = entry.phone || '-';
         const guestCell = document.createElement('td');
         guestCell.textContent = entry.firstTime ? 'Yes' : 'No';
+        const notesCell = document.createElement('td');
+        notesCell.textContent = entry.notes || '-';
         row.appendChild(dateCell);
         row.appendChild(nameCell);
         row.appendChild(phoneCell);
         row.appendChild(guestCell);
+        row.appendChild(notesCell);
         tableBody.appendChild(row);
     });
 }
@@ -3058,7 +3062,7 @@ if ('serviceWorker' in navigator) {
         <strong>BIBLE MATRIX</strong>
         <button class="icon-btn" onclick="closeMenu()" aria-label="Close menu">✕</button>
     </div>
-    <p class="muted-note">Navigate to quiz, Luke status, group chat, or attendance register.</p>
+    <p class="muted-note">Navigate to quiz, Luke status, group chat, or Sunday service attendance register.</p>
     <div class="menu-actions">
         <button class="menu-btn" onclick="goHome()">🏠 Home</button>
         <button class="menu-btn" onclick="openStatusScreen()">🟢 Luke Status</button>
