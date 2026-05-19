@@ -1619,6 +1619,7 @@ let statusUnsubscribe = null;
 let chatUnsubscribe = null;
 let statusAttachmentFile = null;
 const MAX_STATUS_ATTACHMENT_BYTES = 20 * 1024 * 1024;
+const MAX_STATUS_ATTACHMENT_NAME_LENGTH = 120;
 const ALLOWED_STATUS_ATTACHMENT_TYPES = new Set([
     'application/pdf',
     'application/msword',
@@ -1786,6 +1787,17 @@ function getAttachmentKind(contentType) {
     return 'document';
 }
 
+function isTrustedAttachmentUrl(value) {
+    try {
+        const parsed = new URL(String(value || ''));
+        if (parsed.protocol !== 'https:') return false;
+        return parsed.hostname === 'firebasestorage.googleapis.com'
+            || parsed.hostname === 'storage.googleapis.com';
+    } catch (error) {
+        return false;
+    }
+}
+
 function handleStatusAttachmentChange() {
     const attachmentEl = document.getElementById('statusAttachment');
     const attachmentNameEl = document.getElementById('statusAttachmentName');
@@ -1871,7 +1883,7 @@ function subscribeLukeStatuses() {
                     const attachmentBox = document.createElement('div');
                     attachmentBox.className = 'feed-attachment';
                     const safeUrl = String(data.attachment.url || '');
-                    if (safeUrl.startsWith('https://') || safeUrl.startsWith('http://')) {
+                    if (isTrustedAttachmentUrl(safeUrl)) {
                         const kind = getAttachmentKind(data.attachment.type);
                         if (kind === 'image') {
                             const image = document.createElement('img');
@@ -1932,7 +1944,7 @@ async function postLukeStatus() {
             });
             const downloadURL = await uploadTask.ref.getDownloadURL();
             attachmentData = {
-                name: statusAttachmentFile.name.slice(0, 120),
+                name: statusAttachmentFile.name.slice(0, MAX_STATUS_ATTACHMENT_NAME_LENGTH),
                 type: statusAttachmentFile.type,
                 size: Number(statusAttachmentFile.size) || 0,
                 url: downloadURL

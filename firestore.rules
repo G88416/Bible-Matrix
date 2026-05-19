@@ -78,6 +78,7 @@ service cloud.firestore {
           ]
           && request.resource.data.attachment.size is int
           && request.resource.data.attachment.size > 0
+          // 20 MB max file size.
           && request.resource.data.attachment.size <= 20971520
           && request.resource.data.attachment.url is string
           && request.resource.data.attachment.url.matches('^https://.*')
