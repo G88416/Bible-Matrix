@@ -852,6 +852,27 @@ body.menu-lock {
     object-fit: cover;
 }
 
+.feed-attachment audio {
+    width: 100%;
+}
+
+.chat-actions-row {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 10px;
+}
+
+.call-link-btn {
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    background: rgba(10, 8, 24, 0.55);
+    color: var(--text);
+    border-radius: 12px;
+    padding: 10px 12px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
 /* ── Install banner ──────────────────────────────────────────── */
 #installBanner {
     position: fixed;
@@ -1016,6 +1037,15 @@ body {
     .menu-btn {
         font-size: 0.95rem;
         min-height: 50px;
+    }
+
+    .chat-actions-row {
+        flex-direction: column;
+    }
+
+    .call-link-btn {
+        width: 100%;
+        min-height: 46px;
     }
 }
 </style>
@@ -1196,7 +1226,19 @@ body {
             </div>
             <div class="chat-compose">
                 <h3>Send a message</h3>
-                <textarea id="chatMessage" maxlength="400" placeholder="Share your thought from Luke..."></textarea>
+                <div class="chat-actions-row">
+                    <button class="call-link-btn" onclick="openGroupAudioCall()">🎙️ Join Audio Group Call</button>
+                    <label class="file-input-label" style="margin-bottom:0;">
+                        <span>🎤 Add voice note</span>
+                        <input
+                            id="chatVoiceNote"
+                            type="file"
+                            onchange="handleChatVoiceNoteChange()"
+                            accept="audio/mpeg,audio/mp3,audio/wav,audio/x-wav,audio/webm,audio/ogg,audio/mp4,audio/aac,audio/x-m4a" />
+                    </label>
+                </div>
+                <p id="chatVoiceNoteName" class="status-attachment-name">No voice note selected.</p>
+                <textarea id="chatMessage" maxlength="400" placeholder="Share your thought from Luke (optional with voice note)..."></textarea>
                 <button class="btn btn-primary" onclick="sendGroupMessage()">Send</button>
                 <p id="chatFeedback" class="muted-note"></p>
             </div>
@@ -1618,9 +1660,12 @@ let loginRecaptcha = null;
 let statusUnsubscribe = null;
 let chatUnsubscribe = null;
 let statusAttachmentFile = null;
+let chatVoiceNoteFile = null;
 const STATUS_ATTACHMENT_BUCKET = String(firebaseConfig.storageBucket || '').trim();
 const MAX_STATUS_ATTACHMENT_BYTES = 20 * 1024 * 1024;
 const MAX_STATUS_ATTACHMENT_NAME_LENGTH = 120;
+const MAX_CHAT_VOICE_NOTE_BYTES = 12 * 1024 * 1024;
+const GROUP_AUDIO_CALL_URL = 'https://meet.jit.si/BibleMatrixLukeGroupAudioCall';
 const ALLOWED_STATUS_ATTACHMENT_TYPES = new Set([
     'application/pdf',
     'application/msword',
@@ -1634,6 +1679,17 @@ const ALLOWED_STATUS_ATTACHMENT_TYPES = new Set([
     'video/mp4',
     'video/quicktime',
     'video/webm'
+]);
+const ALLOWED_CHAT_VOICE_TYPES = new Set([
+    'audio/mpeg',
+    'audio/mp3',
+    'audio/wav',
+    'audio/x-wav',
+    'audio/webm',
+    'audio/ogg',
+    'audio/mp4',
+    'audio/aac',
+    'audio/x-m4a'
 ]);
 // Brief pause so players can review the right answer before the next question loads.
 const nextQuestionDelayMs = 1400;
@@ -1855,6 +1911,46 @@ function handleStatusAttachmentChange() {
     if (feedbackEl) feedbackEl.textContent = '';
 }
 
+function openGroupAudioCall() {
+    window.open(GROUP_AUDIO_CALL_URL, '_blank', 'noopener,noreferrer');
+}
+
+function handleChatVoiceNoteChange() {
+    const voiceEl = document.getElementById('chatVoiceNote');
+    const voiceNameEl = document.getElementById('chatVoiceNoteName');
+    const feedbackEl = document.getElementById('chatFeedback');
+    const file = voiceEl?.files?.[0] || null;
+    if (!file) {
+        chatVoiceNoteFile = null;
+        if (voiceNameEl) voiceNameEl.textContent = 'No voice note selected.';
+        return;
+    }
+    if (!ALLOWED_CHAT_VOICE_TYPES.has(file.type)) {
+        chatVoiceNoteFile = null;
+        voiceEl.value = '';
+        if (voiceNameEl) voiceNameEl.textContent = 'No voice note selected.';
+        if (feedbackEl) feedbackEl.textContent = 'Unsupported voice note type.';
+        return;
+    }
+    if (file.size <= 0) {
+        chatVoiceNoteFile = null;
+        voiceEl.value = '';
+        if (voiceNameEl) voiceNameEl.textContent = 'No voice note selected.';
+        if (feedbackEl) feedbackEl.textContent = 'Voice note is empty.';
+        return;
+    }
+    if (file.size > MAX_CHAT_VOICE_NOTE_BYTES) {
+        chatVoiceNoteFile = null;
+        voiceEl.value = '';
+        if (voiceNameEl) voiceNameEl.textContent = 'No voice note selected.';
+        if (feedbackEl) feedbackEl.textContent = 'Voice note is too large. Maximum size is 12 MB.';
+        return;
+    }
+    chatVoiceNoteFile = file;
+    if (voiceNameEl) voiceNameEl.textContent = `${file.name} (${formatFileSize(file.size)})`;
+    if (feedbackEl) feedbackEl.textContent = '';
+}
+
 function teardownCommunityListeners() {
     if (typeof statusUnsubscribe === 'function') {
         statusUnsubscribe();
@@ -2041,7 +2137,31 @@ function subscribeGroupChat() {
                 const text = document.createElement('p');
                 text.textContent = data.message || '';
                 item.appendChild(meta);
-                item.appendChild(text);
+                if (data.message) {
+                    item.appendChild(text);
+                }
+                if (data.voiceNote && data.voiceNote.url && data.voiceNote.type) {
+                    const safeUrl = String(data.voiceNote.url || '');
+                    if (isTrustedAttachmentUrl(safeUrl)) {
+                        const voiceWrap = document.createElement('div');
+                        voiceWrap.className = 'feed-attachment';
+                        const audio = document.createElement('audio');
+                        audio.controls = true;
+                        audio.preload = 'metadata';
+                        audio.src = safeUrl;
+                        voiceWrap.appendChild(audio);
+                        const voiceLink = document.createElement('a');
+                        voiceLink.className = 'feed-attachment-link';
+                        voiceLink.href = safeUrl;
+                        voiceLink.target = '_blank';
+                        voiceLink.rel = 'noopener noreferrer';
+                        const voiceName = data.voiceNote.name || 'Open voice note';
+                        const voiceSize = data.voiceNote.size ? ` (${formatFileSize(data.voiceNote.size)})` : '';
+                        voiceLink.textContent = `🎤 ${voiceName}${voiceSize}`;
+                        voiceWrap.appendChild(voiceLink);
+                        item.appendChild(voiceWrap);
+                    }
+                }
                 chatFeed.appendChild(item);
             });
             chatFeed.scrollTop = chatFeed.scrollHeight;
@@ -2055,19 +2175,56 @@ async function sendGroupMessage() {
     if (!firebaseReady() || !currentUser || !currentProfile) return;
     const chatMessageEl = document.getElementById('chatMessage');
     const feedbackEl = document.getElementById('chatFeedback');
+    const voiceEl = document.getElementById('chatVoiceNote');
+    const voiceNameEl = document.getElementById('chatVoiceNoteName');
     const message = chatMessageEl.value.trim();
-    if (!message) {
-        feedbackEl.textContent = 'Type a message before sending.';
+    if (!message && !chatVoiceNoteFile) {
+        feedbackEl.textContent = 'Type a message or attach a voice note before sending.';
         return;
     }
     try {
-        await db.collection('groupMessages').add({
+        let voiceNote = null;
+        if (chatVoiceNoteFile) {
+            if (!storage) {
+                feedbackEl.textContent = 'Voice note upload is unavailable right now.';
+                return;
+            }
+            const safeFileName = sanitizeAttachmentFileName(chatVoiceNoteFile.name);
+            const voicePath = `groupVoiceNotes/${currentUser.uid}/${Date.now()}-${safeFileName}`;
+            let downloadURL = '';
+            try {
+                const uploadTask = await storage.ref().child(voicePath).put(chatVoiceNoteFile, {
+                    contentType: chatVoiceNoteFile.type
+                });
+                downloadURL = await uploadTask.ref.getDownloadURL();
+            } catch (uploadError) {
+                console.error('Failed to upload voice note:', uploadError);
+                feedbackEl.textContent = 'Failed to upload voice note. Check your connection and try again.';
+                return;
+            }
+            voiceNote = {
+                name: clampAttachmentName(chatVoiceNoteFile.name),
+                type: chatVoiceNoteFile.type,
+                size: Number.isFinite(chatVoiceNoteFile.size) ? chatVoiceNoteFile.size : 0,
+                url: downloadURL
+            };
+        }
+        const messagePayload = {
             uid: currentUser.uid,
             authorName: currentProfile.fullName || 'Anonymous',
-            message: message.slice(0, 400),
             createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
+        };
+        if (message) {
+            messagePayload.message = message.slice(0, 400);
+        }
+        if (voiceNote) {
+            messagePayload.voiceNote = voiceNote;
+        }
+        await db.collection('groupMessages').add(messagePayload);
         chatMessageEl.value = '';
+        if (voiceEl) voiceEl.value = '';
+        if (voiceNameEl) voiceNameEl.textContent = 'No voice note selected.';
+        chatVoiceNoteFile = null;
         feedbackEl.textContent = 'Message sent.';
     } catch (error) {
         console.error('Failed to send message:', error);

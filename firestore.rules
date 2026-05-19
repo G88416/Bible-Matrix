@@ -85,6 +85,43 @@ service cloud.firestore {
         );
     }
 
+    function hasValidOptionalVoiceNote() {
+      return !('voiceNote' in request.resource.data)
+        || (
+          request.resource.data.voiceNote is map
+          && request.resource.data.voiceNote.keys().hasOnly(['name', 'type', 'size', 'url'])
+          && request.resource.data.voiceNote.name is string
+          && request.resource.data.voiceNote.name.size() > 0
+          && request.resource.data.voiceNote.name.size() <= 120
+          && request.resource.data.voiceNote.type is string
+          && request.resource.data.voiceNote.type in [
+            'audio/mpeg',
+            'audio/mp3',
+            'audio/wav',
+            'audio/x-wav',
+            'audio/webm',
+            'audio/ogg',
+            'audio/mp4',
+            'audio/aac',
+            'audio/x-m4a'
+          ]
+          && request.resource.data.voiceNote.size is int
+          && request.resource.data.voiceNote.size > 0
+          // 12 MB max voice note size.
+          && request.resource.data.voiceNote.size <= 12582912
+          && request.resource.data.voiceNote.url is string
+          && request.resource.data.voiceNote.url.matches('^https://.*')
+        );
+    }
+
+    function hasValidGroupMessageBody() {
+      return hasValidOptionalText('message', 400)
+        && (
+          ('message' in request.resource.data)
+          || ('voiceNote' in request.resource.data)
+        );
+    }
+
     match /users/{userId} {
       allow read: if isSignedIn();
       allow create: if isOwner(userId)
@@ -120,7 +157,8 @@ service cloud.firestore {
       allow create: if isSignedIn()
         && request.resource.data.uid == request.auth.uid
         && hasValidAuthorName('authorName', 80)
-        && hasValidText('message', 400)
+        && hasValidGroupMessageBody()
+        && hasValidOptionalVoiceNote()
         && request.resource.data.createdAt is timestamp;
       allow update, delete: if false;
     }
