@@ -863,6 +863,13 @@ body.menu-lock {
     margin-bottom: 10px;
 }
 
+.attendance-first-time-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin: 8px 0 12px;
+}
+
 .call-link-btn {
     border: 1px solid rgba(255, 255, 255, 0.16);
     background: rgba(10, 8, 24, 0.55);
@@ -1267,7 +1274,7 @@ body {
                 <input id="attendanceDate" type="date" />
                 <input id="attendanceName" type="text" maxlength="80" placeholder="Full name" />
                 <input id="attendancePhone" type="tel" maxlength="20" placeholder="Phone number (optional)" />
-                <label style="display:flex; gap:8px; align-items:center; margin:8px 0 12px;">
+                <label class="attendance-first-time-row">
                     <input id="attendanceFirstTime" type="checkbox" />
                     <span>First-time guest</span>
                 </label>
@@ -1976,8 +1983,12 @@ function addAttendanceEntry() {
         return;
     }
 
+    const entryId = typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+        ? crypto.randomUUID()
+        : `${Date.now()}-${Math.random().toString(36).slice(2, 12)}`;
+
     attendanceEntries.unshift({
-        id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        id: entryId,
         date,
         name,
         phone,
