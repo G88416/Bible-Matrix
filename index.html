@@ -1780,6 +1780,7 @@ const MAX_STATUS_ATTACHMENT_BYTES = 20 * 1024 * 1024;
 const MAX_STATUS_ATTACHMENT_NAME_LENGTH = 120;
 const STATUS_LIFETIME_MS = 24 * 60 * 60 * 1000;
 const STATUS_EXPIRY_RERENDER_BUFFER_MS = 50;
+const MIN_STATUS_RERENDER_DELAY_MS = 1000;
 const MILLISECONDS_PER_MINUTE = 60000;
 const OBJECT_URL_CLEANUP_DELAY_MS = 5 * 60 * 1000;
 const ATTENDANCE_STORAGE_KEY = 'bibleMatrixSundayAttendanceEntries';
@@ -2339,7 +2340,7 @@ function renderLukeStatuses() {
     if (nextExpiryDelay !== null) {
         statusExpiryRerenderTimeout = setTimeout(() => {
             renderLukeStatuses();
-        }, Math.max(1000, nextExpiryDelay + STATUS_EXPIRY_RERENDER_BUFFER_MS));
+        }, Math.max(MIN_STATUS_RERENDER_DELAY_MS, nextExpiryDelay + STATUS_EXPIRY_RERENDER_BUFFER_MS));
     }
 }
 
