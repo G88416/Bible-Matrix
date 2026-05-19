@@ -5,7 +5,6 @@ const path = require('path');
 const app = express();
 const port = process.env.PORT || 8080;
 const rootDir = __dirname;
-const SPA_ROUTE_PATTERN = /^\/(?!.*\.).*/;
 
 const readRequiredFile = (fileName) => {
   const filePath = path.join(rootDir, fileName);
@@ -38,7 +37,7 @@ app.get('/sw.js', (_req, res) => {
   res.type('application/javascript').send(serviceWorkerJs);
 });
 
-app.get(SPA_ROUTE_PATTERN, (_req, res) => {
+app.get(/.*/, (_req, res) => {
   res.type('html').send(indexHtml);
 });
 
