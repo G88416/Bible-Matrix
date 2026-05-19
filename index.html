@@ -1803,7 +1803,7 @@ function sanitizeAttachmentFileName(fileName) {
     return String(fileName || 'file')
         .replace(/[^\w.\- ]+/g, '_')
         .replace(/\s+/g, '-')
-        .slice(0, 140);
+        .slice(0, MAX_STATUS_ATTACHMENT_NAME_LENGTH);
 }
 
 function clampAttachmentName(fileName) {
@@ -1967,7 +1967,7 @@ async function postLukeStatus() {
             attachmentData = {
                 name: clampAttachmentName(statusAttachmentFile.name),
                 type: statusAttachmentFile.type,
-                size: Number.isFinite(Number(statusAttachmentFile.size)) ? Number(statusAttachmentFile.size) : 0,
+                size: Number.isFinite(statusAttachmentFile.size) ? statusAttachmentFile.size : 0,
                 url: downloadURL
             };
         }
