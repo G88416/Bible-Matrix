@@ -43,9 +43,9 @@
     --success: #28e38b;
     --danger: #ff5f8f;
     --shadow: 0 24px 60px rgba(0, 0, 0, 0.32);
-    --community-green-bg: rgba(104, 211, 145, 0.16);
-    --community-green-border: rgba(104, 211, 145, 0.42);
-    --community-green-soft: rgba(104, 211, 145, 0.1);
+    --community-green-bg: rgba(120, 232, 159, 0.24);
+    --community-green-border: rgba(120, 232, 159, 0.58);
+    --community-green-soft: rgba(120, 232, 159, 0.16);
 }
 
 * {
@@ -3127,6 +3127,11 @@ function selectAnswer(selectedIndex, button) {
     document.getElementById('pauseBtn').disabled = true;
 
     const stage = stages[currentStageIndex];
+    const question = stage?.questions?.[currentQuestionIndex];
+    if (!question) {
+        loadQuestion();
+        return;
+    }
     const buttons = document.querySelectorAll('.answer-btn');
 
     buttons.forEach((item) => {
