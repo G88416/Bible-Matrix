@@ -32,6 +32,27 @@ service cloud.firestore {
         && request.resource.data.phoneNumber.matches('^[+0-9()\\-\\s]{7,20}$');
     }
 
+    function hasValidAuthorName(fieldName, maxSize) {
+      return request.resource.data[fieldName] is string
+        && request.resource.data[fieldName].size() > 1
+        && request.resource.data[fieldName].size() <= maxSize;
+    }
+
+    function hasValidText(fieldName, maxSize) {
+      return request.resource.data[fieldName] is string
+        && request.resource.data[fieldName].size() > 0
+        && request.resource.data[fieldName].size() <= maxSize;
+    }
+
+    function hasValidOptionalText(fieldName, maxSize) {
+      return !(fieldName in request.resource.data)
+        || (
+          request.resource.data[fieldName] is string
+          && request.resource.data[fieldName].size() > 0
+          && request.resource.data[fieldName].size() <= maxSize
+        );
+    }
+
     match /users/{userId} {
       allow read: if isSignedIn();
       allow create: if isOwner(userId)
@@ -48,6 +69,27 @@ service cloud.firestore {
         && hasValidScore()
         && request.resource.data.bestScore >= resource.data.bestScore;
       allow delete: if false;
+    }
+
+    match /lukeStatuses/{statusId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn()
+        && request.resource.data.uid == request.auth.uid
+        && hasValidAuthorName('authorName', 80)
+        && hasValidText('text', 280)
+        && hasValidOptionalText('lukeReference', 50)
+        && request.resource.data.createdAt is timestamp;
+      allow update, delete: if false;
+    }
+
+    match /groupMessages/{messageId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn()
+        && request.resource.data.uid == request.auth.uid
+        && hasValidAuthorName('authorName', 80)
+        && hasValidText('message', 400)
+        && request.resource.data.createdAt is timestamp;
+      allow update, delete: if false;
     }
   }
 }
