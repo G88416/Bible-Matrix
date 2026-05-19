@@ -1774,7 +1774,8 @@ function formatTimestamp(ts) {
 }
 
 function formatFileSize(sizeInBytes) {
-    const size = Number(sizeInBytes) || 0;
+    const parsed = Number(sizeInBytes);
+    const size = Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
     if (size < 1024) return `${size} B`;
     if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`;
     return `${(size / (1024 * 1024)).toFixed(1)} MB`;
@@ -1796,6 +1797,18 @@ function isTrustedAttachmentUrl(value) {
     } catch (error) {
         return false;
     }
+}
+
+function sanitizeAttachmentFileName(fileName) {
+    return String(fileName || 'file')
+        .replace(/[^\w.\- ]+/g, '_')
+        .replace(/\s+/g, '-')
+        .slice(0, 140);
+}
+
+function clampAttachmentName(fileName) {
+    const safeName = String(fileName || 'attachment');
+    return Array.from(safeName).slice(0, MAX_STATUS_ATTACHMENT_NAME_LENGTH).join('');
 }
 
 function handleStatusAttachmentChange() {
@@ -1820,6 +1833,13 @@ function handleStatusAttachmentChange() {
         attachmentEl.value = '';
         if (attachmentNameEl) attachmentNameEl.textContent = 'No file selected.';
         if (feedbackEl) feedbackEl.textContent = 'File is too large. Maximum size is 20 MB.';
+        return;
+    }
+    if (file.size <= 0) {
+        statusAttachmentFile = null;
+        attachmentEl.value = '';
+        if (attachmentNameEl) attachmentNameEl.textContent = 'No file selected.';
+        if (feedbackEl) feedbackEl.textContent = 'File is empty. Choose a file with content.';
         return;
     }
     statusAttachmentFile = file;
@@ -1938,15 +1958,16 @@ async function postLukeStatus() {
                 feedbackEl.textContent = 'File upload is unavailable right now.';
                 return;
             }
-            const attachmentPath = `lukeStatuses/${currentUser.uid}/${Date.now()}-${statusAttachmentFile.name}`;
+            const safeFileName = sanitizeAttachmentFileName(statusAttachmentFile.name);
+            const attachmentPath = `lukeStatuses/${currentUser.uid}/${Date.now()}-${safeFileName}`;
             const uploadTask = await storage.ref().child(attachmentPath).put(statusAttachmentFile, {
                 contentType: statusAttachmentFile.type
             });
             const downloadURL = await uploadTask.ref.getDownloadURL();
             attachmentData = {
-                name: statusAttachmentFile.name.slice(0, MAX_STATUS_ATTACHMENT_NAME_LENGTH),
+                name: clampAttachmentName(statusAttachmentFile.name),
                 type: statusAttachmentFile.type,
-                size: Number(statusAttachmentFile.size) || 0,
+                size: Number.isFinite(Number(statusAttachmentFile.size)) ? Number(statusAttachmentFile.size) : 0,
                 url: downloadURL
             };
         }
