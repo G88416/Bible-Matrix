@@ -1255,7 +1255,7 @@ body {
         <div class="community-header">
             <div>
                 <div class="community-title">
-                    <img src="/icons/logo-advanced.svg" alt="" />
+                    <img src="/icons/logo-advanced.svg" alt="Luke Status logo" />
                     <h2>Luke Status</h2>
                 </div>
                 <p>Create and view faith updates inspired by the Gospel of Luke.</p>
@@ -1276,7 +1276,7 @@ body {
                         accept=".pdf,.doc,.docx,.xls,.xlsx,image/*,video/*" />
                 </label>
                 <p id="statusAttachmentName" class="status-attachment-name">No file selected.</p>
-                <button id="statusAttachmentViewBtn" class="attachment-view-btn" type="button" onclick="viewSelectedStatusAttachment()" hidden>View</button>
+                <button id="statusAttachmentViewBtn" class="attachment-view-btn" type="button" onclick="viewSelectedStatusAttachment()" aria-label="View selected attachment" hidden>View</button>
                 <button class="btn btn-primary" onclick="postLukeStatus()">Post Status</button>
                 <p id="statusFeedback" class="muted-note"></p>
             </div>
@@ -1301,7 +1301,7 @@ body {
         <div class="community-header">
             <div>
                 <div class="community-title">
-                    <img src="/icons/logo-advanced.svg" alt="" />
+                    <img src="/icons/logo-advanced.svg" alt="Luke Group Chat logo" />
                     <h2>Luke Group Chat</h2>
                 </div>
                 <p>Chat together as a group while discussing Luke passages.</p>
@@ -1318,14 +1318,13 @@ body {
             <div class="chat-compose">
                 <h3>Send a message</h3>
                 <div class="chat-actions-row">
-                    <button class="call-link-btn" onclick="toggleGroupCallPanel()">📞 Group Audio Call</button>
+                    <button class="call-link-btn" onclick="toggleGroupCallPanel()">🎙️ Group Call Mic Setup</button>
                     <button id="startVoiceRecordBtn" class="record-btn" type="button" onclick="startVoiceNoteRecording()">🎤 Record voice note</button>
                     <button id="stopVoiceRecordBtn" class="record-btn" type="button" onclick="stopVoiceNoteRecording()" disabled>⏹ Stop</button>
                     <button id="clearVoiceRecordBtn" class="record-btn" type="button" onclick="clearRecordedVoiceNote()" disabled>🗑 Clear</button>
                 </div>
                 <div id="groupCallPanel" class="call-panel">
-                    <p class="muted-note">Use this in-app audio panel to coordinate your group room and enable your microphone on this device.</p>
-                    <input id="groupCallRoom" type="text" maxlength="50" placeholder="Room name (default: luke-group-room)" />
+                    <p class="muted-note">Use this in-app audio panel to enable your mic for group call preparation on this device.</p>
                     <div class="call-controls">
                         <button class="record-btn" type="button" onclick="joinGroupAudioCall()">Join Call</button>
                         <button id="muteCallBtn" class="record-btn" type="button" onclick="toggleGroupCallMute()" disabled>Mute Mic</button>
@@ -1354,7 +1353,7 @@ body {
         <div class="community-header">
             <div>
                 <div class="community-title">
-                    <img src="/icons/logo-advanced.svg" alt="" />
+                    <img src="/icons/logo-advanced.svg" alt="Attendance register logo" />
                     <h2>Sunday Service Attendance Register</h2>
                 </div>
                 <p>Capture Sunday attendance and keep a simple register list.</p>
@@ -1827,7 +1826,6 @@ const MAX_STATUS_ATTACHMENT_NAME_LENGTH = 120;
 const MAX_CHAT_VOICE_NOTE_BYTES = 12 * 1024 * 1024;
 const MILLISECONDS_PER_MINUTE = 60000;
 const OBJECT_URL_CLEANUP_DELAY_MS = 5 * 60 * 1000;
-const DEFAULT_GROUP_CALL_ROOM = 'luke-group-room';
 const ATTENDANCE_STORAGE_KEY = 'bibleMatrixSundayAttendanceEntries';
 const ALLOWED_STATUS_ATTACHMENT_TYPES = new Set([
     'application/pdf',
@@ -2247,7 +2245,7 @@ function getPreferredRecordingMimeType() {
     if (typeof MediaRecorder === 'undefined' || typeof MediaRecorder.isTypeSupported !== 'function') {
         return '';
     }
-    const candidates = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4', 'audio/ogg;codecs=opus'];
+    const candidates = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4', 'audio/ogg;codecs=opus', 'audio/ogg'];
     return candidates.find((type) => MediaRecorder.isTypeSupported(type)) || '';
 }
 
@@ -2370,7 +2368,6 @@ function toggleGroupCallPanel() {
 
 async function joinGroupAudioCall() {
     const feedbackEl = document.getElementById('groupCallFeedback');
-    const roomEl = document.getElementById('groupCallRoom');
     const muteBtn = document.getElementById('muteCallBtn');
     const leaveBtn = document.getElementById('leaveCallBtn');
     if (!navigator.mediaDevices?.getUserMedia) {
@@ -2381,7 +2378,6 @@ async function joinGroupAudioCall() {
         if (feedbackEl) feedbackEl.textContent = 'Already connected to a call.';
         return;
     }
-    const roomName = (roomEl?.value || '').trim() || DEFAULT_GROUP_CALL_ROOM;
     try {
         activeGroupCallStream = await navigator.mediaDevices.getUserMedia({ audio: true });
         isGroupCallMuted = false;
@@ -2390,7 +2386,7 @@ async function joinGroupAudioCall() {
             muteBtn.textContent = 'Mute Mic';
         }
         if (leaveBtn) leaveBtn.disabled = false;
-        if (feedbackEl) feedbackEl.textContent = `Microphone active on this device for room "${roomName}".`;
+        if (feedbackEl) feedbackEl.textContent = 'Microphone active on this device for group call preparation.';
     } catch (error) {
         activeGroupCallStream = null;
         if (feedbackEl) feedbackEl.textContent = 'Unable to start call. Please allow microphone access.';
@@ -2431,7 +2427,7 @@ function teardownCallAndRecording() {
         try {
             chatVoiceRecorder?.stop();
         } catch (error) {
-            console.warn('Voice recorder stop warning:', error);
+            console.warn('Failed to stop voice recorder cleanly:', error);
         }
     }
     isChatVoiceRecording = false;
@@ -2529,6 +2525,7 @@ function subscribeLukeStatuses() {
                         viewBtn.target = '_blank';
                         viewBtn.rel = 'noopener noreferrer';
                         viewBtn.textContent = 'View';
+                        viewBtn.setAttribute('aria-label', 'View attachment');
                         actionRow.appendChild(viewBtn);
                         attachmentBox.appendChild(actionRow);
                         item.appendChild(attachmentBox);
@@ -2669,6 +2666,7 @@ function subscribeGroupChat() {
                         voiceViewBtn.target = '_blank';
                         voiceViewBtn.rel = 'noopener noreferrer';
                         voiceViewBtn.textContent = 'View';
+                        voiceViewBtn.setAttribute('aria-label', 'View voice note');
                         voiceActionRow.appendChild(voiceViewBtn);
                         voiceWrap.appendChild(voiceActionRow);
                         item.appendChild(voiceWrap);
