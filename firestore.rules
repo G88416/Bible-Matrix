@@ -114,7 +114,7 @@ service cloud.firestore {
         );
     }
 
-    function hasValidGroupMessageBody() {
+    function hasValidGroupMessageContent() {
       return hasValidOptionalText('message', 400)
         && (
           ('message' in request.resource.data)
@@ -157,7 +157,7 @@ service cloud.firestore {
       allow create: if isSignedIn()
         && request.resource.data.uid == request.auth.uid
         && hasValidAuthorName('authorName', 80)
-        && hasValidGroupMessageBody()
+        && hasValidGroupMessageContent()
         && hasValidOptionalVoiceNote()
         && request.resource.data.createdAt is timestamp;
       allow update, delete: if false;
