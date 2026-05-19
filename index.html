@@ -1871,9 +1871,9 @@ function showScreen(screenId) {
     document.getElementById(screenId).classList.add('active');
     if (screenId === 'gameScreen') {
         document.body.classList.add('gameplay-active');
-        return;
+    } else {
+        document.body.classList.remove('gameplay-active');
     }
-    document.body.classList.remove('gameplay-active');
 }
 
 function firebaseConfigured() {
