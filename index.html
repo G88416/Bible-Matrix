@@ -1862,10 +1862,17 @@ function isTrustedAttachmentUrl(value) {
 }
 
 function sanitizeAttachmentFileName(fileName) {
-    return String(fileName || 'file')
-        .replace(/[^\w.\- ]+/g, '_')
+    const raw = String(fileName || 'file');
+    const lastDot = raw.lastIndexOf('.');
+    const basePart = (lastDot > 0 ? raw.slice(0, lastDot) : raw)
+        .replace(/[^\w\- ]+/g, '_')
         .replace(/\s+/g, '-')
         .slice(0, MAX_STATUS_ATTACHMENT_NAME_LENGTH);
+    const extension = lastDot > 0
+        ? raw.slice(lastDot + 1).toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 10)
+        : '';
+    if (!extension) return basePart || 'file';
+    return `${basePart || 'file'}.${extension}`;
 }
 
 function clampAttachmentName(fileName) {
@@ -2064,9 +2071,7 @@ async function postLukeStatus() {
             const attachmentPath = `lukeStatuses/${currentUser.uid}/${Date.now()}-${safeFileName}`;
             let downloadURL = '';
             try {
-                const uploadTask = await storage.ref().child(attachmentPath).put(statusAttachmentFile, {
-                    contentType: statusAttachmentFile.type
-                });
+                const uploadTask = await storage.ref().child(attachmentPath).put(statusAttachmentFile);
                 downloadURL = await uploadTask.ref.getDownloadURL();
             } catch (uploadError) {
                 console.error('Failed to upload status attachment:', uploadError);
@@ -2134,10 +2139,10 @@ function subscribeGroupChat() {
                 when.textContent = formatTimestamp(data.createdAt);
                 meta.appendChild(author);
                 meta.appendChild(when);
-                const text = document.createElement('p');
-                text.textContent = data.message || '';
                 item.appendChild(meta);
                 if (data.message) {
+                    const text = document.createElement('p');
+                    text.textContent = data.message;
                     item.appendChild(text);
                 }
                 if (data.voiceNote && data.voiceNote.url && data.voiceNote.type) {
@@ -2193,9 +2198,7 @@ async function sendGroupMessage() {
             const voicePath = `groupVoiceNotes/${currentUser.uid}/${Date.now()}-${safeFileName}`;
             let downloadURL = '';
             try {
-                const uploadTask = await storage.ref().child(voicePath).put(chatVoiceNoteFile, {
-                    contentType: chatVoiceNoteFile.type
-                });
+                const uploadTask = await storage.ref().child(voicePath).put(chatVoiceNoteFile);
                 downloadURL = await uploadTask.ref.getDownloadURL();
             } catch (uploadError) {
                 console.error('Failed to upload voice note:', uploadError);

@@ -53,6 +53,11 @@ service cloud.firestore {
         );
     }
 
+    function hasTrustedStorageUrl(fieldName) {
+      return request.resource.data[fieldName].url.matches('^https://firebasestorage\\.googleapis\\.com/v0/b/bible-matrix\\.firebasestorage\\.app/o/.*$')
+        || request.resource.data[fieldName].url.matches('^https://storage\\.googleapis\\.com/bible-matrix\\.firebasestorage\\.app/.*$');
+    }
+
     function hasValidOptionalAttachment() {
       return !('attachment' in request.resource.data)
         || (
@@ -81,7 +86,7 @@ service cloud.firestore {
           // 20 MB max file size.
           && request.resource.data.attachment.size <= 20971520
           && request.resource.data.attachment.url is string
-          && request.resource.data.attachment.url.matches('^https://.*')
+          && hasTrustedStorageUrl('attachment')
         );
     }
 
@@ -110,7 +115,7 @@ service cloud.firestore {
           // 12 MB max voice note size.
           && request.resource.data.voiceNote.size <= 12582912
           && request.resource.data.voiceNote.url is string
-          && request.resource.data.voiceNote.url.matches('^https://.*')
+          && hasTrustedStorageUrl('voiceNote')
         );
     }
 
