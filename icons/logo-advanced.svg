@@ -1,26 +1,154 @@
 <svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <linearGradient id="bg" x1="64" y1="52" x2="450" y2="458" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#2C1B66"/>
-      <stop offset="0.55" stop-color="#24134F"/>
-      <stop offset="1" stop-color="#112C58"/>
+    <!-- Deep matrix-green-black background -->
+    <linearGradient id="bgGrad" x1="0" y1="0" x2="512" y2="512" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#000c00"/>
+      <stop offset="0.6" stop-color="#001800"/>
+      <stop offset="1" stop-color="#000e05"/>
     </linearGradient>
-    <linearGradient id="shine" x1="126" y1="112" x2="382" y2="410" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#61E7FF"/>
-      <stop offset="1" stop-color="#FFD84D"/>
+    <!-- Radial glow behind cross -->
+    <radialGradient id="crossGlow" cx="256" cy="256" r="160" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#00ff41" stop-opacity="0.22"/>
+      <stop offset="0.5" stop-color="#00ff41" stop-opacity="0.06"/>
+      <stop offset="1" stop-color="#000c00" stop-opacity="0"/>
+    </radialGradient>
+    <!-- Cross vertical bar gradient -->
+    <linearGradient id="crossV" x1="256" y1="128" x2="256" y2="390" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#00ff41" stop-opacity="0.3"/>
+      <stop offset="0.35" stop-color="#00ff41"/>
+      <stop offset="0.65" stop-color="#00ff41"/>
+      <stop offset="1" stop-color="#00cc33" stop-opacity="0.3"/>
     </linearGradient>
+    <!-- Cross horizontal bar gradient -->
+    <linearGradient id="crossH" x1="168" y1="230" x2="344" y2="230" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#00ff41" stop-opacity="0.3"/>
+      <stop offset="0.3" stop-color="#00ff41"/>
+      <stop offset="0.7" stop-color="#00ff41"/>
+      <stop offset="1" stop-color="#00cc33" stop-opacity="0.3"/>
+    </linearGradient>
+    <!-- Soft glow filter for cross -->
+    <filter id="glowF" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="10" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <!-- Brighter glow for cross center -->
+    <filter id="glowStrong" x="-80%" y="-80%" width="260%" height="260%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="18" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
   </defs>
-  <rect width="512" height="512" rx="120" fill="url(#bg)"/>
-  <circle cx="390" cy="122" r="64" fill="#FFD84D" fill-opacity="0.12"/>
-  <circle cx="108" cy="412" r="88" fill="#61E7FF" fill-opacity="0.1"/>
-  <path d="M146 152C146 138.745 156.745 128 170 128H342C355.255 128 366 138.745 366 152V366C366 379.255 355.255 390 342 390H170C156.745 390 146 379.255 146 366V152Z" fill="white" fill-opacity="0.08"/>
-  <path d="M188 176C188 167.163 195.163 160 204 160H308C316.837 160 324 167.163 324 176V343C324 351.837 316.837 359 308 359H204C195.163 359 188 351.837 188 343V176Z" stroke="url(#shine)" stroke-width="10"/>
-  <path d="M256 180V338" stroke="url(#shine)" stroke-width="10" stroke-linecap="round"/>
-  <path d="M221 212H256" stroke="#8EEAFF" stroke-width="8" stroke-linecap="round"/>
-  <path d="M256 212H291" stroke="#FFE38A" stroke-width="8" stroke-linecap="round"/>
-  <path d="M229 262H283" stroke="#D9E7FF" stroke-opacity="0.9" stroke-width="7" stroke-linecap="round"/>
-  <path d="M229 289H283" stroke="#D9E7FF" stroke-opacity="0.7" stroke-width="7" stroke-linecap="round"/>
-  <path d="M256 226C271.464 226 284 213.464 284 198C284 182.536 271.464 170 256 170C240.536 170 228 182.536 228 198C228 213.464 240.536 226 256 226Z" fill="#FFD84D" fill-opacity="0.18"/>
-  <path d="M256 176V220" stroke="#FFD84D" stroke-width="8" stroke-linecap="round"/>
-  <path d="M234 198H278" stroke="#FFD84D" stroke-width="8" stroke-linecap="round"/>
+
+  <!-- Background rounded square -->
+  <rect width="512" height="512" rx="108" fill="url(#bgGrad)"/>
+
+  <!-- Subtle grid pattern (matrix feel) -->
+  <!-- Horizontal grid lines -->
+  <line x1="0" y1="64"  x2="512" y2="64"  stroke="#00ff41" stroke-opacity="0.04" stroke-width="1"/>
+  <line x1="0" y1="128" x2="512" y2="128" stroke="#00ff41" stroke-opacity="0.04" stroke-width="1"/>
+  <line x1="0" y1="192" x2="512" y2="192" stroke="#00ff41" stroke-opacity="0.04" stroke-width="1"/>
+  <line x1="0" y1="256" x2="512" y2="256" stroke="#00ff41" stroke-opacity="0.06" stroke-width="1"/>
+  <line x1="0" y1="320" x2="512" y2="320" stroke="#00ff41" stroke-opacity="0.04" stroke-width="1"/>
+  <line x1="0" y1="384" x2="512" y2="384" stroke="#00ff41" stroke-opacity="0.04" stroke-width="1"/>
+  <line x1="0" y1="448" x2="512" y2="448" stroke="#00ff41" stroke-opacity="0.04" stroke-width="1"/>
+  <!-- Vertical grid lines -->
+  <line x1="64"  y1="0" x2="64"  y2="512" stroke="#00ff41" stroke-opacity="0.04" stroke-width="1"/>
+  <line x1="128" y1="0" x2="128" y2="512" stroke="#00ff41" stroke-opacity="0.04" stroke-width="1"/>
+  <line x1="192" y1="0" x2="192" y2="512" stroke="#00ff41" stroke-opacity="0.04" stroke-width="1"/>
+  <line x1="256" y1="0" x2="256" y2="512" stroke="#00ff41" stroke-opacity="0.06" stroke-width="1"/>
+  <line x1="320" y1="0" x2="320" y2="512" stroke="#00ff41" stroke-opacity="0.04" stroke-width="1"/>
+  <line x1="384" y1="0" x2="384" y2="512" stroke="#00ff41" stroke-opacity="0.04" stroke-width="1"/>
+  <line x1="448" y1="0" x2="448" y2="512" stroke="#00ff41" stroke-opacity="0.04" stroke-width="1"/>
+
+  <!-- Matrix digital rain columns (left side) — bright head, fading tail -->
+  <!-- Column A: x=42 -->
+  <rect x="38" y="42"  width="10" height="10" rx="2" fill="#00ff41" fill-opacity="0.95"/>
+  <rect x="38" y="56"  width="10" height="10" rx="2" fill="#00ff41" fill-opacity="0.70"/>
+  <rect x="38" y="70"  width="10" height="10" rx="2" fill="#00ff41" fill-opacity="0.45"/>
+  <rect x="38" y="84"  width="10" height="10" rx="2" fill="#00ff41" fill-opacity="0.25"/>
+  <rect x="38" y="98"  width="10" height="10" rx="2" fill="#00ff41" fill-opacity="0.10"/>
+  <rect x="38" y="280" width="10" height="10" rx="2" fill="#00ff41" fill-opacity="0.90"/>
+  <rect x="38" y="294" width="10" height="10" rx="2" fill="#00ff41" fill-opacity="0.60"/>
+  <rect x="38" y="308" width="10" height="10" rx="2" fill="#00ff41" fill-opacity="0.35"/>
+  <rect x="38" y="322" width="10" height="10" rx="2" fill="#00ff41" fill-opacity="0.15"/>
+  <!-- Column B: x=62 -->
+  <rect x="58" y="140" width="10" height="10" rx="2" fill="#00ff41" fill-opacity="0.95"/>
+  <rect x="58" y="154" width="10" height="10" rx="2" fill="#00ff41" fill-opacity="0.70"/>
+  <rect x="58" y="168" width="10" height="10" rx="2" fill="#00ff41" fill-opacity="0.45"/>
+  <rect x="58" y="182" width="10" height="10" rx="2" fill="#00ff41" fill-opacity="0.22"/>
+  <rect x="58" y="390" width="10" height="10" rx="2" fill="#00ff41" fill-opacity="0.85"/>
+  <rect x="58" y="404" width="10" height="10" rx="2" fill="#00ff41" fill-opacity="0.50"/>
+  <rect x="58" y="418" width="10" height="10" rx="2" fill="#00ff41" fill-opacity="0.25"/>
+  <!-- Column C: x=88 -->
+  <rect x="84" y="60"  width="10" height="10" rx="2" fill="#00ff41" fill-opacity="0.88"/>
+  <rect x="84" y="74"  width="10" height="10" rx="2" fill="#00ff41" fill-opacity="0.60"/>
+  <rect x="84" y="88"  width="10" height="10" rx="2" fill="#00ff41" fill-opacity="0.35"/>
+  <rect x="84" y="102" width="10" height="10" rx="2" fill="#00ff41" fill-opacity="0.15"/>
+  <rect x="84" y="340" width="10" height="10" rx="2" fill="#00ff41" fill-opacity="0.90"/>
+  <rect x="84" y="354" width="10" height="10" rx="2" fill="#00ff41" fill-opacity="0.65"/>
+  <rect x="84" y="368" width="10" height="10" rx="2" fill="#00ff41" fill-opacity="0.38"/>
+  <rect x="84" y="382" width="10" height="10" rx="2" fill="#00ff41" fill-opacity="0.18"/>
+  <!-- Column D: x=112 -->
+  <rect x="108" y="200" width="10" height="10" rx="2" fill="#00ff41" fill-opacity="0.92"/>
+  <rect x="108" y="214" width="10" height="10" rx="2" fill="#00ff41" fill-opacity="0.65"/>
+  <rect x="108" y="228" width="10" height="10" rx="2" fill="#00ff41" fill-opacity="0.38"/>
+  <rect x="108" y="242" width="10" height="10" rx="2" fill="#00ff41" fill-opacity="0.18"/>
+  <rect x="108" y="430" width="10" height="10" rx="2" fill="#00ff41" fill-opacity="0.80"/>
+  <rect x="108" y="444" width="10" height="10" rx="2" fill="#00ff41" fill-opacity="0.45"/>
+
+  <!-- Matrix digital rain columns (right side) -->
+  <!-- Column E: x=416 -->
+  <rect x="412" y="80"  width="10" height="10" rx="2" fill="#00ff41" fill-opacity="0.92"/>
+  <rect x="412" y="94"  width="10" height="10" rx="2" fill="#00ff41" fill-opacity="0.68"/>
+  <rect x="412" y="108" width="10" height="10" rx="2" fill="#00ff41" fill-opacity="0.40"/>
+  <rect x="412" y="122" width="10" height="10" rx="2" fill="#00ff41" fill-opacity="0.18"/>
+  <rect x="412" y="310" width="10" height="10" rx="2" fill="#00ff41" fill-opacity="0.88"/>
+  <rect x="412" y="324" width="10" height="10" rx="2" fill="#00ff41" fill-opacity="0.58"/>
+  <rect x="412" y="338" width="10" height="10" rx="2" fill="#00ff41" fill-opacity="0.30"/>
+  <!-- Column F: x=440 -->
+  <rect x="436" y="42"  width="10" height="10" rx="2" fill="#00ff41" fill-opacity="0.90"/>
+  <rect x="436" y="56"  width="10" height="10" rx="2" fill="#00ff41" fill-opacity="0.65"/>
+  <rect x="436" y="70"  width="10" height="10" rx="2" fill="#00ff41" fill-opacity="0.38"/>
+  <rect x="436" y="84"  width="10" height="10" rx="2" fill="#00ff41" fill-opacity="0.18"/>
+  <rect x="436" y="260" width="10" height="10" rx="2" fill="#00ff41" fill-opacity="0.88"/>
+  <rect x="436" y="274" width="10" height="10" rx="2" fill="#00ff41" fill-opacity="0.60"/>
+  <rect x="436" y="288" width="10" height="10" rx="2" fill="#00ff41" fill-opacity="0.35"/>
+  <rect x="436" y="302" width="10" height="10" rx="2" fill="#00ff41" fill-opacity="0.15"/>
+  <rect x="436" y="420" width="10" height="10" rx="2" fill="#00ff41" fill-opacity="0.82"/>
+  <rect x="436" y="434" width="10" height="10" rx="2" fill="#00ff41" fill-opacity="0.48"/>
+  <!-- Column G: x=464 -->
+  <rect x="460" y="150" width="10" height="10" rx="2" fill="#00ff41" fill-opacity="0.92"/>
+  <rect x="460" y="164" width="10" height="10" rx="2" fill="#00ff41" fill-opacity="0.68"/>
+  <rect x="460" y="178" width="10" height="10" rx="2" fill="#00ff41" fill-opacity="0.42"/>
+  <rect x="460" y="192" width="10" height="10" rx="2" fill="#00ff41" fill-opacity="0.20"/>
+  <rect x="460" y="370" width="10" height="10" rx="2" fill="#00ff41" fill-opacity="0.85"/>
+  <rect x="460" y="384" width="10" height="10" rx="2" fill="#00ff41" fill-opacity="0.55"/>
+  <rect x="460" y="398" width="10" height="10" rx="2" fill="#00ff41" fill-opacity="0.28"/>
+  <!-- Column H: x=488 -->
+  <rect x="484" y="60"  width="10" height="10" rx="2" fill="#00ff41" fill-opacity="0.90"/>
+  <rect x="484" y="74"  width="10" height="10" rx="2" fill="#00ff41" fill-opacity="0.62"/>
+  <rect x="484" y="88"  width="10" height="10" rx="2" fill="#00ff41" fill-opacity="0.36"/>
+  <rect x="484" y="340" width="10" height="10" rx="2" fill="#00ff41" fill-opacity="0.88"/>
+  <rect x="484" y="354" width="10" height="10" rx="2" fill="#00ff41" fill-opacity="0.58"/>
+  <rect x="484" y="368" width="10" height="10" rx="2" fill="#00ff41" fill-opacity="0.30"/>
+  <rect x="484" y="450" width="10" height="10" rx="2" fill="#00ff41" fill-opacity="0.78"/>
+
+  <!-- Center radial glow -->
+  <circle cx="256" cy="248" r="155" fill="url(#crossGlow)"/>
+
+  <!-- Cross shadow/bloom layer (wide glow) -->
+  <rect x="237" y="128" width="38" height="240" rx="10" fill="#00ff41" fill-opacity="0.12" filter="url(#glowStrong)"/>
+  <rect x="168" y="218" width="176" height="38" rx="10" fill="#00ff41" fill-opacity="0.12" filter="url(#glowStrong)"/>
+
+  <!-- Cross — vertical bar -->
+  <rect x="237" y="128" width="38" height="240" rx="10" fill="url(#crossV)" filter="url(#glowF)"/>
+  <!-- Cross — horizontal bar -->
+  <rect x="168" y="218" width="176" height="40" rx="10" fill="url(#crossH)" filter="url(#glowF)"/>
+
+  <!-- Cross center bright spot -->
+  <circle cx="256" cy="238" r="22" fill="#00ff41" fill-opacity="0.30" filter="url(#glowStrong)"/>
+  <circle cx="256" cy="238" r="10" fill="#00ff41" fill-opacity="0.90"/>
+
+  <!-- "BIBLE MATRIX" label at the bottom -->
+  <rect x="108" y="408" width="296" height="52" rx="10" fill="#00ff41" fill-opacity="0.08"/>
+  <text x="256" y="442" text-anchor="middle" font-family="'Courier New', Courier, monospace" font-size="30" font-weight="bold" letter-spacing="6" fill="#00ff41" fill-opacity="0.92">MATRIX</text>
 </svg>

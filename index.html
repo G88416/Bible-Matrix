@@ -573,27 +573,42 @@ footer {
     flex-direction: column;
     align-items: center;
     margin-bottom: 22px;
-    gap: 10px;
+    gap: 12px;
 }
 
 .app-logo-wrap img {
-    width: 96px;
-    height: 96px;
-    border-radius: 22px;
-    box-shadow: 0 10px 34px rgba(0, 200, 255, 0.26);
+    width: 100px;
+    height: 100px;
+    border-radius: 24px;
+    box-shadow: 0 0 0 2px rgba(0, 255, 65, 0.35),
+                0 0 28px rgba(0, 255, 65, 0.40),
+                0 14px 40px rgba(0, 0, 0, 0.55);
     object-fit: cover;
-    background: radial-gradient(circle at top left, #6d5cff, #190a38);
+    background: #000c00;
+    animation: matrixLogoPulse 3s ease-in-out infinite;
+}
+
+@keyframes matrixLogoPulse {
+    0%, 100% { box-shadow: 0 0 0 2px rgba(0, 255, 65, 0.35),
+                            0 0 28px rgba(0, 255, 65, 0.40),
+                            0 14px 40px rgba(0, 0, 0, 0.55); }
+    50%       { box-shadow: 0 0 0 2px rgba(0, 255, 65, 0.65),
+                            0 0 44px rgba(0, 255, 65, 0.60),
+                            0 14px 40px rgba(0, 0, 0, 0.55); }
 }
 
 .app-logo-wrap .app-brand {
-    font-size: 1.55rem;
+    font-size: 1.6rem;
     font-weight: 800;
-    letter-spacing: 0.06em;
-    background: linear-gradient(135deg, #00e5ff, #ffd84d);
+    letter-spacing: 0.12em;
+    font-family: 'Courier New', Courier, monospace;
+    background: linear-gradient(135deg, #00ff41 0%, #00e5ff 55%, #ffd84d 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
     text-transform: uppercase;
+    text-shadow: none;
+    filter: drop-shadow(0 0 8px rgba(0, 255, 65, 0.50));
 }
 
 .app-topbar {
@@ -1013,7 +1028,197 @@ body.gameplay-active #installBanner.show {
     cursor: pointer;
 }
 
-/* ── Safe-area / notch support ───────────────────────────────── */
+/* ── iOS install instructions modal ─────────────────────────── */
+#iosInstallModal {
+    position: fixed;
+    inset: 0;
+    z-index: 10000;
+    display: none;
+    align-items: flex-end;
+    justify-content: center;
+    background: rgba(0,0,0,0.60);
+    backdrop-filter: blur(6px);
+}
+
+#iosInstallModal.show {
+    display: flex;
+}
+
+#iosInstallSheet {
+    width: min(96vw, 440px);
+    background: rgba(13, 20, 35, 0.98);
+    border: 1px solid rgba(0, 255, 65, 0.28);
+    border-bottom: none;
+    border-radius: 24px 24px 0 0;
+    padding: 20px 22px calc(22px + env(safe-area-inset-bottom));
+    box-shadow: 0 -8px 40px rgba(0,0,0,0.6);
+}
+
+#iosInstallSheet .ios-handle {
+    width: 40px;
+    height: 4px;
+    border-radius: 2px;
+    background: rgba(255,255,255,0.25);
+    margin: 0 auto 18px;
+}
+
+#iosInstallSheet h3 {
+    font-size: 1.1rem;
+    font-weight: 800;
+    margin: 0 0 4px;
+    color: #00ff41;
+    font-family: 'Courier New', Courier, monospace;
+    letter-spacing: 0.05em;
+}
+
+#iosInstallSheet .ios-subtitle {
+    font-size: 0.83rem;
+    color: var(--muted);
+    margin-bottom: 20px;
+}
+
+#iosInstallSheet .ios-steps {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+#iosInstallSheet .ios-steps li {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    font-size: 0.92rem;
+    color: var(--text);
+}
+
+#iosInstallSheet .ios-steps li .step-num {
+    flex-shrink: 0;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: rgba(0, 255, 65, 0.15);
+    border: 1px solid rgba(0, 255, 65, 0.4);
+    color: #00ff41;
+    font-weight: 700;
+    font-size: 0.82rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#iosInstallSheet .ios-steps li .step-icon {
+    font-size: 1.25rem;
+    flex-shrink: 0;
+}
+
+#iosInstallSheet .btn-ios-close {
+    width: 100%;
+    padding: 14px;
+    border-radius: 14px;
+    border: none;
+    background: linear-gradient(135deg, #00ff41, #00c832);
+    color: #001400;
+    font-weight: 700;
+    font-size: 0.95rem;
+    cursor: pointer;
+    font-family: 'Courier New', Courier, monospace;
+    letter-spacing: 0.04em;
+}
+
+/* install banner – updated for all platforms */
+#installBanner {
+    position: fixed;
+    bottom: calc(16px + env(safe-area-inset-bottom));
+    left: 50%;
+    transform: translateX(-50%);
+    width: min(94vw, 440px);
+    background: rgba(0, 10, 0, 0.96);
+    border: 1px solid rgba(0, 255, 65, 0.38);
+    border-radius: 20px;
+    padding: 14px 16px;
+    display: none;
+    align-items: center;
+    gap: 12px;
+    box-shadow: 0 0 0 1px rgba(0,255,65,0.08), 0 12px 40px rgba(0,0,0,0.65);
+    z-index: 9999;
+    backdrop-filter: blur(16px);
+}
+
+#installBanner.show {
+    display: flex;
+}
+
+body.gameplay-active #installBanner,
+body.gameplay-active #installBanner.show {
+    display: none;
+}
+
+#installBanner img {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    flex-shrink: 0;
+    box-shadow: 0 0 12px rgba(0,255,65,0.35);
+}
+
+#installBanner .banner-text {
+    flex: 1;
+    min-width: 0;
+}
+
+#installBanner .banner-text strong {
+    display: block;
+    font-size: 0.93rem;
+    font-family: 'Courier New', Courier, monospace;
+    color: #00ff41;
+    margin-bottom: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+#installBanner .banner-text span {
+    font-size: 0.79rem;
+    color: var(--muted);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+#installBanner .banner-actions {
+    display: flex;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+#installBanner .btn-install {
+    padding: 9px 14px;
+    font-size: 0.84rem;
+    border-radius: 12px;
+    border: none;
+    background: linear-gradient(135deg, #00ff41, #00c832);
+    color: #001400;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+    font-family: 'Courier New', Courier, monospace;
+    letter-spacing: 0.03em;
+}
+
+#installBanner .btn-dismiss {
+    padding: 9px 11px;
+    font-size: 0.84rem;
+    border-radius: 12px;
+    border: 1px solid rgba(255,255,255,0.15);
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+    flex-shrink: 0;
+}
 body {
     padding-top: env(safe-area-inset-top);
     padding-bottom: env(safe-area-inset-bottom);
@@ -1068,12 +1273,13 @@ body {
     }
 
     .app-logo-wrap img {
-        width: 80px;
-        height: 80px;
+        width: 84px;
+        height: 84px;
     }
 
     .app-logo-wrap .app-brand {
-        font-size: 1.3rem;
+        font-size: 1.35rem;
+        letter-spacing: 0.10em;
     }
 
     .community-shell {
@@ -3081,55 +3287,139 @@ if ('serviceWorker' in navigator) {
     });
 }
 
-// ── PWA Install Banner ────────────────────────────────────────
+// ── PWA Install Banner (multi-platform) ──────────────────────
 (function () {
-    let deferredPrompt = null;
+    // Detect platform
+    const ua = navigator.userAgent || '';
+    const isIOS = /iP(hone|od|ad)/.test(ua);
+    const isSafari = isIOS && /WebKit/.test(ua) && !/CriOS|FxiOS|OPiOS|mercury/.test(ua);
+    const isSamsungBrowser = /SamsungBrowser/.test(ua);
+    const isFirefoxMobile = /FxiOS|Firefox/.test(ua) && !isIOS;
+    // Standalone = already installed as PWA
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches
+        || window.navigator.standalone === true;
+
+    if (isStandalone) return; // Already installed — no banner needed
+
     const banner = document.getElementById('installBanner');
+    const bannerSubtitle = document.getElementById('installBannerSubtitle');
     const installBtn = document.getElementById('installBtn');
     const dismissBtn = document.getElementById('dismissBtn');
+    const iosModal = document.getElementById('iosInstallModal');
+    const iosCloseBtn = document.getElementById('iosCloseBtn');
 
+    let deferredPrompt = null;
+    let bannerShown = false;
+
+    function showBanner() {
+        if (bannerShown) return;
+        bannerShown = true;
+        banner.classList.add('show');
+    }
+
+    function hideBanner() {
+        banner.classList.remove('show');
+    }
+
+    // ── iOS / iPadOS Safari ──
+    if (isSafari) {
+        // Show install banner with "How to install" button after delay
+        if (bannerSubtitle) bannerSubtitle.textContent = 'Tap below for step-by-step install instructions';
+        if (installBtn) installBtn.textContent = 'How to Install';
+        setTimeout(showBanner, 3500);
+
+        if (installBtn) {
+            installBtn.addEventListener('click', () => {
+                hideBanner();
+                if (iosModal) iosModal.classList.add('show');
+            });
+        }
+        if (iosCloseBtn) {
+            iosCloseBtn.addEventListener('click', () => {
+                if (iosModal) iosModal.classList.remove('show');
+            });
+        }
+        if (iosModal) {
+            iosModal.addEventListener('click', e => {
+                if (e.target === iosModal) iosModal.classList.remove('show');
+            });
+        }
+    }
+
+    // ── Android / Chrome / Samsung / other supporting beforeinstallprompt ──
     window.addEventListener('beforeinstallprompt', e => {
         e.preventDefault();
         deferredPrompt = e;
-        // Show the banner after a short delay so it doesn't feel intrusive
-        setTimeout(() => banner.classList.add('show'), 3000);
+        if (isSamsungBrowser && bannerSubtitle) {
+            bannerSubtitle.textContent = 'Install on your Samsung device for the best experience';
+        } else if (isFirefoxMobile && bannerSubtitle) {
+            bannerSubtitle.textContent = 'Add to home screen for quick access';
+        }
+        setTimeout(showBanner, 3000);
     });
 
-    if (installBtn) {
+    if (installBtn && !isSafari) {
         installBtn.addEventListener('click', async () => {
             if (!deferredPrompt) return;
             deferredPrompt.prompt();
             const { outcome } = await deferredPrompt.userChoice;
             deferredPrompt = null;
-            banner.classList.remove('show');
+            hideBanner();
         });
     }
 
     if (dismissBtn) {
         dismissBtn.addEventListener('click', () => {
-            banner.classList.remove('show');
+            hideBanner();
             deferredPrompt = null;
         });
     }
 
     // Hide banner once installed
     window.addEventListener('appinstalled', () => {
-        banner.classList.remove('show');
+        hideBanner();
         deferredPrompt = null;
     });
 })();
 </script>
 
-<!-- ── Install Banner ──────────────────────────────────────── -->
+<!-- ── Install Banner (Android / Chrome / Samsung / Firefox) ── -->
 <div id="installBanner" role="complementary" aria-label="Install Bible Matrix">
     <img src="/icons/logo-advanced.svg" alt="Bible Matrix" />
     <div class="banner-text">
         <strong>Install Bible Matrix</strong>
-        <span>Add to your home screen for the best experience</span>
+        <span id="installBannerSubtitle">Add to your home screen for the best experience</span>
     </div>
     <div class="banner-actions">
         <button id="installBtn" class="btn-install">Install</button>
         <button id="dismissBtn" class="btn-dismiss">✕</button>
+    </div>
+</div>
+
+<!-- ── iOS Safari Install Instructions Modal ─────────────────── -->
+<div id="iosInstallModal" role="dialog" aria-modal="true" aria-label="How to install on iOS">
+    <div id="iosInstallSheet">
+        <div class="ios-handle"></div>
+        <h3>📲 Add to Home Screen</h3>
+        <p class="ios-subtitle">Install Bible Matrix on your iPhone or iPad in 3 easy steps:</p>
+        <ol class="ios-steps">
+            <li>
+                <span class="step-num">1</span>
+                <span class="step-icon">⬆️</span>
+                <span>Tap the <strong>Share</strong> button at the bottom of your Safari browser.</span>
+            </li>
+            <li>
+                <span class="step-num">2</span>
+                <span class="step-icon">➕</span>
+                <span>Scroll down and tap <strong>"Add to Home Screen"</strong>.</span>
+            </li>
+            <li>
+                <span class="step-num">3</span>
+                <span class="step-icon">✅</span>
+                <span>Tap <strong>"Add"</strong> in the top-right corner to confirm.</span>
+            </li>
+        </ol>
+        <button id="iosCloseBtn" class="btn-ios-close">Got it — Thanks!</button>
     </div>
 </div>
 
