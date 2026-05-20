@@ -35,35 +35,11 @@ service firebase.storage {
         ];
     }
 
-    function isAllowedVoiceNoteType() {
-      return request.resource != null
-        && request.resource.contentType is string
-        && request.resource.contentType in [
-          'audio/mpeg',
-          'audio/mp3',
-          'audio/wav',
-          'audio/x-wav',
-          'audio/webm',
-          'audio/ogg',
-          'audio/mp4',
-          'audio/aac',
-          'audio/x-m4a'
-        ];
-    }
-
     match /lukeStatuses/{userId}/{fileName=**} {
       allow read: if isSignedIn();
       allow create, update: if isOwner(userId)
         && hasValidUploadSize(20971520)
         && isAllowedStatusAttachmentType();
-      allow delete: if false;
-    }
-
-    match /groupVoiceNotes/{userId}/{fileName=**} {
-      allow read: if isSignedIn();
-      allow create, update: if isOwner(userId)
-        && hasValidUploadSize(12582912)
-        && isAllowedVoiceNoteType();
       allow delete: if false;
     }
 
