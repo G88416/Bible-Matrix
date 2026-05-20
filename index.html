@@ -3294,7 +3294,7 @@ if ('serviceWorker' in navigator) {
     const isIOS = /iP(hone|od|ad)/.test(ua);
     const isSafari = isIOS && /WebKit/.test(ua) && !/CriOS|FxiOS|OPiOS|mercury/.test(ua);
     const isSamsungBrowser = /SamsungBrowser/.test(ua);
-    const isFirefoxMobile = /FxiOS|Firefox/.test(ua) && !isIOS;
+    const isFirefoxMobile = /FxiOS/.test(ua) || (/Firefox/.test(ua) && !/iP(hone|od|ad)/.test(ua));
     // Standalone = already installed as PWA
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches
         || window.navigator.standalone === true;
@@ -3406,7 +3406,7 @@ if ('serviceWorker' in navigator) {
             <li>
                 <span class="step-num">1</span>
                 <span class="step-icon">⬆️</span>
-                <span>Tap the <strong>Share</strong> button at the bottom of your Safari browser.</span>
+                <span>Tap the <strong>Share</strong> button in your Safari browser (bottom on iPhone, top on iPad).</span>
             </li>
             <li>
                 <span class="step-num">2</span>
