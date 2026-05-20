@@ -2803,13 +2803,14 @@ function handleSundayPhotoBulkChange() {
         if (bulkNameEl) bulkNameEl.textContent = 'No bulk photos selected.';
         return;
     }
-    const invalidFile = files.find((file) => getSundayPhotoValidationError(file));
-    if (invalidFile) {
-        const error = getSundayPhotoValidationError(invalidFile);
+    const invalidEntry = files
+        .map((file) => ({ file, error: getSundayPhotoValidationError(file) }))
+        .find((entry) => entry.error);
+    if (invalidEntry) {
         sundayServiceBulkPhotoFiles = [];
         bulkEl.value = '';
         if (bulkNameEl) bulkNameEl.textContent = 'No bulk photos selected.';
-        if (feedbackEl) feedbackEl.textContent = `${invalidFile.name}: ${error}`;
+        if (feedbackEl) feedbackEl.textContent = `${invalidEntry.file.name}: ${invalidEntry.error}`;
         return;
     }
     sundayServiceBulkPhotoFiles = files;
@@ -2830,7 +2831,7 @@ async function uploadSingleSundayServicePhoto({ file, serviceDate, caption = '' 
         authorName: currentProfile.fullName || 'Anonymous',
         serviceDate,
         photo: {
-            name: clampAttachmentName(file.name),
+            name: safeFileName,
             type: file.type,
             size: Number.isFinite(file.size) ? file.size : 0,
             url: downloadURL
@@ -2947,6 +2948,7 @@ function renderSundayServicePhotos() {
     latestSundayPhotoDocs.forEach((doc) => {
         const data = doc.data();
         if (!data?.photo?.url || !data?.photo?.type || !isTrustedAttachmentUrl(data.photo.url)) return;
+        if (!ALLOWED_SUNDAY_PHOTO_TYPES.has(String(data.photo.type || '').toLowerCase())) return;
         const card = document.createElement('article');
         card.className = 'photo-library-item';
         const image = document.createElement('img');
