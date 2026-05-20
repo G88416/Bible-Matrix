@@ -951,6 +951,42 @@ body.menu-lock {
     margin: 8px 0 12px;
 }
 
+.photo-library-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+    gap: 10px;
+    max-height: 460px;
+    overflow-y: auto;
+    padding-right: 4px;
+}
+
+.photo-library-item {
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 12px;
+    padding: 8px;
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.photo-library-item img {
+    width: 100%;
+    height: 150px;
+    object-fit: cover;
+    border-radius: 10px;
+    margin-bottom: 6px;
+}
+
+.photo-library-meta {
+    display: grid;
+    gap: 2px;
+    font-size: 0.8rem;
+    color: var(--muted);
+}
+
+.photo-library-meta strong {
+    color: var(--text);
+    font-size: 0.84rem;
+}
+
 /* ── Install banner ──────────────────────────────────────────── */
 #installBanner {
     position: fixed;
@@ -1563,6 +1599,52 @@ body {
     </div>
 </section>
 
+<section id="photoLibraryScreen" class="screen">
+    <div class="app-topbar">
+        <button class="icon-btn" onclick="toggleMenu()" aria-label="Open navigation menu">☰</button>
+        <button class="icon-btn status-icon" onclick="openStatusScreen()" aria-label="Open Luke status">
+            <span class="status-ring">+</span>
+        </button>
+    </div>
+    <div class="container glass community-shell">
+        <div class="community-header">
+            <div>
+                <div class="community-title">
+                    <img src="/icons/logo-advanced.svg" alt="Photo library logo" />
+                    <h2>Sunday Service Photo Library</h2>
+                </div>
+                <p>Upload and view Sunday service photos with the church group.</p>
+            </div>
+            <button class="btn btn-secondary" onclick="goHome()">Home</button>
+        </div>
+        <div class="community-grid">
+            <div class="status-form">
+                <h3>Upload a photo</h3>
+                <input id="photoServiceDate" type="date" />
+                <label class="file-input-label">
+                    📷 Choose photo
+                    <input
+                        id="photoUploadInput"
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp,image/gif"
+                        onchange="handleSundayPhotoChange()" />
+                </label>
+                <p id="photoUploadName" class="status-attachment-name">No photo selected.</p>
+                <textarea id="photoCaption" maxlength="140" placeholder="Caption (optional)"></textarea>
+                <button class="btn btn-primary" onclick="uploadSundayServicePhoto()">Upload Photo</button>
+                <p id="photoLibraryFeedback" class="muted-note"></p>
+            </div>
+            <div class="feed-box">
+                <h3>Service photo gallery</h3>
+                <p id="photoLibraryCount" class="muted-note">0 photos</p>
+                <div id="photoLibraryGrid" class="photo-library-grid">
+                    <p class="muted-note">No photos yet.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
 <section id="gameScreen" class="screen">
     <div class="container glass game-shell">
         <div class="game-top">
@@ -1977,8 +2059,11 @@ let signupRecaptcha = null;
 let loginRecaptcha = null;
 let statusUnsubscribe = null;
 let chatUnsubscribe = null;
+let photoLibraryUnsubscribe = null;
 let statusAttachmentFile = null;
+let sundayServicePhotoFile = null;
 let latestStatusDocs = [];
+let latestSundayPhotoDocs = [];
 let statusExpiryRerenderTimeout = null;
 let attendanceEntries = [];
 const STATUS_ATTACHMENT_BUCKET = String(firebaseConfig.storageBucket || '').trim();
@@ -1990,6 +2075,7 @@ const MIN_STATUS_RERENDER_DELAY_MS = 1000;
 const MILLISECONDS_PER_MINUTE = 60000;
 const OBJECT_URL_CLEANUP_DELAY_MS = 5 * 60 * 1000;
 const ATTENDANCE_STORAGE_KEY = 'bibleMatrixSundayAttendanceEntries';
+const MAX_SUNDAY_PHOTO_BYTES = 10 * 1024 * 1024;
 const ALLOWED_STATUS_ATTACHMENT_TYPES = new Set([
     'application/pdf',
     'application/msword',
@@ -2003,6 +2089,12 @@ const ALLOWED_STATUS_ATTACHMENT_TYPES = new Set([
     'video/mp4',
     'video/quicktime',
     'video/webm'
+]);
+const ALLOWED_SUNDAY_PHOTO_TYPES = new Set([
+    'image/jpeg',
+    'image/png',
+    'image/webp',
+    'image/gif'
 ]);
 // Brief pause so players can review the right answer before the next question loads.
 const nextQuestionDelayMs = 1400;
@@ -2146,6 +2238,22 @@ function openAttendanceScreen() {
     teardownCommunityListeners();
     setAttendanceDefaultDate();
     renderAttendanceEntries();
+}
+
+function openPhotoLibraryScreen() {
+    if (!currentUser) {
+        showScreen('authScreen');
+        return;
+    }
+    showScreen('photoLibraryScreen');
+    closeMenu();
+    teardownCommunityListeners();
+    setAttendanceDefaultDate();
+    const serviceDateEl = document.getElementById('photoServiceDate');
+    if (serviceDateEl && !serviceDateEl.value) {
+        serviceDateEl.value = document.getElementById('attendanceDate')?.value || '';
+    }
+    subscribeSundayServicePhotos();
 }
 
 function setAttendanceDefaultDate() {
@@ -2411,9 +2519,14 @@ function teardownCommunityListeners() {
     if (typeof chatUnsubscribe === 'function') {
         chatUnsubscribe();
     }
+    if (typeof photoLibraryUnsubscribe === 'function') {
+        photoLibraryUnsubscribe();
+    }
     statusUnsubscribe = null;
     chatUnsubscribe = null;
+    photoLibraryUnsubscribe = null;
     latestStatusDocs = [];
+    latestSundayPhotoDocs = [];
     clearStatusExpiryRerenderTimer();
 }
 
@@ -2626,6 +2739,163 @@ async function postLukeStatus() {
     } catch (error) {
         console.error('Failed to post status:', error);
         feedbackEl.textContent = 'Unable to post status.';
+    }
+}
+
+function handleSundayPhotoChange() {
+    const uploadEl = document.getElementById('photoUploadInput');
+    const uploadNameEl = document.getElementById('photoUploadName');
+    const feedbackEl = document.getElementById('photoLibraryFeedback');
+    const file = uploadEl?.files?.[0] || null;
+    if (!file) {
+        sundayServicePhotoFile = null;
+        if (uploadNameEl) uploadNameEl.textContent = 'No photo selected.';
+        return;
+    }
+    if (!ALLOWED_SUNDAY_PHOTO_TYPES.has(file.type)) {
+        sundayServicePhotoFile = null;
+        uploadEl.value = '';
+        if (uploadNameEl) uploadNameEl.textContent = 'No photo selected.';
+        if (feedbackEl) feedbackEl.textContent = 'Unsupported photo type. Use JPG, PNG, WEBP, or GIF.';
+        return;
+    }
+    if (file.size > MAX_SUNDAY_PHOTO_BYTES) {
+        sundayServicePhotoFile = null;
+        uploadEl.value = '';
+        if (uploadNameEl) uploadNameEl.textContent = 'No photo selected.';
+        if (feedbackEl) feedbackEl.textContent = 'Photo is too large. Maximum size is 10 MB.';
+        return;
+    }
+    if (file.size <= 0) {
+        sundayServicePhotoFile = null;
+        uploadEl.value = '';
+        if (uploadNameEl) uploadNameEl.textContent = 'No photo selected.';
+        if (feedbackEl) feedbackEl.textContent = 'Photo is empty. Choose a valid file.';
+        return;
+    }
+    sundayServicePhotoFile = file;
+    if (uploadNameEl) uploadNameEl.textContent = `${file.name} (${formatFileSize(file.size)})`;
+    if (feedbackEl) feedbackEl.textContent = '';
+}
+
+async function uploadSundayServicePhoto() {
+    if (!firebaseReady() || !currentUser || !currentProfile || !storage) return;
+    const serviceDateEl = document.getElementById('photoServiceDate');
+    const captionEl = document.getElementById('photoCaption');
+    const uploadEl = document.getElementById('photoUploadInput');
+    const uploadNameEl = document.getElementById('photoUploadName');
+    const feedbackEl = document.getElementById('photoLibraryFeedback');
+    if (!feedbackEl || !serviceDateEl || !captionEl || !uploadEl || !uploadNameEl) return;
+    const serviceDate = (serviceDateEl.value || '').trim();
+    const caption = captionEl.value.trim();
+    if (!serviceDate) {
+        feedbackEl.textContent = 'Service date is required.';
+        return;
+    }
+    if (!sundayServicePhotoFile) {
+        feedbackEl.textContent = 'Choose a photo before uploading.';
+        return;
+    }
+    try {
+        const safeFileName = sanitizeAttachmentFileName(sundayServicePhotoFile.name);
+        const photoPath = `sundayServicePhotos/${currentUser.uid}/${Date.now()}-${safeFileName}`;
+        let downloadURL = '';
+        try {
+            const uploadTask = await storage.ref().child(photoPath).put(sundayServicePhotoFile);
+            downloadURL = await uploadTask.ref.getDownloadURL();
+        } catch (uploadError) {
+            console.error('Failed to upload Sunday service photo:', uploadError);
+            feedbackEl.textContent = 'Failed to upload photo. Check your connection and try again.';
+            return;
+        }
+        await db.collection('sundayServicePhotos').add({
+            uid: currentUser.uid,
+            authorName: currentProfile.fullName || 'Anonymous',
+            serviceDate,
+            caption: caption ? caption.slice(0, 140) : '',
+            photo: {
+                name: clampAttachmentName(sundayServicePhotoFile.name),
+                type: sundayServicePhotoFile.type,
+                size: Number.isFinite(sundayServicePhotoFile.size) ? sundayServicePhotoFile.size : 0,
+                url: downloadURL
+            },
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        captionEl.value = '';
+        uploadEl.value = '';
+        uploadNameEl.textContent = 'No photo selected.';
+        sundayServicePhotoFile = null;
+        feedbackEl.textContent = 'Photo uploaded.';
+    } catch (error) {
+        console.error('Failed to save Sunday service photo:', error);
+        feedbackEl.textContent = 'Unable to save photo.';
+    }
+}
+
+function subscribeSundayServicePhotos() {
+    if (!firebaseReady() || !currentUser) return;
+    const photoGrid = document.getElementById('photoLibraryGrid');
+    if (!photoGrid) return;
+    if (typeof photoLibraryUnsubscribe === 'function') {
+        photoLibraryUnsubscribe();
+    }
+    photoGrid.innerHTML = '<p class="muted-note">Loading photos...</p>';
+    photoLibraryUnsubscribe = db.collection('sundayServicePhotos')
+        .orderBy('createdAt', 'desc')
+        .limit(60)
+        .onSnapshot((snapshot) => {
+            latestSundayPhotoDocs = snapshot.docs;
+            renderSundayServicePhotos();
+        }, (error) => {
+            console.error('Failed to load Sunday service photos:', error);
+            photoGrid.innerHTML = '<p class="muted-note">Failed to load photos.</p>';
+            latestSundayPhotoDocs = [];
+            const countEl = document.getElementById('photoLibraryCount');
+            if (countEl) countEl.textContent = '0 photos';
+        });
+}
+
+function renderSundayServicePhotos() {
+    const photoGrid = document.getElementById('photoLibraryGrid');
+    const countEl = document.getElementById('photoLibraryCount');
+    if (!photoGrid || !countEl) return;
+    countEl.textContent = `${latestSundayPhotoDocs.length} ${latestSundayPhotoDocs.length === 1 ? 'photo' : 'photos'}`;
+    if (!latestSundayPhotoDocs.length) {
+        photoGrid.innerHTML = '<p class="muted-note">No photos yet.</p>';
+        return;
+    }
+    photoGrid.innerHTML = '';
+    latestSundayPhotoDocs.forEach((doc) => {
+        const data = doc.data();
+        if (!data?.photo?.url || !data?.photo?.type || !isTrustedAttachmentUrl(data.photo.url)) return;
+        const card = document.createElement('article');
+        card.className = 'photo-library-item';
+        const image = document.createElement('img');
+        image.src = String(data.photo.url);
+        image.alt = data.caption ? `Sunday service photo: ${data.caption}` : 'Sunday service photo';
+        image.loading = 'lazy';
+        card.appendChild(image);
+        const meta = document.createElement('div');
+        meta.className = 'photo-library-meta';
+        const author = document.createElement('strong');
+        author.textContent = data.authorName || 'Anonymous';
+        const date = document.createElement('span');
+        date.textContent = data.serviceDate ? `Service date: ${formatAttendanceDate(data.serviceDate)}` : 'Service date: -';
+        const createdAt = document.createElement('span');
+        createdAt.textContent = formatTimestamp(data.createdAt);
+        meta.appendChild(author);
+        meta.appendChild(date);
+        meta.appendChild(createdAt);
+        if (data.caption) {
+            const caption = document.createElement('span');
+            caption.textContent = data.caption;
+            meta.appendChild(caption);
+        }
+        card.appendChild(meta);
+        photoGrid.appendChild(card);
+    });
+    if (!photoGrid.children.length) {
+        photoGrid.innerHTML = '<p class="muted-note">No photos available.</p>';
     }
 }
 
@@ -3429,12 +3699,13 @@ if ('serviceWorker' in navigator) {
         <strong>BIBLE MATRIX</strong>
         <button class="icon-btn" onclick="closeMenu()" aria-label="Close menu">✕</button>
     </div>
-    <p class="muted-note">Navigate to quiz, Luke status, group chat, or Sunday service attendance register.</p>
+    <p class="muted-note">Navigate to quiz, Luke status, group chat, Sunday service attendance register, or photo library.</p>
     <div class="menu-actions">
         <button class="menu-btn" onclick="goHome()">🏠 Home</button>
         <button class="menu-btn" onclick="openStatusScreen()">🟢 Luke Status</button>
         <button class="menu-btn" onclick="openChatScreen()">💬 Group Chat</button>
         <button class="menu-btn" onclick="openAttendanceScreen()">📝 Sunday Service Attendance Register</button>
+        <button class="menu-btn" onclick="openPhotoLibraryScreen()">📷 Sunday Service Photo Library</button>
         <button class="menu-btn" onclick="logoutFromMenu()">🚪 Log Out</button>
     </div>
 </aside>
