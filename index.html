@@ -1632,6 +1632,17 @@ body {
                 <p id="photoUploadName" class="status-attachment-name">No photo selected.</p>
                 <textarea id="photoCaption" maxlength="140" placeholder="Caption (optional)"></textarea>
                 <button class="btn btn-primary" onclick="uploadSundayServicePhoto()">Upload Photo</button>
+                <label class="file-input-label">
+                    🗂️ Choose multiple photos
+                    <input
+                        id="photoBulkUploadInput"
+                        type="file"
+                        multiple
+                        accept="image/jpeg,image/png,image/webp,image/gif"
+                        onchange="handleSundayPhotoBulkChange()" />
+                </label>
+                <p id="photoBulkUploadName" class="status-attachment-name">No bulk photos selected.</p>
+                <button class="btn btn-secondary" onclick="bulkImportSundayServicePhotos()">Bulk Import Photos</button>
                 <p id="photoLibraryFeedback" class="muted-note"></p>
             </div>
             <div class="feed-box">
@@ -2062,6 +2073,7 @@ let chatUnsubscribe = null;
 let photoLibraryUnsubscribe = null;
 let statusAttachmentFile = null;
 let sundayServicePhotoFile = null;
+let sundayServiceBulkPhotoFiles = [];
 let latestStatusDocs = [];
 let latestSundayPhotoDocs = [];
 let statusExpiryRerenderTimeout = null;
@@ -2527,6 +2539,8 @@ function teardownCommunityListeners() {
     photoLibraryUnsubscribe = null;
     latestStatusDocs = [];
     latestSundayPhotoDocs = [];
+    sundayServicePhotoFile = null;
+    sundayServiceBulkPhotoFiles = [];
     clearStatusExpiryRerenderTimer();
 }
 
@@ -2742,6 +2756,20 @@ async function postLukeStatus() {
     }
 }
 
+function getSundayPhotoValidationError(file) {
+    if (!file) return 'No photo selected.';
+    if (!ALLOWED_SUNDAY_PHOTO_TYPES.has(file.type)) {
+        return 'Unsupported photo type. Use JPG, PNG, WEBP, or GIF.';
+    }
+    if (file.size > MAX_SUNDAY_PHOTO_BYTES) {
+        return 'Photo is too large. Maximum size is 10 MB.';
+    }
+    if (file.size <= 0) {
+        return 'Photo is empty. Choose a valid file.';
+    }
+    return '';
+}
+
 function handleSundayPhotoChange() {
     const uploadEl = document.getElementById('photoUploadInput');
     const uploadNameEl = document.getElementById('photoUploadName');
@@ -2752,30 +2780,67 @@ function handleSundayPhotoChange() {
         if (uploadNameEl) uploadNameEl.textContent = 'No photo selected.';
         return;
     }
-    if (!ALLOWED_SUNDAY_PHOTO_TYPES.has(file.type)) {
+    const validationError = getSundayPhotoValidationError(file);
+    if (validationError) {
         sundayServicePhotoFile = null;
         uploadEl.value = '';
         if (uploadNameEl) uploadNameEl.textContent = 'No photo selected.';
-        if (feedbackEl) feedbackEl.textContent = 'Unsupported photo type. Use JPG, PNG, WEBP, or GIF.';
-        return;
-    }
-    if (file.size > MAX_SUNDAY_PHOTO_BYTES) {
-        sundayServicePhotoFile = null;
-        uploadEl.value = '';
-        if (uploadNameEl) uploadNameEl.textContent = 'No photo selected.';
-        if (feedbackEl) feedbackEl.textContent = 'Photo is too large. Maximum size is 10 MB.';
-        return;
-    }
-    if (file.size <= 0) {
-        sundayServicePhotoFile = null;
-        uploadEl.value = '';
-        if (uploadNameEl) uploadNameEl.textContent = 'No photo selected.';
-        if (feedbackEl) feedbackEl.textContent = 'Photo is empty. Choose a valid file.';
+        if (feedbackEl) feedbackEl.textContent = validationError;
         return;
     }
     sundayServicePhotoFile = file;
     if (uploadNameEl) uploadNameEl.textContent = `${file.name} (${formatFileSize(file.size)})`;
     if (feedbackEl) feedbackEl.textContent = '';
+}
+
+function handleSundayPhotoBulkChange() {
+    const bulkEl = document.getElementById('photoBulkUploadInput');
+    const bulkNameEl = document.getElementById('photoBulkUploadName');
+    const feedbackEl = document.getElementById('photoLibraryFeedback');
+    const files = Array.from(bulkEl?.files || []);
+    if (!files.length) {
+        sundayServiceBulkPhotoFiles = [];
+        if (bulkNameEl) bulkNameEl.textContent = 'No bulk photos selected.';
+        return;
+    }
+    const invalidFile = files.find((file) => getSundayPhotoValidationError(file));
+    if (invalidFile) {
+        const error = getSundayPhotoValidationError(invalidFile);
+        sundayServiceBulkPhotoFiles = [];
+        bulkEl.value = '';
+        if (bulkNameEl) bulkNameEl.textContent = 'No bulk photos selected.';
+        if (feedbackEl) feedbackEl.textContent = `${invalidFile.name}: ${error}`;
+        return;
+    }
+    sundayServiceBulkPhotoFiles = files;
+    if (bulkNameEl) {
+        bulkNameEl.textContent = `${files.length} photo${files.length === 1 ? '' : 's'} selected for bulk import.`;
+    }
+    if (feedbackEl) feedbackEl.textContent = '';
+}
+
+async function uploadSingleSundayServicePhoto({ file, serviceDate, caption = '' }) {
+    if (!storage || !currentUser || !currentProfile) return;
+    const safeFileName = sanitizeAttachmentFileName(file.name);
+    const photoPath = `sundayServicePhotos/${currentUser.uid}/${Date.now()}-${safeFileName}`;
+    const uploadTask = await storage.ref().child(photoPath).put(file);
+    const downloadURL = await uploadTask.ref.getDownloadURL();
+    const payload = {
+        uid: currentUser.uid,
+        authorName: currentProfile.fullName || 'Anonymous',
+        serviceDate,
+        photo: {
+            name: clampAttachmentName(file.name),
+            type: file.type,
+            size: Number.isFinite(file.size) ? file.size : 0,
+            url: downloadURL
+        },
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    };
+    if (caption) {
+        payload.caption = caption.slice(0, 140);
+    }
+    await db.collection('sundayServicePhotos').add(payload);
 }
 
 async function uploadSundayServicePhoto() {
@@ -2797,30 +2862,17 @@ async function uploadSundayServicePhoto() {
         return;
     }
     try {
-        const safeFileName = sanitizeAttachmentFileName(sundayServicePhotoFile.name);
-        const photoPath = `sundayServicePhotos/${currentUser.uid}/${Date.now()}-${safeFileName}`;
-        let downloadURL = '';
         try {
-            const uploadTask = await storage.ref().child(photoPath).put(sundayServicePhotoFile);
-            downloadURL = await uploadTask.ref.getDownloadURL();
+            await uploadSingleSundayServicePhoto({
+                file: sundayServicePhotoFile,
+                serviceDate,
+                caption
+            });
         } catch (uploadError) {
             console.error('Failed to upload Sunday service photo:', uploadError);
             feedbackEl.textContent = 'Failed to upload photo. Check your connection and try again.';
             return;
         }
-        await db.collection('sundayServicePhotos').add({
-            uid: currentUser.uid,
-            authorName: currentProfile.fullName || 'Anonymous',
-            serviceDate,
-            caption: caption ? caption.slice(0, 140) : '',
-            photo: {
-                name: clampAttachmentName(sundayServicePhotoFile.name),
-                type: sundayServicePhotoFile.type,
-                size: Number.isFinite(sundayServicePhotoFile.size) ? sundayServicePhotoFile.size : 0,
-                url: downloadURL
-            },
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
         captionEl.value = '';
         uploadEl.value = '';
         uploadNameEl.textContent = 'No photo selected.';
@@ -2830,6 +2882,39 @@ async function uploadSundayServicePhoto() {
         console.error('Failed to save Sunday service photo:', error);
         feedbackEl.textContent = 'Unable to save photo.';
     }
+}
+
+async function bulkImportSundayServicePhotos() {
+    if (!firebaseReady() || !currentUser || !currentProfile || !storage) return;
+    const serviceDateEl = document.getElementById('photoServiceDate');
+    const bulkEl = document.getElementById('photoBulkUploadInput');
+    const bulkNameEl = document.getElementById('photoBulkUploadName');
+    const feedbackEl = document.getElementById('photoLibraryFeedback');
+    if (!feedbackEl || !serviceDateEl || !bulkEl || !bulkNameEl) return;
+    const serviceDate = (serviceDateEl.value || '').trim();
+    if (!serviceDate) {
+        feedbackEl.textContent = 'Service date is required.';
+        return;
+    }
+    if (!sundayServiceBulkPhotoFiles.length) {
+        feedbackEl.textContent = 'Choose photos for bulk import first.';
+        return;
+    }
+    let uploadedCount = 0;
+    for (const file of sundayServiceBulkPhotoFiles) {
+        try {
+            await uploadSingleSundayServicePhoto({ file, serviceDate });
+            uploadedCount += 1;
+        } catch (error) {
+            console.error('Failed bulk photo upload:', error);
+            feedbackEl.textContent = `Imported ${uploadedCount} of ${sundayServiceBulkPhotoFiles.length} photos before an error.`;
+            return;
+        }
+    }
+    sundayServiceBulkPhotoFiles = [];
+    bulkEl.value = '';
+    bulkNameEl.textContent = 'No bulk photos selected.';
+    feedbackEl.textContent = `Bulk import complete: ${uploadedCount} photo${uploadedCount === 1 ? '' : 's'} uploaded.`;
 }
 
 function subscribeSundayServicePhotos() {
