@@ -2260,16 +2260,16 @@ function openPhotoLibraryScreen() {
     showScreen('photoLibraryScreen');
     closeMenu();
     teardownCommunityListeners();
-    setAttendanceDefaultDate();
-    const serviceDateEl = document.getElementById('photoServiceDate');
-    if (serviceDateEl && !serviceDateEl.value) {
-        serviceDateEl.value = document.getElementById('attendanceDate')?.value || '';
-    }
+    setDefaultDateForInput('photoServiceDate');
     subscribeSundayServicePhotos();
 }
 
 function setAttendanceDefaultDate() {
-    const dateInput = document.getElementById('attendanceDate');
+    setDefaultDateForInput('attendanceDate');
+}
+
+function setDefaultDateForInput(inputId) {
+    const dateInput = document.getElementById(inputId);
     if (!dateInput || dateInput.value) return;
     const today = new Date();
     const localDate = new Date(today.getTime() - (today.getTimezoneOffset() * MILLISECONDS_PER_MINUTE));
@@ -2862,25 +2862,19 @@ async function uploadSundayServicePhoto() {
         return;
     }
     try {
-        try {
-            await uploadSingleSundayServicePhoto({
-                file: sundayServicePhotoFile,
-                serviceDate,
-                caption
-            });
-        } catch (uploadError) {
-            console.error('Failed to upload Sunday service photo:', uploadError);
-            feedbackEl.textContent = 'Failed to upload photo. Check your connection and try again.';
-            return;
-        }
+        await uploadSingleSundayServicePhoto({
+            file: sundayServicePhotoFile,
+            serviceDate,
+            caption
+        });
         captionEl.value = '';
         uploadEl.value = '';
         uploadNameEl.textContent = 'No photo selected.';
         sundayServicePhotoFile = null;
         feedbackEl.textContent = 'Photo uploaded.';
     } catch (error) {
-        console.error('Failed to save Sunday service photo:', error);
-        feedbackEl.textContent = 'Unable to save photo.';
+        console.error('Failed to upload Sunday service photo:', error);
+        feedbackEl.textContent = 'Failed to upload photo. Check your connection and try again.';
     }
 }
 
