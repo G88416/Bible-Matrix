@@ -61,11 +61,11 @@ service cloud.firestore {
           && request.resource.data.videoUrl.size() <= 300
           && request.resource.data.videoUrl.matches('^https://.*$')
           && (
-            request.resource.data.videoUrl.matches('^https://((www|m)\\.)?youtube\\.com/watch\\?v=[A-Za-z0-9_-]{11}(&.*)?$')
-            || request.resource.data.videoUrl.matches('^https://((www|m)\\.)?youtube\\.com/embed/[A-Za-z0-9_-]{11}(\\?.*)?$')
-            || request.resource.data.videoUrl.matches('^https://((www|m)\\.)?youtube\\.com/shorts/[A-Za-z0-9_-]{11}(\\?.*)?$')
-            || request.resource.data.videoUrl.matches('^https://(www\\.)?youtu\\.be/[A-Za-z0-9_-]{11}(\\?.*)?$')
-            || request.resource.data.videoUrl.matches('^https://(www\\.)?youtube-nocookie\\.com/embed/[A-Za-z0-9_-]{11}(\\?.*)?$')
+            request.resource.data.videoUrl.matches('^https://((www|m)\\.)?youtube\\.com/watch\\?v=[A-Za-z0-9_-]{11}$')
+            || request.resource.data.videoUrl.matches('^https://((www|m)\\.)?youtube\\.com/embed/[A-Za-z0-9_-]{11}$')
+            || request.resource.data.videoUrl.matches('^https://((www|m)\\.)?youtube\\.com/shorts/[A-Za-z0-9_-]{11}$')
+            || request.resource.data.videoUrl.matches('^https://(www\\.)?youtu\\.be/[A-Za-z0-9_-]{11}$')
+            || request.resource.data.videoUrl.matches('^https://(www\\.)?youtube-nocookie\\.com/embed/[A-Za-z0-9_-]{11}$')
           )
         );
     }

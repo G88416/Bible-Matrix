@@ -2575,8 +2575,9 @@ function getAnnouncementVideoSource(value) {
             videoId = pathname.split('/shorts/')[1]?.split('/')[0] || '';
         }
         if (!/^[A-Za-z0-9_-]{11}$/.test(videoId)) return null;
+        const safeVideoId = encodeURIComponent(videoId);
         return {
-            src: `https://www.youtube-nocookie.com/embed/${videoId}`,
+            src: `https://www.youtube-nocookie.com/embed/${safeVideoId}`,
             href: normalizedUrl
         };
     } catch (error) {
@@ -2915,7 +2916,7 @@ function renderAnnouncements() {
             frame.src = videoSource.src;
             frame.title = data.title || 'Announcement video';
             frame.loading = 'lazy';
-            frame.allow = 'accelerometer; encrypted-media; gyroscope; picture-in-picture';
+            frame.allow = 'encrypted-media; picture-in-picture';
             frame.allowFullscreen = true;
             videoFrame.appendChild(frame);
             item.appendChild(videoFrame);
