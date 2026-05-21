@@ -1754,7 +1754,7 @@ body {
                 <p class="muted-note announcement-form-note">Admin password is required to post or remove announcements.</p>
                 <input id="announcementTitle" type="text" maxlength="100" placeholder="Announcement title" />
                 <textarea id="announcementMessage" maxlength="500" placeholder="Write the announcement details..."></textarea>
-                <input id="announcementVideoUrl" class="announcement-video-url" type="url" maxlength="300" placeholder="Video URL (YouTube or direct MP4/WEBM, optional)" />
+                <input id="announcementVideoUrl" class="announcement-video-url" type="url" maxlength="300" placeholder="Video URL (YouTube, optional)" />
                 <button class="btn btn-primary photo-admin-btn" onclick="postAnnouncementWithPassword()">Post Announcement</button>
                 <p id="announcementFeedback" class="muted-note"></p>
             </div>
@@ -2554,13 +2554,6 @@ function getAnnouncementVideoSource(value) {
         const hostname = parsed.hostname.toLowerCase();
         const pathname = parsed.pathname || '';
         const normalizedUrl = parsed.toString();
-        if (/\.(mp4|webm|ogg|mov)(\?.*)?$/i.test(pathname + parsed.search)) {
-            return {
-                type: 'video',
-                src: normalizedUrl,
-                href: normalizedUrl
-            };
-        }
         const youtubeHosts = new Set([
             'youtube.com',
             'www.youtube.com',
@@ -2581,9 +2574,8 @@ function getAnnouncementVideoSource(value) {
         } else if (pathname.startsWith('/shorts/')) {
             videoId = pathname.split('/shorts/')[1]?.split('/')[0] || '';
         }
-        if (!/^[A-Za-z0-9_-]{6,}$/.test(videoId)) return null;
+        if (!/^[A-Za-z0-9_-]{11}$/.test(videoId)) return null;
         return {
-            type: 'embed',
             src: `https://www.youtube-nocookie.com/embed/${videoId}`,
             href: normalizedUrl
         };
@@ -2919,21 +2911,13 @@ function renderAnnouncements() {
         if (videoSource) {
             const videoFrame = document.createElement('div');
             videoFrame.className = 'announcement-video-frame';
-            if (videoSource.type === 'embed') {
-                const frame = document.createElement('iframe');
-                frame.src = videoSource.src;
-                frame.title = data.title || 'Announcement video';
-                frame.loading = 'lazy';
-                frame.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
-                frame.allowFullscreen = true;
-                videoFrame.appendChild(frame);
-            } else {
-                const video = document.createElement('video');
-                video.src = videoSource.src;
-                video.controls = true;
-                video.preload = 'metadata';
-                videoFrame.appendChild(video);
-            }
+            const frame = document.createElement('iframe');
+            frame.src = videoSource.src;
+            frame.title = data.title || 'Announcement video';
+            frame.loading = 'lazy';
+            frame.allow = 'accelerometer; encrypted-media; gyroscope; picture-in-picture';
+            frame.allowFullscreen = true;
+            videoFrame.appendChild(frame);
             item.appendChild(videoFrame);
             const actionRow = document.createElement('div');
             actionRow.className = 'feed-action-row';
@@ -2989,7 +2973,7 @@ async function postAnnouncement() {
     }
     const videoSource = videoUrl ? getAnnouncementVideoSource(videoUrl) : null;
     if (videoUrl && !videoSource) {
-        if (feedbackEl) feedbackEl.textContent = 'Use a valid YouTube link or a direct HTTPS MP4/WEBM/OGG/MOV video URL.';
+        if (feedbackEl) feedbackEl.textContent = 'Use a valid YouTube video link.';
         return;
     }
     try {
