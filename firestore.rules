@@ -53,6 +53,23 @@ service cloud.firestore {
         );
     }
 
+    function hasValidOptionalAnnouncementVideoUrl() {
+      return !('videoUrl' in request.resource.data)
+        || (
+          request.resource.data.videoUrl is string
+          && request.resource.data.videoUrl.size() > 0
+          && request.resource.data.videoUrl.size() <= 300
+          && request.resource.data.videoUrl.matches('^https://.*$')
+          && (
+            request.resource.data.videoUrl.matches('^https://((www|m)\\.)?youtube\\.com/watch\\?v=[A-Za-z0-9_-]{11}$')
+            || request.resource.data.videoUrl.matches('^https://((www|m)\\.)?youtube\\.com/embed/[A-Za-z0-9_-]{11}$')
+            || request.resource.data.videoUrl.matches('^https://((www|m)\\.)?youtube\\.com/shorts/[A-Za-z0-9_-]{11}$')
+            || request.resource.data.videoUrl.matches('^https://(www\\.)?youtu\\.be/[A-Za-z0-9_-]{11}$')
+            || request.resource.data.videoUrl.matches('^https://(www\\.)?youtube-nocookie\\.com/embed/[A-Za-z0-9_-]{11}$')
+          )
+        );
+    }
+
     function hasTrustedStorageUrl(fieldName) {
       return request.resource.data[fieldName].url.matches('^https://firebasestorage\\.googleapis\\.com/v0/b/bible-matrix\\.(firebasestorage\\.app|appspot\\.com)/o/.*$')
         || request.resource.data[fieldName].url.matches('^https://storage\\.googleapis\\.com/bible-matrix\\.(firebasestorage\\.app|appspot\\.com)/.*$');
@@ -156,6 +173,20 @@ service cloud.firestore {
         && request.resource.data.uid == request.auth.uid
         && hasValidAuthorName('authorName', 80)
         && hasValidGroupMessageContent()
+        && request.resource.data.createdAt is timestamp;
+      allow update: if false;
+      allow delete: if isSignedIn() && resource.data.uid == request.auth.uid;
+    }
+
+    match /announcements/{announcementId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn()
+        && request.resource.data.uid == request.auth.uid
+        && hasValidAuthorName('authorName', 80)
+        && hasValidText('title', 100)
+        && hasValidOptionalText('message', 500)
+        && hasValidOptionalAnnouncementVideoUrl()
+        && ('message' in request.resource.data || 'videoUrl' in request.resource.data)
         && request.resource.data.createdAt is timestamp;
       allow update: if false;
       allow delete: if isSignedIn() && resource.data.uid == request.auth.uid;

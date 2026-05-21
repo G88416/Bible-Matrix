@@ -867,8 +867,8 @@ body.menu-lock {
 .photo-admin-btn,
 .photo-admin-delete-btn {
     border-radius: 999px;
-    min-height: 34px;
-    font-size: 0.84rem;
+    min-height: 30px;
+    font-size: 0.78rem;
     font-weight: 700;
     letter-spacing: 0.01em;
 }
@@ -881,13 +881,13 @@ body.menu-lock {
 }
 
 .photo-admin-btn {
-    padding: 9px 16px;
+    padding: 8px 14px;
 }
 
 .photo-admin-delete-btn {
-    width: 100%;
-    padding: 8px 14px;
-    margin-top: 8px;
+    width: auto;
+    padding: 6px 12px;
+    margin-top: 0;
     border: 1px solid rgba(255, 95, 143, 0.52);
     background: rgba(255, 95, 143, 0.14);
     color: var(--text);
@@ -914,11 +914,12 @@ body.menu-lock {
     border: 1px solid rgba(255, 95, 143, 0.65);
     background: rgba(255, 95, 143, 0.2);
     color: var(--text);
-    border-radius: 12px;
-    padding: 8px 12px;
+    border-radius: 999px;
+    padding: 6px 12px;
     font-weight: 600;
     cursor: pointer;
-    min-height: 38px;
+    min-height: 30px;
+    font-size: 0.78rem;
 }
 
 .record-btn[disabled] {
@@ -1024,6 +1025,38 @@ body.menu-lock {
 .photo-library-item-actions {
     display: flex;
     margin-top: 8px;
+}
+
+.announcement-form-note {
+    margin-bottom: 12px;
+}
+
+.announcement-video-url {
+    margin-bottom: 10px;
+}
+
+.announcement-title {
+    margin: 2px 0 8px;
+    font-size: 1rem;
+}
+
+.announcement-video-frame {
+    margin-top: 10px;
+    border-radius: 14px;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(10, 8, 24, 0.42);
+}
+
+.announcement-video-frame iframe,
+.announcement-video-frame video {
+    width: 100%;
+    border: 0;
+    display: block;
+}
+
+.announcement-video-frame iframe {
+    aspect-ratio: 16 / 9;
 }
 
 /* ── Install banner ──────────────────────────────────────────── */
@@ -1697,6 +1730,44 @@ body {
     </div>
 </section>
 
+<section id="announcementsScreen" class="screen">
+    <div class="app-topbar">
+        <button class="icon-btn" onclick="toggleMenu()" aria-label="Open navigation menu">☰</button>
+        <button class="icon-btn status-icon" onclick="openStatusScreen()" aria-label="Open Luke status">
+            <span class="status-ring">+</span>
+        </button>
+    </div>
+    <div class="container glass community-shell">
+        <div class="community-header">
+            <div>
+                <div class="community-title">
+                    <img src="/icons/logo-advanced.svg" alt="Announcements logo" />
+                    <h2>Announcements</h2>
+                </div>
+                <p>Share ministry updates, notices, and important video announcements with the church group.</p>
+            </div>
+            <button class="btn btn-secondary" onclick="goHome()">Home</button>
+        </div>
+        <div class="community-grid">
+            <div class="status-form">
+                <h3>Create an announcement</h3>
+                <p class="muted-note announcement-form-note">Admin password is required to post or remove announcements.</p>
+                <input id="announcementTitle" type="text" maxlength="100" placeholder="Announcement title" />
+                <textarea id="announcementMessage" maxlength="500" placeholder="Write the announcement details..."></textarea>
+                <input id="announcementVideoUrl" class="announcement-video-url" type="url" maxlength="300" placeholder="Video URL (YouTube, optional)" />
+                <button class="btn btn-primary photo-admin-btn" onclick="postAnnouncementWithPassword()">Post Announcement</button>
+                <p id="announcementFeedback" class="muted-note"></p>
+            </div>
+            <div class="feed-box">
+                <h3>Latest announcements</h3>
+                <ul id="announcementsFeed" class="feed-list">
+                    <li class="feed-item muted-note">No announcements yet.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</section>
+
 <section id="gameScreen" class="screen">
     <div class="container glass game-shell">
         <div class="game-top">
@@ -2112,11 +2183,13 @@ let loginRecaptcha = null;
 let statusUnsubscribe = null;
 let chatUnsubscribe = null;
 let photoLibraryUnsubscribe = null;
+let announcementsUnsubscribe = null;
 let statusAttachmentFile = null;
 let sundayServicePhotoFile = null;
 let sundayServiceBulkPhotoFiles = [];
 let latestStatusDocs = [];
 let latestSundayPhotoDocs = [];
+let latestAnnouncementDocs = [];
 let statusExpiryRerenderTimeout = null;
 let attendanceEntries = [];
 const STATUS_ATTACHMENT_BUCKET = String(firebaseConfig.storageBucket || '').trim();
@@ -2130,6 +2203,18 @@ const OBJECT_URL_CLEANUP_DELAY_MS = 5 * 60 * 1000;
 const ATTENDANCE_STORAGE_KEY = 'bibleMatrixSundayAttendanceEntries';
 const MAX_SUNDAY_PHOTO_BYTES = 10 * 1024 * 1024;
 const PHOTO_LIBRARY_ADMIN_PASSWORD = 'G19@2026';
+const MAX_ANNOUNCEMENT_VIDEO_URL_LENGTH = 300;
+const YOUTUBE_VIDEO_ID_LENGTH = 11;
+const YOUTUBE_VIDEO_ID_PATTERN = /^[A-Za-z0-9_-]+$/;
+const YOUTUBE_VIDEO_HOSTS = new Set([
+    'youtube.com',
+    'www.youtube.com',
+    'm.youtube.com',
+    'youtu.be',
+    'www.youtu.be',
+    'youtube-nocookie.com',
+    'www.youtube-nocookie.com'
+]);
 const ALLOWED_STATUS_ATTACHMENT_TYPES = new Set([
     'application/pdf',
     'application/msword',
@@ -2261,10 +2346,7 @@ function openStatusScreen() {
     }
     showScreen('statusScreen');
     closeMenu();
-    if (typeof chatUnsubscribe === 'function') {
-        chatUnsubscribe();
-        chatUnsubscribe = null;
-    }
+    teardownCommunityListeners();
     subscribeLukeStatuses();
 }
 
@@ -2275,10 +2357,7 @@ function openChatScreen() {
     }
     showScreen('chatScreen');
     closeMenu();
-    if (typeof statusUnsubscribe === 'function') {
-        statusUnsubscribe();
-        statusUnsubscribe = null;
-    }
+    teardownCommunityListeners();
     subscribeGroupChat();
 }
 
@@ -2304,6 +2383,17 @@ function openPhotoLibraryScreen() {
     teardownCommunityListeners();
     setDefaultDateForInput('photoServiceDate');
     subscribeSundayServicePhotos();
+}
+
+function openAnnouncementsScreen() {
+    if (!currentUser) {
+        showScreen('authScreen');
+        return;
+    }
+    showScreen('announcementsScreen');
+    closeMenu();
+    teardownCommunityListeners();
+    subscribeAnnouncements();
 }
 
 function setAttendanceDefaultDate() {
@@ -2466,6 +2556,37 @@ function isTrustedAttachmentUrl(value) {
     }
 }
 
+function getAnnouncementVideoSource(value) {
+    const rawUrl = String(value || '').trim();
+    if (!rawUrl) return null;
+    try {
+        const parsed = new URL(rawUrl);
+        if (parsed.protocol !== 'https:') return null;
+        const hostname = parsed.hostname.toLowerCase();
+        const pathname = parsed.pathname || '';
+        if (!YOUTUBE_VIDEO_HOSTS.has(hostname)) return null;
+        let videoId = '';
+        if (hostname.includes('youtu.be')) {
+            videoId = pathname.split('/').filter(Boolean)[0] || '';
+        } else if (pathname === '/watch') {
+            videoId = parsed.searchParams.get('v') || '';
+        } else if (pathname.startsWith('/embed/')) {
+            videoId = pathname.split('/embed/')[1]?.split('/')[0] || '';
+        } else if (pathname.startsWith('/shorts/')) {
+            videoId = pathname.split('/shorts/')[1]?.split('/')[0] || '';
+        }
+        videoId = videoId.split(/[?&#]/)[0].trim();
+        if (videoId.length !== YOUTUBE_VIDEO_ID_LENGTH || !YOUTUBE_VIDEO_ID_PATTERN.test(videoId)) return null;
+        const safeVideoId = encodeURIComponent(videoId);
+        return {
+            src: `https://www.youtube-nocookie.com/embed/${safeVideoId}`,
+            href: `https://www.youtube.com/watch?v=${safeVideoId}`
+        };
+    } catch (error) {
+        return null;
+    }
+}
+
 function sanitizeAttachmentFileName(fileName) {
     const raw = String(fileName || 'file');
     const lastDot = raw.lastIndexOf('.');
@@ -2576,11 +2697,16 @@ function teardownCommunityListeners() {
     if (typeof photoLibraryUnsubscribe === 'function') {
         photoLibraryUnsubscribe();
     }
+    if (typeof announcementsUnsubscribe === 'function') {
+        announcementsUnsubscribe();
+    }
     statusUnsubscribe = null;
     chatUnsubscribe = null;
     photoLibraryUnsubscribe = null;
+    announcementsUnsubscribe = null;
     latestStatusDocs = [];
     latestSundayPhotoDocs = [];
+    latestAnnouncementDocs = [];
     sundayServicePhotoFile = null;
     sundayServiceBulkPhotoFiles = [];
     clearStatusExpiryRerenderTimer();
@@ -2730,6 +2856,168 @@ async function deleteLukeStatus(statusId) {
     } catch (error) {
         console.error('Failed to delete status:', error);
         if (feedbackEl) feedbackEl.textContent = 'Unable to delete status.';
+    }
+}
+
+function subscribeAnnouncements() {
+    if (!firebaseReady() || !currentUser) return;
+    const announcementsFeed = document.getElementById('announcementsFeed');
+    if (!announcementsFeed) return;
+    if (typeof announcementsUnsubscribe === 'function') {
+        announcementsUnsubscribe();
+    }
+    announcementsFeed.innerHTML = '<li class="feed-item muted-note">Loading announcements...</li>';
+    announcementsUnsubscribe = db.collection('announcements')
+        .orderBy('createdAt', 'desc')
+        .limit(40)
+        .onSnapshot((snapshot) => {
+            latestAnnouncementDocs = snapshot.docs;
+            renderAnnouncements();
+        }, (error) => {
+            console.error('Failed to load announcements:', error);
+            latestAnnouncementDocs = [];
+            announcementsFeed.innerHTML = '<li class="feed-item muted-note">Failed to load announcements.</li>';
+        });
+}
+
+function renderAnnouncements() {
+    const announcementsFeed = document.getElementById('announcementsFeed');
+    if (!announcementsFeed) return;
+    if (!latestAnnouncementDocs.length) {
+        announcementsFeed.innerHTML = '<li class="feed-item muted-note">No announcements yet.</li>';
+        return;
+    }
+    announcementsFeed.innerHTML = '';
+    latestAnnouncementDocs.forEach((doc) => {
+        const data = doc.data();
+        const item = document.createElement('li');
+        item.className = 'feed-item';
+        const meta = document.createElement('div');
+        meta.className = 'feed-meta';
+        const author = document.createElement('span');
+        author.textContent = data.authorName || 'Admin';
+        const when = document.createElement('span');
+        when.textContent = formatTimestamp(data.createdAt);
+        meta.appendChild(author);
+        meta.appendChild(when);
+        item.appendChild(meta);
+        const title = document.createElement('h4');
+        title.className = 'announcement-title';
+        title.textContent = data.title || 'Announcement';
+        item.appendChild(title);
+        if (data.message) {
+            const message = document.createElement('p');
+            message.textContent = data.message;
+            item.appendChild(message);
+        }
+        const videoSource = getAnnouncementVideoSource(data.videoUrl);
+        if (videoSource) {
+            const videoFrame = document.createElement('div');
+            videoFrame.className = 'announcement-video-frame';
+            const frame = document.createElement('iframe');
+            frame.src = videoSource.src;
+            frame.title = data.title || 'Announcement video';
+            frame.loading = 'lazy';
+            frame.allowFullscreen = true;
+            videoFrame.appendChild(frame);
+            item.appendChild(videoFrame);
+            const actionRow = document.createElement('div');
+            actionRow.className = 'feed-action-row';
+            const openVideoLink = document.createElement('a');
+            openVideoLink.className = 'feed-view-btn';
+            openVideoLink.href = videoSource.href;
+            openVideoLink.target = '_blank';
+            openVideoLink.rel = 'noopener noreferrer';
+            openVideoLink.textContent = 'Open Video';
+            actionRow.appendChild(openVideoLink);
+            item.appendChild(actionRow);
+        }
+        if (currentUser && data.uid === currentUser.uid) {
+            const actionRow = document.createElement('div');
+            actionRow.className = 'feed-action-row';
+            const deleteBtn = document.createElement('button');
+            deleteBtn.className = 'feed-delete-btn';
+            deleteBtn.type = 'button';
+            deleteBtn.textContent = 'Delete';
+            deleteBtn.setAttribute('aria-label', 'Delete announcement');
+            deleteBtn.addEventListener('click', () => {
+                deleteAnnouncement(doc.id);
+            });
+            actionRow.appendChild(deleteBtn);
+            item.appendChild(actionRow);
+        }
+        announcementsFeed.appendChild(item);
+    });
+}
+
+async function postAnnouncementWithPassword() {
+    const feedbackEl = document.getElementById('announcementFeedback');
+    if (!await requirePhotoLibraryAdminPassword('post this announcement', feedbackEl)) return;
+    await postAnnouncement();
+}
+
+async function postAnnouncement() {
+    if (!firebaseReady() || !currentUser || !currentProfile) return;
+    const titleEl = document.getElementById('announcementTitle');
+    const messageEl = document.getElementById('announcementMessage');
+    const videoUrlEl = document.getElementById('announcementVideoUrl');
+    const feedbackEl = document.getElementById('announcementFeedback');
+    const title = titleEl.value.trim();
+    const message = messageEl.value.trim();
+    const videoUrl = videoUrlEl.value.trim();
+    if (!title) {
+        if (feedbackEl) feedbackEl.textContent = 'Add an announcement title.';
+        return;
+    }
+    if (!message && !videoUrl) {
+        if (feedbackEl) feedbackEl.textContent = 'Add announcement details or a video link.';
+        return;
+    }
+    const videoSource = videoUrl ? getAnnouncementVideoSource(videoUrl) : null;
+    if (videoUrl && !videoSource) {
+        if (feedbackEl) feedbackEl.textContent = 'Use a valid YouTube video link.';
+        return;
+    }
+    try {
+        const payload = {
+            uid: currentUser.uid,
+            authorName: currentProfile.fullName || 'Admin',
+            title: title.slice(0, 100),
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        };
+        if (message) {
+            payload.message = message.slice(0, 500);
+        }
+        if (videoSource) {
+            if (videoSource.href.length > MAX_ANNOUNCEMENT_VIDEO_URL_LENGTH) {
+                if (feedbackEl) feedbackEl.textContent = 'Video link is too long.';
+                return;
+            }
+            payload.videoUrl = videoSource.href;
+        }
+        await db.collection('announcements').add(payload);
+        titleEl.value = '';
+        messageEl.value = '';
+        videoUrlEl.value = '';
+        if (feedbackEl) feedbackEl.textContent = 'Announcement posted.';
+    } catch (error) {
+        console.error('Failed to post announcement:', error);
+        if (feedbackEl) feedbackEl.textContent = 'Unable to post announcement.';
+    }
+}
+
+async function deleteAnnouncement(announcementId) {
+    if (!firebaseReady() || !currentUser || !announcementId) return;
+    const feedbackEl = document.getElementById('announcementFeedback');
+    const shouldDelete = window.confirm('Are you sure you want to delete this announcement?');
+    if (!shouldDelete) return;
+    if (!await requirePhotoLibraryAdminPassword('delete this announcement', feedbackEl)) return;
+    try {
+        await db.collection('announcements').doc(announcementId).delete();
+        if (feedbackEl) feedbackEl.textContent = 'Announcement deleted.';
+    } catch (error) {
+        console.error('Failed to delete announcement:', error);
+        if (feedbackEl) feedbackEl.textContent = 'Unable to delete announcement.';
     }
 }
 
@@ -3996,11 +4284,12 @@ if ('serviceWorker' in navigator) {
         <strong>BIBLE MATRIX</strong>
         <button class="icon-btn" onclick="closeMenu()" aria-label="Close menu">✕</button>
     </div>
-    <p class="muted-note">Navigate to quiz, Luke status, group chat, Sunday service attendance register, or photo library.</p>
+    <p class="muted-note">Navigate to quiz, Luke status, group chat, announcements, Sunday service attendance register, or photo library.</p>
     <div class="menu-actions">
         <button class="menu-btn" onclick="goHome()">🏠 Home</button>
         <button class="menu-btn" onclick="openStatusScreen()">🟢 Luke Status</button>
         <button class="menu-btn" onclick="openChatScreen()">💬 Group Chat</button>
+        <button class="menu-btn" onclick="openAnnouncementsScreen()">📢 Announcements</button>
         <button class="menu-btn" onclick="openAttendanceScreen()">📝 Sunday Service Attendance Register</button>
         <button class="menu-btn" onclick="openPhotoLibraryScreen()">📷 Sunday Service Photo Library</button>
         <button class="menu-btn" onclick="logoutFromMenu()">🚪 Log Out</button>
