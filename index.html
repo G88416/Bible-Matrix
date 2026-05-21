@@ -3042,6 +3042,7 @@ function getStoragePathFromFirebaseUrl(downloadUrl) {
             return decodeURIComponent(pathSegments.slice(1).join('/'));
         }
     } catch (error) {
+        console.error('Failed to parse Firebase Storage URL:', error);
         return '';
     }
     return '';
