@@ -46,6 +46,27 @@ service firebase.storage {
         ];
     }
 
+    function isAllowedAnnouncementPosterType() {
+      return request.resource != null
+        && request.resource.contentType is string
+        && request.resource.contentType in [
+          'image/jpeg',
+          'image/png',
+          'image/webp',
+          'image/gif'
+        ];
+    }
+
+    function isAllowedAnnouncementVideoType() {
+      return request.resource != null
+        && request.resource.contentType is string
+        && request.resource.contentType in [
+          'video/mp4',
+          'video/quicktime',
+          'video/webm'
+        ];
+    }
+
     match /lukeStatuses/{userId}/{fileName=**} {
       allow read: if isSignedIn();
       allow create, update: if isOwner(userId)
@@ -59,7 +80,23 @@ service firebase.storage {
       allow create, update: if isOwner(userId)
         && hasValidUploadSize(10485760)
         && isAllowedSundayPhotoType();
-      allow delete: if false;
+      allow delete: if isOwner(userId);
+    }
+
+    match /announcements/{userId}/poster/{fileName=**} {
+      allow read: if isSignedIn();
+      allow create, update: if isOwner(userId)
+        && hasValidUploadSize(10485760)
+        && isAllowedAnnouncementPosterType();
+      allow delete: if isOwner(userId);
+    }
+
+    match /announcements/{userId}/video/{fileName=**} {
+      allow read: if isSignedIn();
+      allow create, update: if isOwner(userId)
+        && hasValidUploadSize(20971520)
+        && isAllowedAnnouncementVideoType();
+      allow delete: if isOwner(userId);
     }
 
     match /{allPaths=**} {

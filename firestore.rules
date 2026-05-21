@@ -70,6 +70,55 @@ service cloud.firestore {
         );
     }
 
+    function hasValidAnnouncementPosterData() {
+      return request.resource.data.poster is map
+        && request.resource.data.poster.keys().hasOnly(['name', 'type', 'size', 'url'])
+        && request.resource.data.poster.name is string
+        && request.resource.data.poster.name.size() > 0
+        && request.resource.data.poster.name.size() <= 120
+        && request.resource.data.poster.type is string
+        && request.resource.data.poster.type in [
+          'image/jpeg',
+          'image/png',
+          'image/webp',
+          'image/gif'
+        ]
+        && request.resource.data.poster.size is int
+        && request.resource.data.poster.size > 0
+        && request.resource.data.poster.size <= 10485760
+        && request.resource.data.poster.url is string
+        && hasTrustedStorageUrl('poster');
+    }
+
+    function hasValidAnnouncementVideoData() {
+      return request.resource.data.video is map
+        && request.resource.data.video.keys().hasOnly(['name', 'type', 'size', 'url'])
+        && request.resource.data.video.name is string
+        && request.resource.data.video.name.size() > 0
+        && request.resource.data.video.name.size() <= 120
+        && request.resource.data.video.type is string
+        && request.resource.data.video.type in [
+          'video/mp4',
+          'video/quicktime',
+          'video/webm'
+        ]
+        && request.resource.data.video.size is int
+        && request.resource.data.video.size > 0
+        && request.resource.data.video.size <= 20971520
+        && request.resource.data.video.url is string
+        && hasTrustedStorageUrl('video');
+    }
+
+    function hasValidOptionalAnnouncementPoster() {
+      return !('poster' in request.resource.data)
+        || hasValidAnnouncementPosterData();
+    }
+
+    function hasValidOptionalAnnouncementVideo() {
+      return !('video' in request.resource.data)
+        || hasValidAnnouncementVideoData();
+    }
+
     function hasTrustedStorageUrl(fieldName) {
       return request.resource.data[fieldName].url.matches('^https://firebasestorage\\.googleapis\\.com/v0/b/bible-matrix\\.(firebasestorage\\.app|appspot\\.com)/o/.*$')
         || request.resource.data[fieldName].url.matches('^https://storage\\.googleapis\\.com/bible-matrix\\.(firebasestorage\\.app|appspot\\.com)/.*$');
@@ -186,7 +235,14 @@ service cloud.firestore {
         && hasValidText('title', 100)
         && hasValidOptionalText('message', 500)
         && hasValidOptionalAnnouncementVideoUrl()
-        && ('message' in request.resource.data || 'videoUrl' in request.resource.data)
+        && hasValidOptionalAnnouncementPoster()
+        && hasValidOptionalAnnouncementVideo()
+        && (
+          'message' in request.resource.data
+          || 'videoUrl' in request.resource.data
+          || 'poster' in request.resource.data
+          || 'video' in request.resource.data
+        )
         && request.resource.data.createdAt is timestamp;
       allow update: if false;
       allow delete: if isSignedIn() && resource.data.uid == request.auth.uid;
@@ -201,7 +257,8 @@ service cloud.firestore {
         && hasValidOptionalText('caption', 140)
         && hasValidSundayServicePhotoData()
         && request.resource.data.createdAt is timestamp;
-      allow update, delete: if false;
+      allow update: if false;
+      allow delete: if isSignedIn() && resource.data.uid == request.auth.uid;
     }
   }
 }

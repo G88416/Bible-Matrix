@@ -1035,9 +1035,28 @@ body.menu-lock {
     margin-bottom: 10px;
 }
 
+.announcement-media-name {
+    margin-bottom: 10px;
+}
+
 .announcement-title {
     margin: 2px 0 8px;
     font-size: 1rem;
+}
+
+.announcement-poster {
+    margin-top: 10px;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(10, 8, 24, 0.42);
+}
+
+.announcement-poster img {
+    width: 100%;
+    max-height: 320px;
+    object-fit: cover;
+    display: block;
 }
 
 .announcement-video-frame {
@@ -1755,6 +1774,26 @@ body {
                 <input id="announcementTitle" type="text" maxlength="100" placeholder="Announcement title" />
                 <textarea id="announcementMessage" maxlength="500" placeholder="Write the announcement details..."></textarea>
                 <input id="announcementVideoUrl" class="announcement-video-url" type="url" maxlength="300" placeholder="Video URL (YouTube, optional)" />
+                <button type="button" class="file-input-label photo-admin-picker" onclick="openAnnouncementPosterPicker()">
+                    🖼️ Choose poster
+                </button>
+                <input
+                    id="announcementPosterInput"
+                    class="hidden-file-input"
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp,image/gif"
+                    onchange="handleAnnouncementPosterChange()" />
+                <p id="announcementPosterName" class="status-attachment-name announcement-media-name">No poster selected.</p>
+                <button type="button" class="file-input-label photo-admin-picker" onclick="openAnnouncementVideoPicker()">
+                    🎬 Choose video file
+                </button>
+                <input
+                    id="announcementVideoInput"
+                    class="hidden-file-input"
+                    type="file"
+                    accept="video/mp4,video/quicktime,video/webm"
+                    onchange="handleAnnouncementVideoChange()" />
+                <p id="announcementVideoName" class="status-attachment-name announcement-media-name">No video selected.</p>
                 <button class="btn btn-primary photo-admin-btn" onclick="postAnnouncementWithPassword()">Post Announcement</button>
                 <p id="announcementFeedback" class="muted-note"></p>
             </div>
@@ -2187,6 +2226,8 @@ let announcementsUnsubscribe = null;
 let statusAttachmentFile = null;
 let sundayServicePhotoFile = null;
 let sundayServiceBulkPhotoFiles = [];
+let announcementPosterFile = null;
+let announcementVideoFile = null;
 let latestStatusDocs = [];
 let latestSundayPhotoDocs = [];
 let latestAnnouncementDocs = [];
@@ -2204,6 +2245,8 @@ const ATTENDANCE_STORAGE_KEY = 'bibleMatrixSundayAttendanceEntries';
 const MAX_SUNDAY_PHOTO_BYTES = 10 * 1024 * 1024;
 const PHOTO_LIBRARY_ADMIN_PASSWORD = 'G19@2026';
 const MAX_ANNOUNCEMENT_VIDEO_URL_LENGTH = 300;
+const MAX_ANNOUNCEMENT_POSTER_BYTES = 10 * 1024 * 1024;
+const MAX_ANNOUNCEMENT_VIDEO_BYTES = 20 * 1024 * 1024;
 const YOUTUBE_VIDEO_ID_LENGTH = 11;
 const YOUTUBE_VIDEO_ID_PATTERN = /^[A-Za-z0-9_-]+$/;
 const YOUTUBE_VIDEO_HOSTS = new Set([
@@ -2234,6 +2277,17 @@ const ALLOWED_SUNDAY_PHOTO_TYPES = new Set([
     'image/png',
     'image/webp',
     'image/gif'
+]);
+const ALLOWED_ANNOUNCEMENT_POSTER_TYPES = new Set([
+    'image/jpeg',
+    'image/png',
+    'image/webp',
+    'image/gif'
+]);
+const ALLOWED_ANNOUNCEMENT_VIDEO_TYPES = new Set([
+    'video/mp4',
+    'video/quicktime',
+    'video/webm'
 ]);
 // Brief pause so players can review the right answer before the next question loads.
 const nextQuestionDelayMs = 1400;
@@ -2587,6 +2641,14 @@ function getAnnouncementVideoSource(value) {
     }
 }
 
+function isAllowedAnnouncementPosterType(contentType) {
+    return ALLOWED_ANNOUNCEMENT_POSTER_TYPES.has(String(contentType || '').toLowerCase());
+}
+
+function isAllowedAnnouncementVideoType(contentType) {
+    return ALLOWED_ANNOUNCEMENT_VIDEO_TYPES.has(String(contentType || '').toLowerCase());
+}
+
 function sanitizeAttachmentFileName(fileName) {
     const raw = String(fileName || 'file');
     const lastDot = raw.lastIndexOf('.');
@@ -2604,6 +2666,110 @@ function sanitizeAttachmentFileName(fileName) {
 function clampAttachmentName(fileName) {
     const safeName = String(fileName || 'attachment');
     return Array.from(safeName).slice(0, MAX_STATUS_ATTACHMENT_NAME_LENGTH).join('');
+}
+
+function getAnnouncementPosterValidationError(file) {
+    if (!file) return 'No poster selected.';
+    if (!isAllowedAnnouncementPosterType(file.type)) {
+        return 'Unsupported poster type. Use JPG, PNG, WEBP, or GIF.';
+    }
+    if (file.size > MAX_ANNOUNCEMENT_POSTER_BYTES) {
+        return 'Poster is too large. Maximum size is 10 MB.';
+    }
+    if (file.size <= 0) {
+        return 'Poster is empty. Choose a valid file.';
+    }
+    return '';
+}
+
+function getAnnouncementVideoValidationError(file) {
+    if (!file) return 'No video selected.';
+    if (!isAllowedAnnouncementVideoType(file.type)) {
+        return 'Unsupported video type. Use MP4, MOV, or WEBM.';
+    }
+    if (file.size > MAX_ANNOUNCEMENT_VIDEO_BYTES) {
+        return 'Video is too large. Maximum size is 20 MB.';
+    }
+    if (file.size <= 0) {
+        return 'Video is empty. Choose a valid file.';
+    }
+    return '';
+}
+
+function openAnnouncementPosterPicker() {
+    const inputEl = document.getElementById('announcementPosterInput');
+    if (inputEl) inputEl.click();
+}
+
+function openAnnouncementVideoPicker() {
+    const inputEl = document.getElementById('announcementVideoInput');
+    if (inputEl) inputEl.click();
+}
+
+function handleAnnouncementPosterChange() {
+    const posterEl = document.getElementById('announcementPosterInput');
+    const posterNameEl = document.getElementById('announcementPosterName');
+    const feedbackEl = document.getElementById('announcementFeedback');
+    const file = posterEl?.files?.[0] || null;
+    if (!file) {
+        announcementPosterFile = null;
+        if (posterNameEl) posterNameEl.textContent = 'No poster selected.';
+        return;
+    }
+    const validationError = getAnnouncementPosterValidationError(file);
+    if (validationError) {
+        announcementPosterFile = null;
+        posterEl.value = '';
+        if (posterNameEl) posterNameEl.textContent = 'No poster selected.';
+        if (feedbackEl) feedbackEl.textContent = validationError;
+        return;
+    }
+    announcementPosterFile = file;
+    if (posterNameEl) posterNameEl.textContent = `${file.name} (${formatFileSize(file.size)})`;
+    if (feedbackEl) feedbackEl.textContent = '';
+}
+
+function handleAnnouncementVideoChange() {
+    const videoEl = document.getElementById('announcementVideoInput');
+    const videoNameEl = document.getElementById('announcementVideoName');
+    const feedbackEl = document.getElementById('announcementFeedback');
+    const file = videoEl?.files?.[0] || null;
+    if (!file) {
+        announcementVideoFile = null;
+        if (videoNameEl) videoNameEl.textContent = 'No video selected.';
+        return;
+    }
+    const validationError = getAnnouncementVideoValidationError(file);
+    if (validationError) {
+        announcementVideoFile = null;
+        videoEl.value = '';
+        if (videoNameEl) videoNameEl.textContent = 'No video selected.';
+        if (feedbackEl) feedbackEl.textContent = validationError;
+        return;
+    }
+    announcementVideoFile = file;
+    if (videoNameEl) videoNameEl.textContent = `${file.name} (${formatFileSize(file.size)})`;
+    if (feedbackEl) feedbackEl.textContent = '';
+}
+
+async function uploadAnnouncementMediaFile(file, mediaKind) {
+    if (!storage || !currentUser) {
+        throw new Error('Storage unavailable.');
+    }
+    const safeFileName = sanitizeAttachmentFileName(file.name);
+    const kind = mediaKind === 'video' ? 'video' : 'poster';
+    const mediaPath = `announcements/${currentUser.uid}/${kind}/${Date.now()}-${safeFileName}`;
+    const uploadTask = await storage.ref().child(mediaPath).put(file);
+    const downloadURL = await uploadTask.ref.getDownloadURL();
+    if (!isTrustedAttachmentUrl(downloadURL)) {
+        throw new Error('Unexpected storage URL for uploaded announcement media.');
+    }
+    return {
+        name: clampAttachmentName(file.name),
+        type: String(file.type || '').toLowerCase(),
+        size: Number.isFinite(file.size) ? file.size : 0,
+        url: downloadURL
+    };
 }
 
 function handleStatusAttachmentChange() {
@@ -2709,6 +2875,8 @@ function teardownCommunityListeners() {
     latestAnnouncementDocs = [];
     sundayServicePhotoFile = null;
     sundayServiceBulkPhotoFiles = [];
+    announcementPosterFile = null;
+    announcementVideoFile = null;
     clearStatusExpiryRerenderTimer();
 }
 
@@ -2910,6 +3078,37 @@ function renderAnnouncements() {
             message.textContent = data.message;
             item.appendChild(message);
         }
+        if (data?.poster?.url && isTrustedAttachmentUrl(data.poster.url) && isAllowedAnnouncementPosterType(data.poster.type)) {
+            const posterFrame = document.createElement('div');
+            posterFrame.className = 'announcement-poster';
+            const posterImage = document.createElement('img');
+            posterImage.src = String(data.poster.url);
+            posterImage.alt = data.title ? `Poster for ${data.title}` : 'Announcement poster';
+            posterImage.loading = 'lazy';
+            posterFrame.appendChild(posterImage);
+            item.appendChild(posterFrame);
+        }
+        if (data?.video?.url && isTrustedAttachmentUrl(data.video.url) && isAllowedAnnouncementVideoType(data.video.type)) {
+            const videoFrame = document.createElement('div');
+            videoFrame.className = 'announcement-video-frame';
+            const videoPlayer = document.createElement('video');
+            videoPlayer.src = String(data.video.url);
+            videoPlayer.controls = true;
+            videoPlayer.preload = 'metadata';
+            videoPlayer.playsInline = true;
+            videoFrame.appendChild(videoPlayer);
+            item.appendChild(videoFrame);
+            const uploadActionRow = document.createElement('div');
+            uploadActionRow.className = 'feed-action-row';
+            const openUploadVideoLink = document.createElement('a');
+            openUploadVideoLink.className = 'feed-view-btn';
+            openUploadVideoLink.href = String(data.video.url);
+            openUploadVideoLink.target = '_blank';
+            openUploadVideoLink.rel = 'noopener noreferrer';
+            openUploadVideoLink.textContent = 'Open Uploaded Video';
+            uploadActionRow.appendChild(openUploadVideoLink);
+            item.appendChild(uploadActionRow);
+        }
         const videoSource = getAnnouncementVideoSource(data.videoUrl);
         if (videoSource) {
             const videoFrame = document.createElement('div');
@@ -2961,6 +3160,10 @@ async function postAnnouncement() {
     const titleEl = document.getElementById('announcementTitle');
     const messageEl = document.getElementById('announcementMessage');
     const videoUrlEl = document.getElementById('announcementVideoUrl');
+    const posterEl = document.getElementById('announcementPosterInput');
+    const posterNameEl = document.getElementById('announcementPosterName');
+    const videoUploadEl = document.getElementById('announcementVideoInput');
+    const videoNameEl = document.getElementById('announcementVideoName');
     const feedbackEl = document.getElementById('announcementFeedback');
     const title = titleEl.value.trim();
     const message = messageEl.value.trim();
@@ -2969,8 +3172,8 @@ async function postAnnouncement() {
         if (feedbackEl) feedbackEl.textContent = 'Add an announcement title.';
         return;
     }
-    if (!message && !videoUrl) {
-        if (feedbackEl) feedbackEl.textContent = 'Add announcement details or a video link.';
+    if (!message && !videoUrl && !announcementPosterFile && !announcementVideoFile) {
+        if (feedbackEl) feedbackEl.textContent = 'Add announcement details, media, or a video link.';
         return;
     }
     const videoSource = videoUrl ? getAnnouncementVideoSource(videoUrl) : null;
@@ -2978,7 +3181,39 @@ async function postAnnouncement() {
         if (feedbackEl) feedbackEl.textContent = 'Use a valid YouTube video link.';
         return;
     }
+    if (videoSource && videoSource.href.length > MAX_ANNOUNCEMENT_VIDEO_URL_LENGTH) {
+        if (feedbackEl) feedbackEl.textContent = 'Video link is too long.';
+        return;
+    }
+    if (announcementPosterFile) {
+        const posterError = getAnnouncementPosterValidationError(announcementPosterFile);
+        if (posterError) {
+            if (feedbackEl) feedbackEl.textContent = posterError;
+            return;
+        }
+    }
+    if (announcementVideoFile) {
+        const videoError = getAnnouncementVideoValidationError(announcementVideoFile);
+        if (videoError) {
+            if (feedbackEl) feedbackEl.textContent = videoError;
+            return;
+        }
+    }
     try {
+        let posterData = null;
+        let uploadedVideoData = null;
+        if (announcementPosterFile || announcementVideoFile) {
+            if (!storage) {
+                if (feedbackEl) feedbackEl.textContent = 'Media upload is unavailable right now.';
+                return;
+            }
+        }
+        if (announcementPosterFile) {
+            posterData = await uploadAnnouncementMediaFile(announcementPosterFile, 'poster');
+        }
+        if (announcementVideoFile) {
+            uploadedVideoData = await uploadAnnouncementMediaFile(announcementVideoFile, 'video');
+        }
         const payload = {
             uid: currentUser.uid,
             authorName: currentProfile.fullName || 'Admin',
@@ -2989,16 +3224,24 @@ async function postAnnouncement() {
             payload.message = message.slice(0, 500);
         }
         if (videoSource) {
-            if (videoSource.href.length > MAX_ANNOUNCEMENT_VIDEO_URL_LENGTH) {
-                if (feedbackEl) feedbackEl.textContent = 'Video link is too long.';
-                return;
-            }
             payload.videoUrl = videoSource.href;
+        }
+        if (posterData) {
+            payload.poster = posterData;
+        }
+        if (uploadedVideoData) {
+            payload.video = uploadedVideoData;
         }
         await db.collection('announcements').add(payload);
         titleEl.value = '';
         messageEl.value = '';
         videoUrlEl.value = '';
+        if (posterEl) posterEl.value = '';
+        if (posterNameEl) posterNameEl.textContent = 'No poster selected.';
+        if (videoUploadEl) videoUploadEl.value = '';
+        if (videoNameEl) videoNameEl.textContent = 'No video selected.';
+        announcementPosterFile = null;
+        announcementVideoFile = null;
         if (feedbackEl) feedbackEl.textContent = 'Announcement posted.';
     } catch (error) {
         console.error('Failed to post announcement:', error);
