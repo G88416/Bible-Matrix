@@ -94,6 +94,31 @@ service cloud.firestore {
       return hasValidText('message', 400);
     }
 
+    function hasValidSundayServicePhotoData() {
+      return request.resource.data.photo is map
+        && request.resource.data.photo.keys().hasOnly(['name', 'type', 'size', 'url'])
+        && request.resource.data.photo.name is string
+        && request.resource.data.photo.name.size() > 0
+        && request.resource.data.photo.name.size() <= 120
+        && request.resource.data.photo.type is string
+        && request.resource.data.photo.type in [
+          'image/jpeg',
+          'image/png',
+          'image/webp',
+          'image/gif'
+        ]
+        && request.resource.data.photo.size is int
+        && request.resource.data.photo.size > 0
+        && request.resource.data.photo.size <= 10485760
+        && request.resource.data.photo.url is string
+        && hasTrustedStorageUrl('photo');
+    }
+
+    function hasValidServiceDate() {
+      return request.resource.data.serviceDate is string
+        && request.resource.data.serviceDate.matches('^\\d{4}-\\d{2}-\\d{2}$');
+    }
+
     match /users/{userId} {
       allow read: if isSignedIn();
       allow create: if isOwner(userId)
@@ -131,6 +156,18 @@ service cloud.firestore {
         && request.resource.data.uid == request.auth.uid
         && hasValidAuthorName('authorName', 80)
         && hasValidGroupMessageContent()
+        && request.resource.data.createdAt is timestamp;
+      allow update, delete: if false;
+    }
+
+    match /sundayServicePhotos/{photoId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn()
+        && request.resource.data.uid == request.auth.uid
+        && hasValidAuthorName('authorName', 80)
+        && hasValidServiceDate()
+        && hasValidOptionalText('caption', 140)
+        && hasValidSundayServicePhotoData()
         && request.resource.data.createdAt is timestamp;
       allow update, delete: if false;
     }
