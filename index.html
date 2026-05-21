@@ -1015,6 +1015,12 @@ body.menu-lock {
     border-radius: 10px;
     margin-bottom: 6px;
     cursor: pointer;
+    transition: transform 0.18s ease, opacity 0.18s ease;
+}
+
+.photo-library-item img:hover {
+    transform: scale(1.02);
+    opacity: 0.88;
 }
 
 .photo-library-meta {
@@ -2491,8 +2497,9 @@ function createShareNetworkLink(type, payload) {
     const joinedText = [payload.title, payload.text].filter(Boolean).join('\n');
     const encodedUrl = encodeURIComponent(payload.url);
     const encodedText = encodeURIComponent(joinedText);
+    const encodedCombinedText = encodeURIComponent(`${joinedText}\n${payload.url}`.trim());
     if (type === 'WhatsApp') {
-        return `https://wa.me/?text=${encodeURIComponent(`${joinedText}\n${payload.url}`.trim())}`;
+        return `https://wa.me/?text=${encodedCombinedText}`;
     }
     if (type === 'Facebook') {
         return `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`;
