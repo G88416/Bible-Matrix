@@ -2687,8 +2687,14 @@ function prepareChatReply(authorName) {
     const chatMessageEl = document.getElementById('chatMessage');
     if (!chatMessageEl) return;
     const mention = authorName ? `@${authorName} ` : '';
-    chatMessageEl.value = mention;
+    const existing = chatMessageEl.value.trim();
+    if (!existing) {
+        chatMessageEl.value = mention;
+    } else if (!existing.includes(mention.trim())) {
+        chatMessageEl.value = `${existing}\n${mention}`.trimStart();
+    }
     chatMessageEl.focus();
+    chatMessageEl.setSelectionRange(chatMessageEl.value.length, chatMessageEl.value.length);
 }
 
 function isNearBottom(element, threshold = 90) {
@@ -4154,7 +4160,7 @@ function subscribeGroupChat() {
                 const data = doc.data();
                 const item = document.createElement('li');
                 item.className = 'feed-item';
-                const isOwnMessage = Boolean(currentUser && data.uid === currentUser.uid);
+                const isOwnMessage = currentUser && data.uid === currentUser.uid;
                 item.classList.add(isOwnMessage ? 'chat-item-own' : 'chat-item-other');
                 const meta = document.createElement('div');
                 meta.className = 'feed-meta';
