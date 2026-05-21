@@ -2204,6 +2204,7 @@ const ATTENDANCE_STORAGE_KEY = 'bibleMatrixSundayAttendanceEntries';
 const MAX_SUNDAY_PHOTO_BYTES = 10 * 1024 * 1024;
 const PHOTO_LIBRARY_ADMIN_PASSWORD = 'G19@2026';
 const MAX_ANNOUNCEMENT_VIDEO_URL_LENGTH = 300;
+const YOUTUBE_VIDEO_ID_LENGTH = 11;
 const ALLOWED_STATUS_ATTACHMENT_TYPES = new Set([
     'application/pdf',
     'application/msword',
@@ -2574,7 +2575,7 @@ function getAnnouncementVideoSource(value) {
             videoId = pathname.split('/shorts/')[1]?.split('/')[0] || '';
         }
         videoId = videoId.split(/[?&#]/)[0].trim();
-        if (!/^[A-Za-z0-9_-]{11}$/.test(videoId)) return null;
+        if (videoId.length !== YOUTUBE_VIDEO_ID_LENGTH || !/^[A-Za-z0-9_-]+$/.test(videoId)) return null;
         const safeVideoId = encodeURIComponent(videoId);
         return {
             src: `https://www.youtube-nocookie.com/embed/${safeVideoId}`,
@@ -2987,7 +2988,11 @@ async function postAnnouncement() {
             payload.message = message.slice(0, 500);
         }
         if (videoSource) {
-            payload.videoUrl = videoSource.href.slice(0, MAX_ANNOUNCEMENT_VIDEO_URL_LENGTH);
+            if (videoSource.href.length > MAX_ANNOUNCEMENT_VIDEO_URL_LENGTH) {
+                if (feedbackEl) feedbackEl.textContent = 'Video link is too long.';
+                return;
+            }
+            payload.videoUrl = videoSource.href;
         }
         await db.collection('announcements').add(payload);
         titleEl.value = '';
