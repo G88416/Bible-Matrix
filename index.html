@@ -3082,18 +3082,20 @@ function renderSundayServicePhotos() {
             meta.appendChild(caption);
         }
         card.appendChild(meta);
-        const actions = document.createElement('div');
-        actions.className = 'photo-library-item-actions';
-        const deleteBtn = document.createElement('button');
-        deleteBtn.className = 'btn btn-secondary photo-admin-delete-btn';
-        deleteBtn.type = 'button';
-        deleteBtn.textContent = 'Delete';
-        deleteBtn.setAttribute('aria-label', 'Delete photo');
-        deleteBtn.addEventListener('click', () => {
-            deleteSundayServicePhoto(doc.id, data.photo.url);
-        });
-        actions.appendChild(deleteBtn);
-        card.appendChild(actions);
+        if (currentUser && data.uid === currentUser.uid) {
+            const actions = document.createElement('div');
+            actions.className = 'photo-library-item-actions';
+            const deleteBtn = document.createElement('button');
+            deleteBtn.className = 'btn btn-secondary photo-admin-delete-btn';
+            deleteBtn.type = 'button';
+            deleteBtn.textContent = 'Delete';
+            deleteBtn.setAttribute('aria-label', 'Delete photo');
+            deleteBtn.addEventListener('click', () => {
+                deleteSundayServicePhoto(doc.id, data.photo.url);
+            });
+            actions.appendChild(deleteBtn);
+            card.appendChild(actions);
+        }
         photoGrid.appendChild(card);
     });
     if (!photoGrid.children.length) {

@@ -158,7 +158,7 @@ service cloud.firestore {
         && hasValidGroupMessageContent()
         && request.resource.data.createdAt is timestamp;
       allow update: if false;
-      allow delete: if isSignedIn();
+      allow delete: if isSignedIn() && resource.data.uid == request.auth.uid;
     }
 
     match /sundayServicePhotos/{photoId} {
