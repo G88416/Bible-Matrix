@@ -2205,6 +2205,16 @@ const MAX_SUNDAY_PHOTO_BYTES = 10 * 1024 * 1024;
 const PHOTO_LIBRARY_ADMIN_PASSWORD = 'G19@2026';
 const MAX_ANNOUNCEMENT_VIDEO_URL_LENGTH = 300;
 const YOUTUBE_VIDEO_ID_LENGTH = 11;
+const YOUTUBE_VIDEO_ID_PATTERN = /^[A-Za-z0-9_-]+$/;
+const YOUTUBE_VIDEO_HOSTS = new Set([
+    'youtube.com',
+    'www.youtube.com',
+    'm.youtube.com',
+    'youtu.be',
+    'www.youtu.be',
+    'youtube-nocookie.com',
+    'www.youtube-nocookie.com'
+]);
 const ALLOWED_STATUS_ATTACHMENT_TYPES = new Set([
     'application/pdf',
     'application/msword',
@@ -2554,16 +2564,7 @@ function getAnnouncementVideoSource(value) {
         if (parsed.protocol !== 'https:') return null;
         const hostname = parsed.hostname.toLowerCase();
         const pathname = parsed.pathname || '';
-        const youtubeHosts = new Set([
-            'youtube.com',
-            'www.youtube.com',
-            'm.youtube.com',
-            'youtu.be',
-            'www.youtu.be',
-            'youtube-nocookie.com',
-            'www.youtube-nocookie.com'
-        ]);
-        if (!youtubeHosts.has(hostname)) return null;
+        if (!YOUTUBE_VIDEO_HOSTS.has(hostname)) return null;
         let videoId = '';
         if (hostname.includes('youtu.be')) {
             videoId = pathname.split('/').filter(Boolean)[0] || '';
@@ -2575,7 +2576,7 @@ function getAnnouncementVideoSource(value) {
             videoId = pathname.split('/shorts/')[1]?.split('/')[0] || '';
         }
         videoId = videoId.split(/[?&#]/)[0].trim();
-        if (videoId.length !== YOUTUBE_VIDEO_ID_LENGTH || !/^[A-Za-z0-9_-]+$/.test(videoId)) return null;
+        if (videoId.length !== YOUTUBE_VIDEO_ID_LENGTH || !YOUTUBE_VIDEO_ID_PATTERN.test(videoId)) return null;
         const safeVideoId = encodeURIComponent(videoId);
         return {
             src: `https://www.youtube-nocookie.com/embed/${safeVideoId}`,
