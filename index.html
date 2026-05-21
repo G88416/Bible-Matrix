@@ -2597,7 +2597,6 @@ function openSundayPhotoViewer(photoIndex) {
     const photos = getRenderableSundayPhotos();
     if (!photos.length) return;
     const nextIndex = Math.max(0, Math.min(photoIndex, photos.length - 1));
-    activePhotoViewerIndex = nextIndex;
     closePhotoViewer();
     activePhotoViewerIndex = nextIndex;
     const selected = photos[nextIndex];
@@ -2697,6 +2696,7 @@ function prepareChatReply(authorName) {
     chatMessageEl.setSelectionRange(chatMessageEl.value.length, chatMessageEl.value.length);
 }
 
+// Returns true when a scrollable element is within the threshold (in pixels) of the bottom.
 function isNearBottom(element, threshold = 90) {
     if (!element) return true;
     return (element.scrollHeight - element.scrollTop - element.clientHeight) <= threshold;
