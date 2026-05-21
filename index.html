@@ -44,6 +44,7 @@
     --danger: #ff5f8f;
     --shadow: 0 24px 60px rgba(0, 0, 0, 0.32);
     --game-screen-bottom-padding: 24px;
+    --chat-min-feed-height: 280px;
     --community-green-bg: rgba(120, 232, 159, 0.24);
     --community-green-border: rgba(120, 232, 159, 0.58);
     --community-green-soft: rgba(120, 232, 159, 0.16);
@@ -830,7 +831,7 @@ body.menu-lock {
 .chat-shell {
     display: grid;
     gap: 14px;
-    grid-template-rows: minmax(280px, 1fr) auto;
+    grid-template-rows: minmax(var(--chat-min-feed-height), 1fr) auto;
 }
 
 .feed-box h3,
@@ -2378,6 +2379,9 @@ const MIN_STATUS_RERENDER_DELAY_MS = 1000;
 const MILLISECONDS_PER_MINUTE = 60000;
 const OBJECT_URL_CLEANUP_DELAY_MS = 5 * 60 * 1000;
 const ATTENDANCE_STORAGE_KEY = 'bibleMatrixSundayAttendanceEntries';
+const MAX_SHARE_TITLE_LENGTH = 140;
+const MAX_SHARE_TEXT_LENGTH = 700;
+const CHAT_AUTO_SCROLL_THRESHOLD = 90;
 const MAX_SUNDAY_PHOTO_BYTES = 10 * 1024 * 1024;
 const PHOTO_LIBRARY_ADMIN_PASSWORD = 'G19@2026';
 const MAX_ANNOUNCEMENT_VIDEO_URL_LENGTH = 300;
@@ -2468,8 +2472,8 @@ function buildAppShareUrl() {
 }
 
 function buildSharePayload({ title = '', text = '', url = '' } = {}) {
-    const safeTitle = String(title || '').trim().slice(0, 140);
-    const safeText = String(text || '').trim().slice(0, 700);
+    const safeTitle = String(title || '').trim().slice(0, MAX_SHARE_TITLE_LENGTH);
+    const safeText = String(text || '').trim().slice(0, MAX_SHARE_TEXT_LENGTH);
     const safeUrl = String(url || '').trim();
     return {
         title: safeTitle,
@@ -2685,7 +2689,12 @@ function shareLukeStatus(statusData) {
 function prepareChatReply(authorName) {
     const chatMessageEl = document.getElementById('chatMessage');
     if (!chatMessageEl) return;
-    const mention = authorName ? `@${authorName} ` : '';
+    const safeAuthorName = String(authorName || '')
+        .replace(/\s+/g, ' ')
+        .replace(/[@\n\r\t]/g, '')
+        .trim()
+        .slice(0, 60);
+    const mention = safeAuthorName ? `@${safeAuthorName} ` : '';
     const existing = chatMessageEl.value.trim();
     if (!existing) {
         chatMessageEl.value = mention;
@@ -2697,7 +2706,7 @@ function prepareChatReply(authorName) {
 }
 
 // Returns true when a scrollable element is within the threshold (in pixels) of the bottom.
-function isNearBottom(element, threshold = 90) {
+function isNearBottom(element, threshold = CHAT_AUTO_SCROLL_THRESHOLD) {
     if (!element) return true;
     return (element.scrollHeight - element.scrollTop - element.clientHeight) <= threshold;
 }
