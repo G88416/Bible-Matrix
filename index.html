@@ -2553,7 +2553,6 @@ function getAnnouncementVideoSource(value) {
         if (parsed.protocol !== 'https:') return null;
         const hostname = parsed.hostname.toLowerCase();
         const pathname = parsed.pathname || '';
-        const normalizedUrl = parsed.toString();
         const youtubeHosts = new Set([
             'youtube.com',
             'www.youtube.com',
@@ -2567,18 +2566,19 @@ function getAnnouncementVideoSource(value) {
         let videoId = '';
         if (hostname.includes('youtu.be')) {
             videoId = pathname.split('/').filter(Boolean)[0] || '';
-        } else if (pathname.startsWith('/watch')) {
+        } else if (pathname === '/watch') {
             videoId = parsed.searchParams.get('v') || '';
         } else if (pathname.startsWith('/embed/')) {
             videoId = pathname.split('/embed/')[1]?.split('/')[0] || '';
         } else if (pathname.startsWith('/shorts/')) {
             videoId = pathname.split('/shorts/')[1]?.split('/')[0] || '';
         }
+        videoId = videoId.split(/[?&#]/)[0].trim();
         if (!/^[A-Za-z0-9_-]{11}$/.test(videoId)) return null;
         const safeVideoId = encodeURIComponent(videoId);
         return {
             src: `https://www.youtube-nocookie.com/embed/${safeVideoId}`,
-            href: normalizedUrl
+            href: `https://www.youtube.com/watch?v=${safeVideoId}`
         };
     } catch (error) {
         return null;
@@ -2916,7 +2916,6 @@ function renderAnnouncements() {
             frame.src = videoSource.src;
             frame.title = data.title || 'Announcement video';
             frame.loading = 'lazy';
-            frame.allow = 'encrypted-media; picture-in-picture';
             frame.allowFullscreen = true;
             videoFrame.appendChild(frame);
             item.appendChild(videoFrame);
