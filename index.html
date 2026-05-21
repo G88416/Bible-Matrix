@@ -44,6 +44,7 @@
     --danger: #ff5f8f;
     --shadow: 0 24px 60px rgba(0, 0, 0, 0.32);
     --game-screen-bottom-padding: 24px;
+    --chat-min-feed-height: 280px;
     --community-green-bg: rgba(120, 232, 159, 0.24);
     --community-green-border: rgba(120, 232, 159, 0.58);
     --community-green-soft: rgba(120, 232, 159, 0.16);
@@ -153,11 +154,12 @@ body::before {
 }
 
 .btn {
-    border: none;
-    border-radius: 18px;
-    padding: 15px 22px;
-    font-weight: 700;
-    font-size: 1rem;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 14px;
+    padding: 10px 15px;
+    font-weight: 600;
+    font-size: 0.92rem;
+    line-height: 1.2;
     cursor: pointer;
     transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
 }
@@ -169,7 +171,7 @@ body::before {
 .btn-primary {
     color: #111827;
     background: linear-gradient(135deg, var(--accent), var(--accent-strong));
-    box-shadow: 0 16px 35px rgba(245, 196, 81, 0.26);
+    box-shadow: 0 10px 24px rgba(245, 196, 81, 0.24);
 }
 
 .btn-secondary {
@@ -627,13 +629,13 @@ footer {
 }
 
 .icon-btn {
-    width: 48px;
-    height: 48px;
-    border-radius: 16px;
-    border: 1px solid rgba(255, 255, 255, 0.18);
+    width: 42px;
+    height: 42px;
+    border-radius: 13px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
     background: rgba(21, 14, 49, 0.86);
     color: var(--text);
-    font-size: 1.25rem;
+    font-size: 1.1rem;
     font-weight: 700;
     display: inline-flex;
     align-items: center;
@@ -713,14 +715,15 @@ footer {
 .menu-btn {
     width: 100%;
     text-align: left;
-    border-radius: 14px;
-    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
     background: rgba(255, 255, 255, 0.05);
     color: var(--text);
-    padding: 12px 14px;
+    padding: 9px 12px;
     font-weight: 600;
+    font-size: 0.9rem;
     cursor: pointer;
-    min-height: 48px;
+    min-height: 40px;
 }
 
 body.menu-lock {
@@ -828,6 +831,7 @@ body.menu-lock {
 .chat-shell {
     display: grid;
     gap: 14px;
+    grid-template-rows: minmax(var(--chat-min-feed-height), 1fr) auto;
 }
 
 .feed-box h3,
@@ -895,19 +899,21 @@ body.menu-lock {
 
 .attachment-view-btn,
 .record-btn,
-.feed-view-btn {
+.feed-view-btn,
+.feed-share-btn {
     border: 1px solid var(--community-green-border);
     background: var(--community-green-soft);
     color: var(--text);
-    border-radius: 12px;
-    padding: 8px 12px;
+    border-radius: 10px;
+    padding: 7px 10px;
     font-weight: 600;
+    font-size: 0.8rem;
     cursor: pointer;
     text-decoration: none;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-height: 38px;
+    min-height: 32px;
 }
 
 .feed-delete-btn {
@@ -915,11 +921,11 @@ body.menu-lock {
     background: rgba(255, 95, 143, 0.2);
     color: var(--text);
     border-radius: 999px;
-    padding: 6px 12px;
+    padding: 5px 10px;
     font-weight: 600;
     cursor: pointer;
-    min-height: 30px;
-    font-size: 0.78rem;
+    min-height: 28px;
+    font-size: 0.74rem;
 }
 
 .record-btn[disabled] {
@@ -1008,6 +1014,13 @@ body.menu-lock {
     object-fit: cover;
     border-radius: 10px;
     margin-bottom: 6px;
+    cursor: pointer;
+    transition: transform 0.18s ease, opacity 0.18s ease;
+}
+
+.photo-library-item img:hover {
+    transform: scale(1.02);
+    opacity: 0.88;
 }
 
 .photo-library-meta {
@@ -1024,7 +1037,136 @@ body.menu-lock {
 
 .photo-library-item-actions {
     display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
     margin-top: 8px;
+}
+
+.chat-feed-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.chat-feed-list .feed-item {
+    max-width: min(92%, 540px);
+    width: fit-content;
+    padding: 10px;
+}
+
+.chat-item-own {
+    align-self: flex-end;
+    border-color: rgba(120, 232, 159, 0.55);
+    background: rgba(120, 232, 159, 0.17);
+}
+
+.chat-item-other {
+    align-self: flex-start;
+    border-color: rgba(255, 255, 255, 0.16);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.chat-item-own .feed-meta {
+    justify-content: flex-end;
+}
+
+.chat-message-text {
+    line-height: 1.42;
+    word-break: break-word;
+}
+
+.chat-compose {
+    position: sticky;
+    bottom: 0;
+    backdrop-filter: blur(4px);
+}
+
+.chat-reply-btn {
+    margin-top: 2px;
+}
+
+.photo-viewer-overlay,
+.share-sheet-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 130;
+    background: rgba(4, 2, 12, 0.9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 14px;
+}
+
+.photo-viewer-dialog {
+    width: min(940px, 100%);
+    max-height: calc(100vh - 28px);
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    background: rgba(14, 9, 34, 0.96);
+    padding: 10px;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    gap: 8px;
+}
+
+.photo-viewer-topbar {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.photo-viewer-image-wrap {
+    border-radius: 12px;
+    overflow: auto;
+    max-height: calc(100vh - 220px);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    background: rgba(0, 0, 0, 0.34);
+}
+
+.photo-viewer-image-wrap img {
+    width: 100%;
+    height: auto;
+    display: block;
+    object-fit: contain;
+}
+
+.photo-viewer-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.photo-viewer-nav {
+    display: inline-flex;
+    gap: 6px;
+}
+
+.photo-viewer-meta {
+    color: var(--muted);
+    font-size: 0.82rem;
+}
+
+.share-sheet-dialog {
+    width: min(360px, 100%);
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    background: rgba(14, 9, 34, 0.97);
+    padding: 14px;
+    display: grid;
+    gap: 10px;
+}
+
+.share-sheet-links {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+}
+
+.share-sheet-link {
+    text-decoration: none;
 }
 
 .announcement-form-note {
@@ -1431,13 +1573,13 @@ body {
 
     .menu-head .icon-btn,
     .app-topbar .icon-btn {
-        width: 46px;
-        height: 46px;
+        width: 40px;
+        height: 40px;
     }
 
     .menu-btn {
-        font-size: 0.95rem;
-        min-height: 50px;
+        font-size: 0.88rem;
+        min-height: 38px;
     }
 
 }
@@ -1620,7 +1762,7 @@ body {
         <div class="chat-shell">
             <div class="feed-box">
                 <h3>Group conversation</h3>
-                <ul id="chatFeed" class="feed-list">
+                <ul id="chatFeed" class="feed-list chat-feed-list">
                     <li class="feed-item muted-note">No messages yet.</li>
                 </ul>
             </div>
@@ -2233,6 +2375,7 @@ let latestSundayPhotoDocs = [];
 let latestAnnouncementDocs = [];
 let statusExpiryRerenderTimeout = null;
 let attendanceEntries = [];
+let activePhotoViewerIndex = -1;
 const STATUS_ATTACHMENT_BUCKET = String(firebaseConfig.storageBucket || '').trim();
 const MAX_STATUS_ATTACHMENT_BYTES = 20 * 1024 * 1024;
 const MAX_STATUS_ATTACHMENT_NAME_LENGTH = 120;
@@ -2242,6 +2385,9 @@ const MIN_STATUS_RERENDER_DELAY_MS = 1000;
 const MILLISECONDS_PER_MINUTE = 60000;
 const OBJECT_URL_CLEANUP_DELAY_MS = 5 * 60 * 1000;
 const ATTENDANCE_STORAGE_KEY = 'bibleMatrixSundayAttendanceEntries';
+const MAX_SHARE_TITLE_LENGTH = 140;
+const MAX_SHARE_TEXT_LENGTH = 700;
+const CHAT_AUTO_SCROLL_THRESHOLD = 90;
 const MAX_SUNDAY_PHOTO_BYTES = 10 * 1024 * 1024;
 const PHOTO_LIBRARY_ADMIN_PASSWORD = 'G19@2026';
 const MAX_ANNOUNCEMENT_VIDEO_URL_LENGTH = 300;
@@ -2258,6 +2404,7 @@ const YOUTUBE_VIDEO_HOSTS = new Set([
     'youtube-nocookie.com',
     'www.youtube-nocookie.com'
 ]);
+const SHARE_MENU_NETWORKS = ['WhatsApp', 'Facebook', 'X', 'Email'];
 const ALLOWED_STATUS_ATTACHMENT_TYPES = new Set([
     'application/pdf',
     'application/msword',
@@ -2295,6 +2442,8 @@ const nextQuestionDelayMs = 1400;
 const aiTimeUpBonus = 0.08;
 
 function showScreen(screenId) {
+    closePhotoViewer();
+    closeShareSheet();
     document.querySelectorAll('.screen').forEach((screen) => screen.classList.remove('active'));
     document.getElementById(screenId).classList.add('active');
     if (screenId === 'gameScreen') {
@@ -2322,6 +2471,251 @@ function firebaseReady() {
 
 function setAuthFeedback(id, message) {
     document.getElementById(id).textContent = message;
+}
+
+function buildAppShareUrl() {
+    return `${window.location.origin}${window.location.pathname}`;
+}
+
+function buildSharePayload({ title = '', text = '', url = '' } = {}) {
+    const safeTitle = String(title || '').trim().slice(0, MAX_SHARE_TITLE_LENGTH);
+    const safeText = String(text || '').trim().slice(0, MAX_SHARE_TEXT_LENGTH);
+    const safeUrl = String(url || '').trim();
+    return {
+        title: safeTitle,
+        text: safeText,
+        url: safeUrl || buildAppShareUrl()
+    };
+}
+
+function closeShareSheet() {
+    const overlay = document.getElementById('shareSheetOverlay');
+    if (overlay) overlay.remove();
+}
+
+function createShareNetworkLink(type, payload) {
+    const joinedText = [payload.title, payload.text].filter(Boolean).join('\n');
+    const encodedUrl = encodeURIComponent(payload.url);
+    const encodedText = encodeURIComponent(joinedText);
+    const encodedCombinedText = encodeURIComponent(`${joinedText}\n${payload.url}`.trim());
+    if (type === 'WhatsApp') {
+        return `https://wa.me/?text=${encodedCombinedText}`;
+    }
+    if (type === 'Facebook') {
+        return `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`;
+    }
+    if (type === 'X') {
+        return `https://twitter.com/intent/tweet?text=${encodedText}&url=${encodedUrl}`;
+    }
+    return `mailto:?subject=${encodeURIComponent(payload.title || 'Luke update')}&body=${encodeURIComponent(`${payload.text}\n${payload.url}`.trim())}`;
+}
+
+function openShareSheet(payload) {
+    closeShareSheet();
+    const overlay = document.createElement('div');
+    overlay.className = 'share-sheet-overlay';
+    overlay.id = 'shareSheetOverlay';
+    const dialog = document.createElement('div');
+    dialog.className = 'share-sheet-dialog';
+    const title = document.createElement('h3');
+    title.textContent = 'Share';
+    const links = document.createElement('div');
+    links.className = 'share-sheet-links';
+    SHARE_MENU_NETWORKS.forEach((network) => {
+        const link = document.createElement('a');
+        link.className = 'feed-view-btn share-sheet-link';
+        link.href = createShareNetworkLink(network, payload);
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+        link.textContent = network;
+        links.appendChild(link);
+    });
+    const copyBtn = document.createElement('button');
+    copyBtn.type = 'button';
+    copyBtn.className = 'feed-share-btn';
+    copyBtn.textContent = 'Copy link';
+    copyBtn.addEventListener('click', async () => {
+        try {
+            if (navigator.clipboard && payload.url) {
+                await navigator.clipboard.writeText(payload.url);
+                copyBtn.textContent = 'Copied';
+                return;
+            }
+        } catch (error) {
+            console.error('Unable to copy link:', error);
+        }
+        window.prompt('Copy this link:', payload.url);
+    });
+    const closeBtn = document.createElement('button');
+    closeBtn.type = 'button';
+    closeBtn.className = 'btn btn-secondary';
+    closeBtn.textContent = 'Close';
+    closeBtn.addEventListener('click', closeShareSheet);
+    dialog.appendChild(title);
+    dialog.appendChild(links);
+    dialog.appendChild(copyBtn);
+    dialog.appendChild(closeBtn);
+    overlay.appendChild(dialog);
+    overlay.addEventListener('click', (event) => {
+        if (event.target === overlay) closeShareSheet();
+    });
+    document.body.appendChild(overlay);
+}
+
+async function shareContent(payloadInput) {
+    const payload = buildSharePayload(payloadInput);
+    if (navigator.share) {
+        try {
+            await navigator.share({
+                title: payload.title,
+                text: payload.text,
+                url: payload.url
+            });
+            return;
+        } catch (error) {
+            if (error?.name === 'AbortError') return;
+            console.error('Native share failed, using fallback:', error);
+        }
+    }
+    openShareSheet(payload);
+}
+
+function getRenderableSundayPhotos() {
+    const photos = [];
+    latestSundayPhotoDocs.forEach((doc) => {
+        const data = doc.data();
+        if (!data?.photo?.url || !data?.photo?.type || !isTrustedAttachmentUrl(data.photo.url)) return;
+        if (!ALLOWED_SUNDAY_PHOTO_TYPES.has(String(data.photo.type || '').toLowerCase())) return;
+        photos.push({ doc, data });
+    });
+    return photos;
+}
+
+function closePhotoViewer() {
+    const overlay = document.getElementById('photoViewerOverlay');
+    if (overlay) overlay.remove();
+    activePhotoViewerIndex = -1;
+}
+
+function shiftPhotoViewer(direction) {
+    const photos = getRenderableSundayPhotos();
+    if (!photos.length || activePhotoViewerIndex < 0) return;
+    const nextIndex = (activePhotoViewerIndex + direction + photos.length) % photos.length;
+    openSundayPhotoViewer(nextIndex);
+}
+
+function openSundayPhotoViewer(photoIndex) {
+    const photos = getRenderableSundayPhotos();
+    if (!photos.length) return;
+    const nextIndex = Math.max(0, Math.min(photoIndex, photos.length - 1));
+    closePhotoViewer();
+    activePhotoViewerIndex = nextIndex;
+    const selected = photos[nextIndex];
+    const overlay = document.createElement('div');
+    overlay.className = 'photo-viewer-overlay';
+    overlay.id = 'photoViewerOverlay';
+    const dialog = document.createElement('div');
+    dialog.className = 'photo-viewer-dialog';
+    const topbar = document.createElement('div');
+    topbar.className = 'photo-viewer-topbar';
+    const title = document.createElement('strong');
+    title.textContent = `Photo ${nextIndex + 1} of ${photos.length}`;
+    const closeBtn = document.createElement('button');
+    closeBtn.type = 'button';
+    closeBtn.className = 'btn btn-secondary';
+    closeBtn.textContent = 'Close';
+    closeBtn.addEventListener('click', closePhotoViewer);
+    topbar.appendChild(title);
+    topbar.appendChild(closeBtn);
+    const imageWrap = document.createElement('div');
+    imageWrap.className = 'photo-viewer-image-wrap';
+    const image = document.createElement('img');
+    image.src = String(selected.data.photo.url);
+    image.alt = selected.data.caption ? `Sunday service photo: ${selected.data.caption}` : 'Sunday service photo';
+    image.loading = 'eager';
+    imageWrap.appendChild(image);
+    const footer = document.createElement('div');
+    footer.className = 'photo-viewer-footer';
+    const meta = document.createElement('div');
+    meta.className = 'photo-viewer-meta';
+    const serviceDate = selected.data.serviceDate ? formatAttendanceDate(selected.data.serviceDate) : '-';
+    meta.textContent = `${selected.data.authorName || 'Anonymous'} • ${serviceDate} • ${formatTimestamp(selected.data.createdAt)}`;
+    const nav = document.createElement('div');
+    nav.className = 'photo-viewer-nav';
+    const prevBtn = document.createElement('button');
+    prevBtn.type = 'button';
+    prevBtn.className = 'feed-view-btn';
+    prevBtn.textContent = '◀ Prev';
+    prevBtn.addEventListener('click', () => shiftPhotoViewer(-1));
+    const nextBtn = document.createElement('button');
+    nextBtn.type = 'button';
+    nextBtn.className = 'feed-view-btn';
+    nextBtn.textContent = 'Next ▶';
+    nextBtn.addEventListener('click', () => shiftPhotoViewer(1));
+    const shareBtn = document.createElement('button');
+    shareBtn.type = 'button';
+    shareBtn.className = 'feed-share-btn';
+    shareBtn.textContent = 'Share';
+    shareBtn.addEventListener('click', () => {
+        const captionText = selected.data.caption ? ` — ${selected.data.caption}` : '';
+        shareContent({
+            title: 'Sunday Service Photo',
+            text: `${selected.data.authorName || 'Anonymous'} shared a Sunday service photo${captionText}`,
+            url: String(selected.data.photo.url)
+        });
+    });
+    nav.appendChild(prevBtn);
+    nav.appendChild(nextBtn);
+    nav.appendChild(shareBtn);
+    footer.appendChild(meta);
+    footer.appendChild(nav);
+    dialog.appendChild(topbar);
+    dialog.appendChild(imageWrap);
+    dialog.appendChild(footer);
+    overlay.appendChild(dialog);
+    overlay.addEventListener('click', (event) => {
+        if (event.target === overlay) closePhotoViewer();
+    });
+    document.body.appendChild(overlay);
+}
+
+function shareLukeStatus(statusData) {
+    if (!statusData) return;
+    const referenceText = statusData.lukeReference ? `${statusData.lukeReference}: ` : '';
+    const bodyText = statusData.text ? statusData.text : 'Luke faith update';
+    const attachmentUrl = statusData.attachment?.url && isTrustedAttachmentUrl(statusData.attachment.url)
+        ? String(statusData.attachment.url)
+        : buildAppShareUrl();
+    shareContent({
+        title: `Luke Status • ${statusData.authorName || 'Anonymous'}`,
+        text: `${referenceText}${bodyText}`.trim(),
+        url: attachmentUrl
+    });
+}
+
+function prepareChatReply(authorName) {
+    const chatMessageEl = document.getElementById('chatMessage');
+    if (!chatMessageEl) return;
+    const safeAuthorName = String(authorName || '')
+        .replace(/\s+/g, ' ')
+        .replace(/[@\n\r\t]/g, '')
+        .trim()
+        .slice(0, 60);
+    const mention = safeAuthorName ? `@${safeAuthorName} ` : '';
+    const existing = chatMessageEl.value.trim();
+    if (!existing) {
+        chatMessageEl.value = mention;
+    } else if (!existing.includes(mention.trim())) {
+        chatMessageEl.value = `${existing}\n${mention}`.trimStart();
+    }
+    chatMessageEl.focus();
+    chatMessageEl.setSelectionRange(chatMessageEl.value.length, chatMessageEl.value.length);
+}
+
+// Returns true when a scrollable element is within the threshold (in pixels) of the bottom.
+function isNearBottom(element, threshold = CHAT_AUTO_SCROLL_THRESHOLD) {
+    if (!element) return true;
+    return (element.scrollHeight - element.scrollTop - element.clientHeight) <= threshold;
 }
 
 function cloneStageResults(data) {
@@ -2990,9 +3384,18 @@ function renderLukeStatuses() {
                 item.appendChild(attachmentBox);
             }
         }
+        const actionRow = document.createElement('div');
+        actionRow.className = 'feed-action-row';
+        const shareBtn = document.createElement('button');
+        shareBtn.className = 'feed-share-btn';
+        shareBtn.type = 'button';
+        shareBtn.textContent = 'Share';
+        shareBtn.setAttribute('aria-label', 'Share status');
+        shareBtn.addEventListener('click', () => {
+            shareLukeStatus(data);
+        });
+        actionRow.appendChild(shareBtn);
         if (currentUser && data.uid === currentUser.uid) {
-            const actionRow = document.createElement('div');
-            actionRow.className = 'feed-action-row';
             const deleteBtn = document.createElement('button');
             deleteBtn.className = 'feed-delete-btn';
             deleteBtn.type = 'button';
@@ -3002,8 +3405,8 @@ function renderLukeStatuses() {
                 deleteLukeStatus(doc.id);
             });
             actionRow.appendChild(deleteBtn);
-            item.appendChild(actionRow);
         }
+        item.appendChild(actionRow);
         statusFeed.appendChild(item);
     });
     if (nextExpiryDelay !== null) {
@@ -3672,22 +4075,23 @@ function renderSundayServicePhotos() {
     const photoGrid = document.getElementById('photoLibraryGrid');
     const countEl = document.getElementById('photoLibraryCount');
     if (!photoGrid || !countEl) return;
-    countEl.textContent = `${latestSundayPhotoDocs.length} ${latestSundayPhotoDocs.length === 1 ? 'photo' : 'photos'}`;
-    if (!latestSundayPhotoDocs.length) {
+    const renderablePhotos = getRenderableSundayPhotos();
+    countEl.textContent = `${renderablePhotos.length} ${renderablePhotos.length === 1 ? 'photo' : 'photos'}`;
+    if (!renderablePhotos.length) {
         photoGrid.innerHTML = '<p class="muted-note">No photos yet.</p>';
         return;
     }
     photoGrid.innerHTML = '';
-    latestSundayPhotoDocs.forEach((doc) => {
-        const data = doc.data();
-        if (!data?.photo?.url || !data?.photo?.type || !isTrustedAttachmentUrl(data.photo.url)) return;
-        if (!ALLOWED_SUNDAY_PHOTO_TYPES.has(String(data.photo.type || '').toLowerCase())) return;
+    renderablePhotos.forEach(({ doc, data }, index) => {
         const card = document.createElement('article');
         card.className = 'photo-library-item';
         const image = document.createElement('img');
         image.src = String(data.photo.url);
         image.alt = data.caption ? `Sunday service photo: ${data.caption}` : 'Sunday service photo';
         image.loading = 'lazy';
+        image.addEventListener('click', () => {
+            openSundayPhotoViewer(index);
+        });
         card.appendChild(image);
         const meta = document.createElement('div');
         meta.className = 'photo-library-meta';
@@ -3706,9 +4110,32 @@ function renderSundayServicePhotos() {
             meta.appendChild(caption);
         }
         card.appendChild(meta);
+        const actions = document.createElement('div');
+        actions.className = 'photo-library-item-actions';
+        const viewBtn = document.createElement('button');
+        viewBtn.className = 'feed-view-btn';
+        viewBtn.type = 'button';
+        viewBtn.textContent = 'View';
+        viewBtn.setAttribute('aria-label', 'View photo full screen');
+        viewBtn.addEventListener('click', () => {
+            openSundayPhotoViewer(index);
+        });
+        actions.appendChild(viewBtn);
+        const shareBtn = document.createElement('button');
+        shareBtn.className = 'feed-share-btn';
+        shareBtn.type = 'button';
+        shareBtn.textContent = 'Share';
+        shareBtn.setAttribute('aria-label', 'Share photo');
+        shareBtn.addEventListener('click', () => {
+            const captionText = data.caption ? ` — ${data.caption}` : '';
+            shareContent({
+                title: 'Sunday Service Photo',
+                text: `${data.authorName || 'Anonymous'} shared a Sunday service photo${captionText}`,
+                url: String(data.photo.url)
+            });
+        });
+        actions.appendChild(shareBtn);
         if (currentUser && data.uid === currentUser.uid) {
-            const actions = document.createElement('div');
-            actions.className = 'photo-library-item-actions';
             const deleteBtn = document.createElement('button');
             deleteBtn.className = 'btn btn-secondary photo-admin-delete-btn';
             deleteBtn.type = 'button';
@@ -3718,8 +4145,8 @@ function renderSundayServicePhotos() {
                 deleteSundayServicePhoto(doc.id, data.photo.url);
             });
             actions.appendChild(deleteBtn);
-            card.appendChild(actions);
         }
+        card.appendChild(actions);
         photoGrid.appendChild(card);
     });
     if (!photoGrid.children.length) {
@@ -3743,11 +4170,14 @@ function subscribeGroupChat() {
                 chatFeed.innerHTML = '<li class="feed-item muted-note">No messages yet. Say hello to the group.</li>';
                 return;
             }
+            const keepPinnedToBottom = isNearBottom(chatFeed);
             chatFeed.innerHTML = '';
             snapshot.docs.forEach((doc) => {
                 const data = doc.data();
                 const item = document.createElement('li');
                 item.className = 'feed-item';
+                const isOwnMessage = currentUser && data.uid === currentUser.uid;
+                item.classList.add(isOwnMessage ? 'chat-item-own' : 'chat-item-other');
                 const meta = document.createElement('div');
                 meta.className = 'feed-meta';
                 const author = document.createElement('span');
@@ -3759,12 +4189,27 @@ function subscribeGroupChat() {
                 item.appendChild(meta);
                 if (data.message) {
                     const text = document.createElement('p');
+                    text.className = 'chat-message-text';
                     text.textContent = data.message;
                     item.appendChild(text);
                 }
+                const actionRow = document.createElement('div');
+                actionRow.className = 'feed-action-row';
+                const replyBtn = document.createElement('button');
+                replyBtn.type = 'button';
+                replyBtn.className = 'feed-view-btn chat-reply-btn';
+                replyBtn.textContent = 'Reply';
+                replyBtn.setAttribute('aria-label', 'Reply to message');
+                replyBtn.addEventListener('click', () => {
+                    prepareChatReply(data.authorName || 'Member');
+                });
+                actionRow.appendChild(replyBtn);
+                item.appendChild(actionRow);
                 chatFeed.appendChild(item);
             });
-            chatFeed.scrollTop = chatFeed.scrollHeight;
+            if (keepPinnedToBottom) {
+                chatFeed.scrollTop = chatFeed.scrollHeight;
+            }
         }, (error) => {
             console.error('Failed to load chat:', error);
             chatFeed.innerHTML = '<li class="feed-item muted-note">Failed to load group chat.</li>';
@@ -4374,7 +4819,17 @@ initFirebase();
 
 window.addEventListener('keydown', (event) => {
     if (event.key === 'Escape') {
+        closePhotoViewer();
+        closeShareSheet();
         closeMenu();
+        return;
+    }
+    if (event.key === 'ArrowLeft' && activePhotoViewerIndex >= 0) {
+        shiftPhotoViewer(-1);
+        return;
+    }
+    if (event.key === 'ArrowRight' && activePhotoViewerIndex >= 0) {
+        shiftPhotoViewer(1);
     }
 });
 
