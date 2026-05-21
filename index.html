@@ -859,6 +859,36 @@ body.menu-lock {
     display: none;
 }
 
+.photo-admin-picker,
+.photo-admin-btn,
+.photo-admin-delete-btn {
+    border-radius: 999px;
+    min-height: 34px;
+    font-size: 0.84rem;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+}
+
+.photo-admin-picker {
+    border: 1px solid rgba(142, 234, 255, 0.42);
+    background: linear-gradient(135deg, rgba(36, 54, 92, 0.7), rgba(18, 29, 52, 0.82));
+    box-shadow: 0 10px 24px rgba(7, 18, 40, 0.35);
+    padding: 8px 14px;
+}
+
+.photo-admin-btn {
+    padding: 9px 16px;
+}
+
+.photo-admin-delete-btn {
+    width: 100%;
+    padding: 8px 14px;
+    margin-top: 8px;
+    border: 1px solid rgba(255, 95, 143, 0.52);
+    background: rgba(255, 95, 143, 0.14);
+    color: var(--text);
+}
+
 .attachment-view-btn,
 .record-btn,
 .feed-view-btn {
@@ -985,6 +1015,11 @@ body.menu-lock {
 .photo-library-meta strong {
     color: var(--text);
     font-size: 0.84rem;
+}
+
+.photo-library-item-actions {
+    display: flex;
+    margin-top: 8px;
 }
 
 /* ── Install banner ──────────────────────────────────────────── */
@@ -1621,7 +1656,7 @@ body {
             <div class="status-form">
                 <h3>Upload a photo</h3>
                 <input id="photoServiceDate" type="date" />
-                <label class="file-input-label">
+                <label class="file-input-label photo-admin-picker" onclick="return handleAdminPhotoPickerAccess(event, 'choose a photo')">
                     📷 Choose photo
                     <input
                         id="photoUploadInput"
@@ -1631,8 +1666,8 @@ body {
                 </label>
                 <p id="photoUploadName" class="status-attachment-name">No photo selected.</p>
                 <textarea id="photoCaption" maxlength="140" placeholder="Caption (optional)"></textarea>
-                <button class="btn btn-primary" onclick="uploadSundayServicePhoto()">Upload Photo</button>
-                <label class="file-input-label">
+                <button class="btn btn-primary photo-admin-btn" onclick="uploadSundayServicePhotoWithPassword()">Upload Photo</button>
+                <label class="file-input-label photo-admin-picker" onclick="return handleAdminPhotoPickerAccess(event, 'choose multiple photos')">
                     🗂️ Choose multiple photos
                     <input
                         id="photoBulkUploadInput"
@@ -1642,7 +1677,7 @@ body {
                         onchange="handleSundayPhotoBulkChange()" />
                 </label>
                 <p id="photoBulkUploadName" class="status-attachment-name">No bulk photos selected.</p>
-                <button class="btn btn-secondary" onclick="bulkImportSundayServicePhotos()">Bulk Import Photos</button>
+                <button class="btn btn-secondary photo-admin-btn" onclick="bulkImportSundayServicePhotosWithPassword()">Bulk Import Photos</button>
                 <p id="photoLibraryFeedback" class="muted-note"></p>
             </div>
             <div class="feed-box">
@@ -2088,6 +2123,7 @@ const MILLISECONDS_PER_MINUTE = 60000;
 const OBJECT_URL_CLEANUP_DELAY_MS = 5 * 60 * 1000;
 const ATTENDANCE_STORAGE_KEY = 'bibleMatrixSundayAttendanceEntries';
 const MAX_SUNDAY_PHOTO_BYTES = 10 * 1024 * 1024;
+const PHOTO_LIBRARY_ADMIN_PASSWORD = 'G19@2026';
 const ALLOWED_STATUS_ATTACHMENT_TYPES = new Set([
     'application/pdf',
     'application/msword',
@@ -2770,6 +2806,36 @@ function getSundayPhotoValidationError(file) {
     return '';
 }
 
+function requirePhotoLibraryAdminPassword(actionLabel, feedbackEl = document.getElementById('photoLibraryFeedback')) {
+    const password = window.prompt(`Admin password required to ${actionLabel}.`);
+    if (password === null) return false;
+    if (password !== PHOTO_LIBRARY_ADMIN_PASSWORD) {
+        if (feedbackEl) feedbackEl.textContent = 'Incorrect admin password.';
+        return false;
+    }
+    if (feedbackEl) feedbackEl.textContent = '';
+    return true;
+}
+
+function handleAdminPhotoPickerAccess(event, actionLabel) {
+    if (requirePhotoLibraryAdminPassword(actionLabel)) return true;
+    if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+    }
+    return false;
+}
+
+function uploadSundayServicePhotoWithPassword() {
+    if (!requirePhotoLibraryAdminPassword('upload a photo')) return;
+    uploadSundayServicePhoto();
+}
+
+function bulkImportSundayServicePhotosWithPassword() {
+    if (!requirePhotoLibraryAdminPassword('bulk import photos')) return;
+    bulkImportSundayServicePhotos();
+}
+
 function handleSundayPhotoChange() {
     const uploadEl = document.getElementById('photoUploadInput');
     const uploadNameEl = document.getElementById('photoUploadName');
@@ -2912,6 +2978,49 @@ async function bulkImportSundayServicePhotos() {
     feedbackEl.textContent = `Bulk import complete: ${uploadedCount} photo${uploadedCount === 1 ? '' : 's'} uploaded.`;
 }
 
+function getStoragePathFromFirebaseUrl(downloadUrl) {
+    if (!isTrustedAttachmentUrl(downloadUrl)) return '';
+    try {
+        const parsed = new URL(String(downloadUrl || ''));
+        if (parsed.hostname === 'firebasestorage.googleapis.com') {
+            const marker = '/o/';
+            const markerIndex = parsed.pathname.indexOf(marker);
+            if (markerIndex < 0) return '';
+            const encodedObjectPath = parsed.pathname.slice(markerIndex + marker.length).split('/')[0];
+            return decodeURIComponent(encodedObjectPath || '');
+        }
+        if (parsed.hostname === 'storage.googleapis.com') {
+            const pathSegments = parsed.pathname.split('/').filter(Boolean);
+            if (!pathSegments.length || pathSegments[0] !== STATUS_ATTACHMENT_BUCKET) return '';
+            return decodeURIComponent(pathSegments.slice(1).join('/'));
+        }
+    } catch (error) {
+        return '';
+    }
+    return '';
+}
+
+async function deleteSundayServicePhoto(photoId, photoUrl) {
+    if (!firebaseReady() || !currentUser || !photoId) return;
+    const feedbackEl = document.getElementById('photoLibraryFeedback');
+    if (!requirePhotoLibraryAdminPassword('delete this photo', feedbackEl)) return;
+    const shouldDelete = window.confirm('Delete this photo? This action cannot be undone.');
+    if (!shouldDelete) return;
+    try {
+        await db.collection('sundayServicePhotos').doc(photoId).delete();
+        const storagePath = getStoragePathFromFirebaseUrl(photoUrl);
+        if (storagePath && storage) {
+            storage.ref().child(storagePath).delete().catch((storageError) => {
+                console.warn('Photo file cleanup failed:', storageError);
+            });
+        }
+        if (feedbackEl) feedbackEl.textContent = 'Photo deleted.';
+    } catch (error) {
+        console.error('Failed to delete Sunday service photo:', error);
+        if (feedbackEl) feedbackEl.textContent = 'Unable to delete photo.';
+    }
+}
+
 function subscribeSundayServicePhotos() {
     if (!firebaseReady() || !currentUser) return;
     const photoGrid = document.getElementById('photoLibraryGrid');
@@ -2973,6 +3082,18 @@ function renderSundayServicePhotos() {
             meta.appendChild(caption);
         }
         card.appendChild(meta);
+        const actions = document.createElement('div');
+        actions.className = 'photo-library-item-actions';
+        const deleteBtn = document.createElement('button');
+        deleteBtn.className = 'btn btn-secondary photo-admin-delete-btn';
+        deleteBtn.type = 'button';
+        deleteBtn.textContent = 'Delete';
+        deleteBtn.setAttribute('aria-label', 'Delete photo');
+        deleteBtn.addEventListener('click', () => {
+            deleteSundayServicePhoto(doc.id, data.photo.url);
+        });
+        actions.appendChild(deleteBtn);
+        card.appendChild(actions);
         photoGrid.appendChild(card);
     });
     if (!photoGrid.children.length) {
