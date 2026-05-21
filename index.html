@@ -859,6 +859,40 @@ body.menu-lock {
     display: none;
 }
 
+.hidden-file-input {
+    display: none;
+}
+
+.photo-admin-picker,
+.photo-admin-btn,
+.photo-admin-delete-btn {
+    border-radius: 999px;
+    min-height: 34px;
+    font-size: 0.84rem;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+}
+
+.photo-admin-picker {
+    border: 1px solid rgba(142, 234, 255, 0.42);
+    background: linear-gradient(135deg, rgba(36, 54, 92, 0.7), rgba(18, 29, 52, 0.82));
+    box-shadow: 0 10px 24px rgba(7, 18, 40, 0.35);
+    padding: 8px 14px;
+}
+
+.photo-admin-btn {
+    padding: 9px 16px;
+}
+
+.photo-admin-delete-btn {
+    width: 100%;
+    padding: 8px 14px;
+    margin-top: 8px;
+    border: 1px solid rgba(255, 95, 143, 0.52);
+    background: rgba(255, 95, 143, 0.14);
+    color: var(--text);
+}
+
 .attachment-view-btn,
 .record-btn,
 .feed-view-btn {
@@ -985,6 +1019,11 @@ body.menu-lock {
 .photo-library-meta strong {
     color: var(--text);
     font-size: 0.84rem;
+}
+
+.photo-library-item-actions {
+    display: flex;
+    margin-top: 8px;
 }
 
 /* ── Install banner ──────────────────────────────────────────── */
@@ -1621,28 +1660,30 @@ body {
             <div class="status-form">
                 <h3>Upload a photo</h3>
                 <input id="photoServiceDate" type="date" />
-                <label class="file-input-label">
+                <button type="button" class="file-input-label photo-admin-picker" onclick="openSundayPhotoPicker(false)">
                     📷 Choose photo
-                    <input
-                        id="photoUploadInput"
-                        type="file"
-                        accept="image/jpeg,image/png,image/webp,image/gif"
-                        onchange="handleSundayPhotoChange()" />
-                </label>
+                </button>
+                <input
+                    id="photoUploadInput"
+                    class="hidden-file-input"
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp,image/gif"
+                    onchange="handleSundayPhotoChange()" />
                 <p id="photoUploadName" class="status-attachment-name">No photo selected.</p>
                 <textarea id="photoCaption" maxlength="140" placeholder="Caption (optional)"></textarea>
-                <button class="btn btn-primary" onclick="uploadSundayServicePhoto()">Upload Photo</button>
-                <label class="file-input-label">
+                <button class="btn btn-primary photo-admin-btn" onclick="uploadSundayServicePhotoWithPassword()">Upload Photo</button>
+                <button type="button" class="file-input-label photo-admin-picker" onclick="openSundayPhotoPicker(true)">
                     🗂️ Choose multiple photos
-                    <input
-                        id="photoBulkUploadInput"
-                        type="file"
-                        multiple
-                        accept="image/jpeg,image/png,image/webp,image/gif"
-                        onchange="handleSundayPhotoBulkChange()" />
-                </label>
+                </button>
+                <input
+                    id="photoBulkUploadInput"
+                    class="hidden-file-input"
+                    type="file"
+                    multiple
+                    accept="image/jpeg,image/png,image/webp,image/gif"
+                    onchange="handleSundayPhotoBulkChange()" />
                 <p id="photoBulkUploadName" class="status-attachment-name">No bulk photos selected.</p>
-                <button class="btn btn-secondary" onclick="bulkImportSundayServicePhotos()">Bulk Import Photos</button>
+                <button class="btn btn-secondary photo-admin-btn" onclick="bulkImportSundayServicePhotosWithPassword()">Bulk Import Photos</button>
                 <p id="photoLibraryFeedback" class="muted-note"></p>
             </div>
             <div class="feed-box">
@@ -2088,6 +2129,7 @@ const MILLISECONDS_PER_MINUTE = 60000;
 const OBJECT_URL_CLEANUP_DELAY_MS = 5 * 60 * 1000;
 const ATTENDANCE_STORAGE_KEY = 'bibleMatrixSundayAttendanceEntries';
 const MAX_SUNDAY_PHOTO_BYTES = 10 * 1024 * 1024;
+const PHOTO_LIBRARY_ADMIN_PASSWORD = 'G19@2026';
 const ALLOWED_STATUS_ATTACHMENT_TYPES = new Set([
     'application/pdf',
     'application/msword',
@@ -2770,6 +2812,114 @@ function getSundayPhotoValidationError(file) {
     return '';
 }
 
+function requestPhotoLibraryAdminPassword(actionLabel) {
+    return new Promise((resolve) => {
+        const overlay = document.createElement('div');
+        overlay.style.position = 'fixed';
+        overlay.style.inset = '0';
+        overlay.style.background = 'rgba(3, 6, 16, 0.74)';
+        overlay.style.display = 'flex';
+        overlay.style.alignItems = 'center';
+        overlay.style.justifyContent = 'center';
+        overlay.style.zIndex = '12000';
+        overlay.innerHTML = `
+            <div style="width:min(90vw,360px);background:rgba(10,15,34,0.98);border:1px solid rgba(255,255,255,0.16);border-radius:14px;padding:16px;">
+                <h3 style="margin:0 0 8px 0;font-size:1rem;">Admin Access</h3>
+                <p id="photoAdminPromptText" style="margin:0 0 12px 0;color:var(--muted);font-size:0.86rem;"></p>
+                <form id="photoAdminPasswordForm">
+                    <label for="photoAdminPasswordInput" style="display:block;margin-bottom:6px;font-size:0.82rem;color:var(--muted);">Password</label>
+                    <input id="photoAdminPasswordInput" type="password" autocomplete="current-password" aria-label="Admin password" style="width:100%;margin-bottom:12px;" />
+                    <div style="display:flex;gap:8px;justify-content:flex-end;">
+                        <button type="button" id="photoAdminCancelBtn" class="btn btn-secondary" style="padding:8px 12px;">Cancel</button>
+                        <button type="submit" class="btn btn-primary" style="padding:8px 12px;">Continue</button>
+                    </div>
+                </form>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+        const promptText = overlay.querySelector('#photoAdminPromptText');
+        if (promptText) promptText.textContent = `Enter password to ${String(actionLabel || 'continue')}.`;
+        const form = overlay.querySelector('#photoAdminPasswordForm');
+        const input = overlay.querySelector('#photoAdminPasswordInput');
+        const cancelBtn = overlay.querySelector('#photoAdminCancelBtn');
+        const close = (value) => {
+            overlay.remove();
+            resolve(value);
+        };
+        cancelBtn.addEventListener('click', () => close(null));
+        form.addEventListener('submit', (event) => {
+            event.preventDefault();
+            close(String(input.value || ''));
+        });
+        input.focus();
+    });
+}
+
+async function requirePhotoLibraryAdminPassword(actionLabel, feedbackEl = document.getElementById('photoLibraryFeedback')) {
+    const password = await requestPhotoLibraryAdminPassword(actionLabel);
+    if (password === null) return false;
+    if (password !== PHOTO_LIBRARY_ADMIN_PASSWORD) {
+        if (feedbackEl) feedbackEl.textContent = 'Incorrect admin password.';
+        return false;
+    }
+    if (feedbackEl) feedbackEl.textContent = '';
+    return true;
+}
+
+function requestPhotoLibraryConfirmation(message) {
+    return new Promise((resolve) => {
+        const overlay = document.createElement('div');
+        overlay.style.position = 'fixed';
+        overlay.style.inset = '0';
+        overlay.style.background = 'rgba(3, 6, 16, 0.74)';
+        overlay.style.display = 'flex';
+        overlay.style.alignItems = 'center';
+        overlay.style.justifyContent = 'center';
+        overlay.style.zIndex = '12000';
+        overlay.innerHTML = `
+            <div style="width:min(90vw,360px);background:rgba(10,15,34,0.98);border:1px solid rgba(255,255,255,0.16);border-radius:14px;padding:16px;">
+                <h3 style="margin:0 0 8px 0;font-size:1rem;">Confirm Delete</h3>
+                <p id="photoDeleteConfirmText" style="margin:0 0 12px 0;color:var(--muted);font-size:0.86rem;"></p>
+                <div style="display:flex;gap:8px;justify-content:flex-end;">
+                    <button type="button" id="photoDeleteCancelBtn" class="btn btn-secondary" style="padding:8px 12px;">Cancel</button>
+                    <button type="button" id="photoDeleteConfirmBtn" class="btn btn-primary" style="padding:8px 12px;">Delete</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+        const text = overlay.querySelector('#photoDeleteConfirmText');
+        if (text) text.textContent = String(message || 'Are you sure?');
+        const close = (value) => {
+            overlay.remove();
+            resolve(value);
+        };
+        const cancelBtn = overlay.querySelector('#photoDeleteCancelBtn');
+        const confirmBtn = overlay.querySelector('#photoDeleteConfirmBtn');
+        cancelBtn.addEventListener('click', () => close(false));
+        confirmBtn.addEventListener('click', () => close(true));
+    });
+}
+
+async function openSundayPhotoPicker(useBulkInput) {
+    const actionLabel = useBulkInput ? 'choose multiple photos' : 'choose a photo';
+    if (!await requirePhotoLibraryAdminPassword(actionLabel)) return;
+    const inputId = useBulkInput ? 'photoBulkUploadInput' : 'photoUploadInput';
+    const inputEl = document.getElementById(inputId);
+    if (inputEl) {
+        inputEl.click();
+    }
+}
+
+async function uploadSundayServicePhotoWithPassword() {
+    if (!await requirePhotoLibraryAdminPassword('upload a photo')) return;
+    uploadSundayServicePhoto();
+}
+
+async function bulkImportSundayServicePhotosWithPassword() {
+    if (!await requirePhotoLibraryAdminPassword('bulk import photos')) return;
+    bulkImportSundayServicePhotos();
+}
+
 function handleSundayPhotoChange() {
     const uploadEl = document.getElementById('photoUploadInput');
     const uploadNameEl = document.getElementById('photoUploadName');
@@ -2912,6 +3062,58 @@ async function bulkImportSundayServicePhotos() {
     feedbackEl.textContent = `Bulk import complete: ${uploadedCount} photo${uploadedCount === 1 ? '' : 's'} uploaded.`;
 }
 
+function getStoragePathFromFirebaseUrl(downloadUrl) {
+    if (!isTrustedAttachmentUrl(downloadUrl)) return '';
+    try {
+        const parsed = new URL(String(downloadUrl || ''));
+        if (parsed.hostname === 'firebasestorage.googleapis.com') {
+            const marker = '/o/';
+            const markerIndex = parsed.pathname.indexOf(marker);
+            if (markerIndex < 0) return '';
+            const encodedObjectPath = parsed.pathname.slice(markerIndex + marker.length).split('/')[0];
+            return decodeURIComponent(encodedObjectPath || '');
+        }
+        if (parsed.hostname === 'storage.googleapis.com') {
+            const pathSegments = parsed.pathname.split('/').filter(Boolean);
+            if (!pathSegments.length || pathSegments[0] !== STATUS_ATTACHMENT_BUCKET) return '';
+            return decodeURIComponent(pathSegments.slice(1).join('/'));
+        }
+    } catch (error) {
+        console.error('Failed to parse Firebase Storage URL:', error);
+        return '';
+    }
+    return '';
+}
+
+async function deleteSundayServicePhoto(photoId, photoUrl) {
+    if (!firebaseReady() || !currentUser || !photoId) return;
+    const feedbackEl = document.getElementById('photoLibraryFeedback');
+    const shouldDelete = await requestPhotoLibraryConfirmation('Delete this photo? This action cannot be undone.');
+    if (!shouldDelete) return;
+    if (!await requirePhotoLibraryAdminPassword('delete this photo', feedbackEl)) return;
+    try {
+        await db.collection('sundayServicePhotos').doc(photoId).delete();
+        const storagePath = getStoragePathFromFirebaseUrl(photoUrl);
+        let fileCleanupFailed = false;
+        if (storagePath && storage) {
+            try {
+                await storage.ref().child(storagePath).delete();
+            } catch (storageError) {
+                fileCleanupFailed = true;
+                console.error('Photo file cleanup failed:', storageError);
+            }
+        }
+        if (feedbackEl) {
+            feedbackEl.textContent = fileCleanupFailed
+                ? 'Photo deleted, but file cleanup failed.'
+                : 'Photo deleted.';
+        }
+    } catch (error) {
+        console.error('Failed to delete Sunday service photo:', error);
+        if (feedbackEl) feedbackEl.textContent = 'Unable to delete photo.';
+    }
+}
+
 function subscribeSundayServicePhotos() {
     if (!firebaseReady() || !currentUser) return;
     const photoGrid = document.getElementById('photoLibraryGrid');
@@ -2973,6 +3175,20 @@ function renderSundayServicePhotos() {
             meta.appendChild(caption);
         }
         card.appendChild(meta);
+        if (currentUser && data.uid === currentUser.uid) {
+            const actions = document.createElement('div');
+            actions.className = 'photo-library-item-actions';
+            const deleteBtn = document.createElement('button');
+            deleteBtn.className = 'btn btn-secondary photo-admin-delete-btn';
+            deleteBtn.type = 'button';
+            deleteBtn.textContent = 'Delete';
+            deleteBtn.setAttribute('aria-label', 'Delete photo');
+            deleteBtn.addEventListener('click', () => {
+                deleteSundayServicePhoto(doc.id, data.photo.url);
+            });
+            actions.appendChild(deleteBtn);
+            card.appendChild(actions);
+        }
         photoGrid.appendChild(card);
     });
     if (!photoGrid.children.length) {

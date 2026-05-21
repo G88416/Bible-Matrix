@@ -51,7 +51,7 @@ service firebase.storage {
       allow create, update: if isOwner(userId)
         && hasValidUploadSize(20971520)
         && isAllowedStatusAttachmentType();
-      allow delete: if false;
+      allow delete: if isOwner(userId);
     }
 
     match /sundayServicePhotos/{userId}/{fileName=**} {
