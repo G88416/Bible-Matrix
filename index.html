@@ -2825,7 +2825,7 @@ function requestPhotoLibraryAdminPassword(actionLabel) {
         overlay.innerHTML = `
             <div style="width:min(90vw,360px);background:rgba(10,15,34,0.98);border:1px solid rgba(255,255,255,0.16);border-radius:14px;padding:16px;">
                 <h3 style="margin:0 0 8px 0;font-size:1rem;">Admin Access</h3>
-                <p style="margin:0 0 12px 0;color:var(--muted);font-size:0.86rem;">Enter password to ${actionLabel}.</p>
+                <p id="photoAdminPromptText" style="margin:0 0 12px 0;color:var(--muted);font-size:0.86rem;"></p>
                 <form id="photoAdminPasswordForm">
                     <input id="photoAdminPasswordInput" type="password" autocomplete="current-password" aria-label="Admin password" style="width:100%;margin-bottom:12px;" />
                     <div style="display:flex;gap:8px;justify-content:flex-end;">
@@ -2836,6 +2836,8 @@ function requestPhotoLibraryAdminPassword(actionLabel) {
             </div>
         `;
         document.body.appendChild(overlay);
+        const promptText = overlay.querySelector('#photoAdminPromptText');
+        if (promptText) promptText.textContent = `Enter password to ${String(actionLabel || 'continue')}.`;
         const form = overlay.querySelector('#photoAdminPasswordForm');
         const input = overlay.querySelector('#photoAdminPasswordInput');
         const cancelBtn = overlay.querySelector('#photoAdminCancelBtn');
