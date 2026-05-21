@@ -2119,7 +2119,7 @@ let latestStatusDocs = [];
 let latestSundayPhotoDocs = [];
 let statusExpiryRerenderTimeout = null;
 let attendanceEntries = [];
-const FIREBASE_STORAGE_BUCKET = String(firebaseConfig.storageBucket || '').trim();
+const STATUS_ATTACHMENT_BUCKET = String(firebaseConfig.storageBucket || '').trim();
 const MAX_STATUS_ATTACHMENT_BYTES = 20 * 1024 * 1024;
 const MAX_STATUS_ATTACHMENT_NAME_LENGTH = 120;
 const STATUS_LIFETIME_MS = 24 * 60 * 60 * 1000;
@@ -2454,10 +2454,10 @@ function isTrustedAttachmentUrl(value) {
     try {
         const parsed = new URL(String(value || ''));
         if (parsed.protocol !== 'https:') return false;
-        if (!FIREBASE_STORAGE_BUCKET) return false;
+        if (!STATUS_ATTACHMENT_BUCKET) return false;
         const decodedPath = decodeURIComponent(parsed.pathname || '');
-        const hasBucketInPath = decodedPath.includes(`/b/${FIREBASE_STORAGE_BUCKET}/`)
-            || decodedPath.startsWith(`/${FIREBASE_STORAGE_BUCKET}/`);
+        const hasBucketInPath = decodedPath.includes(`/b/${STATUS_ATTACHMENT_BUCKET}/`)
+            || decodedPath.startsWith(`/${STATUS_ATTACHMENT_BUCKET}/`);
         if (!hasBucketInPath) return false;
         return parsed.hostname === 'firebasestorage.googleapis.com'
             || parsed.hostname === 'storage.googleapis.com';
@@ -3075,7 +3075,7 @@ function getStoragePathFromFirebaseUrl(downloadUrl) {
         }
         if (parsed.hostname === 'storage.googleapis.com') {
             const pathSegments = parsed.pathname.split('/').filter(Boolean);
-            if (!pathSegments.length || pathSegments[0] !== FIREBASE_STORAGE_BUCKET) return '';
+            if (!pathSegments.length || pathSegments[0] !== STATUS_ATTACHMENT_BUCKET) return '';
             return decodeURIComponent(pathSegments.slice(1).join('/'));
         }
     } catch (error) {
