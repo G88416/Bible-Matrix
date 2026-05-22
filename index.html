@@ -3455,13 +3455,13 @@ function renderLukeStatuses() {
             if (isTrustedAttachmentUrl(safeUrl)) {
                 const kind = getAttachmentKind(data.attachment.type);
                 const statusPhotoIndex = statusPhotoIndexByDocId.get(doc.id);
-                const hasStatusPhotoViewer = Number.isInteger(statusPhotoIndex);
+                const canOpenInPhotoViewer = Number.isInteger(statusPhotoIndex);
                 if (kind === 'image') {
                     const image = document.createElement('img');
                     image.src = safeUrl;
                     image.alt = data.attachment.name || 'Status image';
                     image.loading = 'lazy';
-                    if (hasStatusPhotoViewer) {
+                    if (canOpenInPhotoViewer) {
                         image.style.cursor = 'pointer';
                         image.addEventListener('click', () => {
                             openStatusPhotoViewer(statusPhotoIndex);
@@ -3486,11 +3486,11 @@ function renderLukeStatuses() {
                 const actionRow = document.createElement('div');
                 actionRow.className = 'feed-action-row';
                 actionRow.appendChild(fileLink);
-                const viewBtn = hasStatusPhotoViewer
+                const viewBtn = canOpenInPhotoViewer
                     ? document.createElement('button')
                     : document.createElement('a');
                 viewBtn.className = 'feed-view-btn';
-                if (hasStatusPhotoViewer) {
+                if (canOpenInPhotoViewer) {
                     viewBtn.type = 'button';
                     viewBtn.addEventListener('click', () => {
                         openStatusPhotoViewer(statusPhotoIndex);
@@ -3501,7 +3501,7 @@ function renderLukeStatuses() {
                     viewBtn.rel = 'noopener noreferrer';
                 }
                 viewBtn.textContent = 'View';
-                viewBtn.setAttribute('aria-label', hasStatusPhotoViewer ? 'View status photo full screen' : 'View attachment');
+                viewBtn.setAttribute('aria-label', canOpenInPhotoViewer ? 'View status photo full screen' : 'View attachment');
                 actionRow.appendChild(viewBtn);
                 attachmentBox.appendChild(actionRow);
                 item.appendChild(attachmentBox);
