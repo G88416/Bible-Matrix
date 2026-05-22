@@ -2376,6 +2376,7 @@ let latestAnnouncementDocs = [];
 let statusExpiryRerenderTimeout = null;
 let attendanceEntries = [];
 let activePhotoViewerIndex = -1;
+let activeStatusViewerIndex = -1;
 const STATUS_ATTACHMENT_BUCKET = String(firebaseConfig.storageBucket || '').trim();
 const MAX_STATUS_ATTACHMENT_BYTES = 20 * 1024 * 1024;
 const MAX_STATUS_ATTACHMENT_NAME_LENGTH = 120;
@@ -2675,6 +2676,105 @@ function openSundayPhotoViewer(photoIndex) {
     overlay.appendChild(dialog);
     overlay.addEventListener('click', (event) => {
         if (event.target === overlay) closePhotoViewer();
+    });
+    document.body.appendChild(overlay);
+}
+
+function getRenderableStatusPhotoItems() {
+    const nowMs = Date.now();
+    const items = [];
+    latestStatusDocs.forEach((doc) => {
+        const data = doc.data();
+        const createdAtMs = getStatusCreatedAtMs(data);
+        if (!isStatusVisible(createdAtMs, nowMs)) return;
+        if (!data?.attachment?.url || !data?.attachment?.type) return;
+        const safeUrl = String(data.attachment.url || '');
+        if (!isTrustedAttachmentUrl(safeUrl)) return;
+        if (getAttachmentKind(data.attachment.type) !== 'image') return;
+        items.push({ doc, data });
+    });
+    return items;
+}
+
+function closeStatusPhotoViewer() {
+    const overlay = document.getElementById('statusPhotoViewerOverlay');
+    if (overlay) overlay.remove();
+    activeStatusViewerIndex = -1;
+}
+
+function shiftStatusPhotoViewer(direction) {
+    const items = getRenderableStatusPhotoItems();
+    if (!items.length || activeStatusViewerIndex < 0) return;
+    const nextIndex = (activeStatusViewerIndex + direction + items.length) % items.length;
+    openStatusPhotoViewer(nextIndex);
+}
+
+function openStatusPhotoViewer(photoIndex) {
+    const items = getRenderableStatusPhotoItems();
+    if (!items.length) return;
+    const nextIndex = Math.max(0, Math.min(photoIndex, items.length - 1));
+    closeStatusPhotoViewer();
+    activeStatusViewerIndex = nextIndex;
+    const selected = items[nextIndex];
+    const overlay = document.createElement('div');
+    overlay.className = 'photo-viewer-overlay';
+    overlay.id = 'statusPhotoViewerOverlay';
+    const dialog = document.createElement('div');
+    dialog.className = 'photo-viewer-dialog';
+    const topbar = document.createElement('div');
+    topbar.className = 'photo-viewer-topbar';
+    const title = document.createElement('strong');
+    title.textContent = `Photo ${nextIndex + 1} of ${items.length}`;
+    const closeBtn = document.createElement('button');
+    closeBtn.type = 'button';
+    closeBtn.className = 'btn btn-secondary';
+    closeBtn.textContent = 'Close';
+    closeBtn.addEventListener('click', closeStatusPhotoViewer);
+    topbar.appendChild(title);
+    topbar.appendChild(closeBtn);
+    const imageWrap = document.createElement('div');
+    imageWrap.className = 'photo-viewer-image-wrap';
+    const image = document.createElement('img');
+    image.src = String(selected.data.attachment.url);
+    image.alt = selected.data.attachment.name || 'Status photo';
+    image.loading = 'eager';
+    imageWrap.appendChild(image);
+    const footer = document.createElement('div');
+    footer.className = 'photo-viewer-footer';
+    const meta = document.createElement('div');
+    meta.className = 'photo-viewer-meta';
+    const referenceText = selected.data.lukeReference ? ` • ${selected.data.lukeReference}` : '';
+    meta.textContent = `${selected.data.authorName || 'Anonymous'} • ${formatTimestamp(selected.data.createdAt)}${referenceText}`;
+    const nav = document.createElement('div');
+    nav.className = 'photo-viewer-nav';
+    const prevBtn = document.createElement('button');
+    prevBtn.type = 'button';
+    prevBtn.className = 'feed-view-btn';
+    prevBtn.textContent = '◀ Prev';
+    prevBtn.addEventListener('click', () => shiftStatusPhotoViewer(-1));
+    const nextBtn = document.createElement('button');
+    nextBtn.type = 'button';
+    nextBtn.className = 'feed-view-btn';
+    nextBtn.textContent = 'Next ▶';
+    nextBtn.addEventListener('click', () => shiftStatusPhotoViewer(1));
+    const shareBtn = document.createElement('button');
+    shareBtn.type = 'button';
+    shareBtn.className = 'feed-share-btn';
+    shareBtn.textContent = 'Share';
+    shareBtn.addEventListener('click', () => {
+        shareLukeStatus(selected.data);
+    });
+    nav.appendChild(prevBtn);
+    nav.appendChild(nextBtn);
+    nav.appendChild(shareBtn);
+    footer.appendChild(meta);
+    footer.appendChild(nav);
+    dialog.appendChild(topbar);
+    dialog.appendChild(imageWrap);
+    dialog.appendChild(footer);
+    overlay.appendChild(dialog);
+    overlay.addEventListener('click', (event) => {
+        if (event.target === overlay) closeStatusPhotoViewer();
     });
     document.body.appendChild(overlay);
 }
@@ -3320,6 +3420,11 @@ function renderLukeStatuses() {
         statusFeed.innerHTML = `<li class="feed-item muted-note">${emptyMessage}</li>`;
         return;
     }
+    const statusPhotoItems = getRenderableStatusPhotoItems();
+    const statusPhotoIndexByDocId = new Map();
+    statusPhotoItems.forEach(({ doc }, index) => {
+        statusPhotoIndexByDocId.set(doc.id, index);
+    });
     statusFeed.innerHTML = '';
     visibleStatuses.forEach(({ doc, data }) => {
         const item = document.createElement('li');
@@ -3348,11 +3453,19 @@ function renderLukeStatuses() {
             const safeUrl = String(data.attachment.url || '');
             if (isTrustedAttachmentUrl(safeUrl)) {
                 const kind = getAttachmentKind(data.attachment.type);
+                const statusPhotoIndex = statusPhotoIndexByDocId.get(doc.id);
+                const hasStatusPhotoViewer = Number.isInteger(statusPhotoIndex);
                 if (kind === 'image') {
                     const image = document.createElement('img');
                     image.src = safeUrl;
                     image.alt = data.attachment.name || 'Status image';
                     image.loading = 'lazy';
+                    if (hasStatusPhotoViewer) {
+                        image.style.cursor = 'pointer';
+                        image.addEventListener('click', () => {
+                            openStatusPhotoViewer(statusPhotoIndex);
+                        });
+                    }
                     attachmentBox.appendChild(image);
                 } else if (kind === 'video') {
                     const video = document.createElement('video');
@@ -3372,13 +3485,22 @@ function renderLukeStatuses() {
                 const actionRow = document.createElement('div');
                 actionRow.className = 'feed-action-row';
                 actionRow.appendChild(fileLink);
-                const viewBtn = document.createElement('a');
+                const viewBtn = hasStatusPhotoViewer
+                    ? document.createElement('button')
+                    : document.createElement('a');
                 viewBtn.className = 'feed-view-btn';
-                viewBtn.href = safeUrl;
-                viewBtn.target = '_blank';
-                viewBtn.rel = 'noopener noreferrer';
+                if (hasStatusPhotoViewer) {
+                    viewBtn.type = 'button';
+                    viewBtn.addEventListener('click', () => {
+                        openStatusPhotoViewer(statusPhotoIndex);
+                    });
+                } else {
+                    viewBtn.href = safeUrl;
+                    viewBtn.target = '_blank';
+                    viewBtn.rel = 'noopener noreferrer';
+                }
                 viewBtn.textContent = 'View';
-                viewBtn.setAttribute('aria-label', 'View attachment');
+                viewBtn.setAttribute('aria-label', hasStatusPhotoViewer ? 'View status photo full screen' : 'View attachment');
                 actionRow.appendChild(viewBtn);
                 attachmentBox.appendChild(actionRow);
                 item.appendChild(attachmentBox);
