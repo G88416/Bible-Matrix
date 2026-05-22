@@ -12,6 +12,7 @@
     "indexes": "firestore.indexes.json"
   },
   "storage": {
+    "bucket": "bible-matrix.firebasestorage.app",
     "rules": "storage.rules"
   }
 }
