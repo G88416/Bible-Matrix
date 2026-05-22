@@ -4031,7 +4031,7 @@ async function uploadSingleSundayServicePhoto({ file, serviceDate, caption = '' 
     if (!storage || !currentUser || !currentProfile) return;
     const safeFileName = sanitizeAttachmentFileName(file.name);
     const photoPath = `sundayServicePhotos/${currentUser.uid}/${Date.now()}-${safeFileName}`;
-    const uploadTask = await storage.ref().child(photoPath).put(file);
+    const uploadTask = await storage.ref().child(photoPath).put(file, { contentType: file.type });
     const downloadURL = await uploadTask.ref.getDownloadURL();
     const payload = {
         uid: currentUser.uid,
@@ -4102,21 +4102,33 @@ async function bulkImportSundayServicePhotos() {
         feedbackEl.textContent = 'Choose photos for bulk import first.';
         return;
     }
+    const totalCount = sundayServiceBulkPhotoFiles.length;
     let uploadedCount = 0;
-    for (const file of sundayServiceBulkPhotoFiles) {
+    let failedCount = 0;
+    let lastError = null;
+    for (let i = 0; i < totalCount; i++) {
+        const file = sundayServiceBulkPhotoFiles[i];
+        feedbackEl.textContent = `Uploading photo ${i + 1} of ${totalCount}…`;
         try {
             await uploadSingleSundayServicePhoto({ file, serviceDate });
             uploadedCount += 1;
         } catch (error) {
-            console.error('Failed bulk photo upload:', error);
-            feedbackEl.textContent = `Imported ${uploadedCount} of ${sundayServiceBulkPhotoFiles.length} photos before an error.`;
-            return;
+            console.error('Failed to upload photo during bulk import:', error);
+            failedCount += 1;
+            if (!lastError) lastError = error;
         }
     }
     sundayServiceBulkPhotoFiles = [];
     bulkEl.value = '';
     bulkNameEl.textContent = 'No bulk photos selected.';
-    feedbackEl.textContent = `Bulk import complete: ${uploadedCount} photo${uploadedCount === 1 ? '' : 's'} uploaded.`;
+    if (failedCount === 0) {
+        feedbackEl.textContent = `Bulk import complete: ${uploadedCount} photo${uploadedCount === 1 ? '' : 's'} uploaded.`;
+    } else if (uploadedCount === 0) {
+        const errorDetail = (lastError?.code && String(lastError.code)) || lastError?.message || 'Unknown error';
+        feedbackEl.textContent = `All ${totalCount} photos failed to upload. (${errorDetail})`;
+    } else {
+        feedbackEl.textContent = `Imported ${uploadedCount} of ${totalCount} photos. ${failedCount} photo${failedCount === 1 ? '' : 's'} failed.`;
+    }
 }
 
 function getStoragePathFromFirebaseUrl(downloadUrl) {
