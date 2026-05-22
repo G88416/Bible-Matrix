@@ -2724,7 +2724,7 @@ function openStatusPhotoViewer(photoIndex) {
     const topbar = document.createElement('div');
     topbar.className = 'photo-viewer-topbar';
     const title = document.createElement('strong');
-    title.textContent = `Photo ${nextIndex + 1} of ${items.length}`;
+    title.textContent = `Status Photo ${nextIndex + 1} of ${items.length}`;
     const closeBtn = document.createElement('button');
     closeBtn.type = 'button';
     closeBtn.className = 'btn btn-secondary';
@@ -2743,8 +2743,9 @@ function openStatusPhotoViewer(photoIndex) {
     footer.className = 'photo-viewer-footer';
     const meta = document.createElement('div');
     meta.className = 'photo-viewer-meta';
+    const createdAtMs = getStatusCreatedAtMs(selected.data);
     const referenceText = selected.data.lukeReference ? ` • ${selected.data.lukeReference}` : '';
-    meta.textContent = `${selected.data.authorName || 'Anonymous'} • ${formatTimestamp(selected.data.createdAt)}${referenceText}`;
+    meta.textContent = `${selected.data.authorName || 'Anonymous'} • ${formatTimestamp(createdAtMs)}${referenceText}`;
     const nav = document.createElement('div');
     nav.className = 'photo-viewer-nav';
     const prevBtn = document.createElement('button');
