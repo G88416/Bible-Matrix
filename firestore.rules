@@ -124,8 +124,8 @@ service cloud.firestore {
     }
 
     function hasTrustedStorageUrl(fieldName) {
-      return request.resource.data[fieldName].url.matches('^https://firebasestorage\\.googleapis\\.com/v0/b/[A-Za-z0-9._-]+\\.(firebasestorage\\.app|appspot\\.com)/o/.*$')
-        || request.resource.data[fieldName].url.matches('^https://storage\\.googleapis\\.com/[A-Za-z0-9._-]+\\.(firebasestorage\\.app|appspot\\.com)/.*$');
+      return request.resource.data[fieldName].url.matches('^https://firebasestorage\\.googleapis\\.com/v0/b/bible-matrix(-[a-z0-9-]+)?\\.(firebasestorage\\.app|appspot\\.com)/o/.*$')
+        || request.resource.data[fieldName].url.matches('^https://storage\\.googleapis\\.com/bible-matrix(-[a-z0-9-]+)?\\.(firebasestorage\\.app|appspot\\.com)/.*$');
     }
 
     function hasValidOptionalAttachment() {
