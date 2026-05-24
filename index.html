@@ -4486,7 +4486,7 @@ async function refreshLeaderboard() {
         const snapshot = await db.collection('users')
             .where('bestScore', '>=', 0)
             .orderBy('bestScore', 'desc')
-            .limit(20)
+            .limit(100)
             .get();
 
         if (snapshot.empty) {
