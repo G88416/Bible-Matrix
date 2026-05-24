@@ -4495,13 +4495,19 @@ async function refreshLeaderboard() {
         }
 
         rankingTableBody.innerHTML = '';
-        snapshot.docs.forEach((doc, index) => {
+        let lastScore = null;
+        let currentRank = 0;
+        snapshot.docs.forEach((doc) => {
             const data = doc.data();
             const row = document.createElement('tr');
             const nameClass = getGenderClass(data.gender);
             const safeScore = Math.min(MAX_QUIZ_SCORE, Math.max(0, Number(data.bestScore) || 0));
+            if (lastScore === null || safeScore !== lastScore) {
+                currentRank += 1;
+                lastScore = safeScore;
+            }
             const rankCell = document.createElement('td');
-            rankCell.textContent = String(index + 1);
+            rankCell.textContent = String(currentRank);
             const nameCell = document.createElement('td');
             const nameSpan = document.createElement('span');
             if (nameClass) {
