@@ -1085,6 +1085,83 @@ body.menu-lock {
     margin-top: 2px;
 }
 
+.status-reaction-row {
+    margin-top: 10px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.status-reaction-btn {
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text);
+    border-radius: 999px;
+    padding: 6px 10px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.status-reaction-btn.active {
+    border-color: rgba(120, 232, 159, 0.65);
+    background: rgba(120, 232, 159, 0.18);
+}
+
+.status-reaction-count {
+    color: var(--muted);
+    font-size: 0.76rem;
+}
+
+.chat-status-reply-preview,
+.chat-status-reply-context {
+    border: 1px solid rgba(142, 234, 255, 0.28);
+    background: rgba(142, 234, 255, 0.09);
+    border-radius: 12px;
+    padding: 10px;
+    display: grid;
+    gap: 4px;
+}
+
+.chat-status-reply-preview[hidden] {
+    display: none;
+}
+
+.chat-status-reply-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    font-size: 0.76rem;
+    color: var(--muted);
+}
+
+.chat-status-reply-label {
+    font-weight: 700;
+    color: #8eeaff;
+}
+
+.chat-status-reply-text {
+    margin: 0;
+    font-size: 0.84rem;
+    line-height: 1.4;
+    color: var(--text);
+    word-break: break-word;
+}
+
+.chat-status-reply-close {
+    border: none;
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 1rem;
+    line-height: 1;
+    padding: 0;
+}
+
 .photo-viewer-overlay,
 .share-sheet-overlay {
     position: fixed;
@@ -1768,6 +1845,13 @@ body {
             </div>
             <div class="chat-compose">
                 <h3>Send a message</h3>
+                <div id="chatStatusReplyPreview" class="chat-status-reply-preview" hidden>
+                    <div class="chat-status-reply-header">
+                        <span id="chatStatusReplyLabel" class="chat-status-reply-label">Replying to a status</span>
+                        <button type="button" class="chat-status-reply-close" onclick="clearPendingStatusChatReply()" aria-label="Clear status reply">✕</button>
+                    </div>
+                    <p id="chatStatusReplyText" class="chat-status-reply-text"></p>
+                </div>
                 <textarea id="chatMessage" maxlength="400" placeholder="Type a message..."></textarea>
                 <button class="btn btn-primary" onclick="sendGroupMessage()">Send</button>
                 <p id="chatFeedback" class="muted-note"></p>
@@ -2362,6 +2446,7 @@ let loginConfirmation = null;
 let signupRecaptcha = null;
 let loginRecaptcha = null;
 let statusUnsubscribe = null;
+let statusReactionUnsubscribe = null;
 let chatUnsubscribe = null;
 let photoLibraryUnsubscribe = null;
 let announcementsUnsubscribe = null;
@@ -2371,9 +2456,11 @@ let sundayServiceBulkPhotoFiles = [];
 let announcementPosterFile = null;
 let announcementVideoFile = null;
 let latestStatusDocs = [];
+let latestStatusReactionDocs = [];
 let latestSundayPhotoDocs = [];
 let latestAnnouncementDocs = [];
 let statusExpiryRerenderTimeout = null;
+let pendingStatusChatReply = null;
 let attendanceEntries = [];
 let activePhotoViewerIndex = -1;
 let activeStatusViewerIndex = -1;
@@ -2381,6 +2468,7 @@ const STATUS_ATTACHMENT_BUCKET = String(firebaseConfig.storageBucket || '').trim
 const MAX_STATUS_ATTACHMENT_BYTES = 20 * 1024 * 1024;
 const MAX_STATUS_ATTACHMENT_NAME_LENGTH = 120;
 const STATUS_LIFETIME_MS = 24 * 60 * 60 * 1000;
+const STATUS_REACTION_OPTIONS = ['❤️', '🙏', '🔥', '👏', '😊'];
 const STATUS_EXPIRY_RERENDER_BUFFER_MS = 50;
 const MIN_STATUS_RERENDER_DELAY_MS = 1000;
 const MILLISECONDS_PER_MINUTE = 60000;
@@ -2813,6 +2901,120 @@ function prepareChatReply(authorName) {
     chatMessageEl.setSelectionRange(chatMessageEl.value.length, chatMessageEl.value.length);
 }
 
+function buildStatusChatReplyPreview(replyData) {
+    if (!replyData) return '';
+    const parts = [];
+    const authorName = String(replyData.statusAuthorName || '').trim();
+    if (authorName) {
+        parts.push(`Replying to ${authorName}`);
+    }
+    const lukeReference = String(replyData.lukeReference || '').trim();
+    if (lukeReference) {
+        parts.push(lukeReference);
+    }
+    const statusText = String(replyData.statusText || '').trim();
+    if (statusText) {
+        parts.push(statusText);
+    }
+    return parts.join(' • ').slice(0, 220);
+}
+
+function renderPendingStatusChatReply() {
+    const previewEl = document.getElementById('chatStatusReplyPreview');
+    const labelEl = document.getElementById('chatStatusReplyLabel');
+    const textEl = document.getElementById('chatStatusReplyText');
+    if (!previewEl || !labelEl || !textEl) return;
+    if (!pendingStatusChatReply) {
+        previewEl.hidden = true;
+        textEl.textContent = '';
+        return;
+    }
+    const authorName = String(pendingStatusChatReply.statusAuthorName || '').trim() || 'this status';
+    labelEl.textContent = `Replying to ${authorName}`;
+    textEl.textContent = buildStatusChatReplyPreview(pendingStatusChatReply) || 'Status reply';
+    previewEl.hidden = false;
+}
+
+function clearPendingStatusChatReply() {
+    pendingStatusChatReply = null;
+    renderPendingStatusChatReply();
+}
+
+function prepareStatusReply(statusId, statusData) {
+    if (!statusId || !statusData) return;
+    const statusText = String(statusData.text || '').replace(/\s+/g, ' ').trim();
+    pendingStatusChatReply = {
+        statusId: String(statusId),
+        statusAuthorName: String(statusData.authorName || 'Anonymous').trim().slice(0, 80),
+        statusText: statusText.slice(0, 180),
+        lukeReference: String(statusData.lukeReference || '').trim().slice(0, 50)
+    };
+    openChatScreen();
+    renderPendingStatusChatReply();
+    prepareChatReply(statusData.authorName || 'Member');
+}
+
+function getStatusReactionSummary(statusId) {
+    const summary = {
+        counts: new Map(),
+        currentUserEmoji: ''
+    };
+    latestStatusReactionDocs.forEach((reactionDoc) => {
+        const reaction = reactionDoc.data();
+        if (!reaction || reaction.statusId !== statusId) return;
+        const emoji = String(reaction.emoji || '').trim();
+        if (!STATUS_REACTION_OPTIONS.includes(emoji)) return;
+        summary.counts.set(emoji, (summary.counts.get(emoji) || 0) + 1);
+        if (currentUser && reaction.uid === currentUser.uid) {
+            summary.currentUserEmoji = emoji;
+        }
+    });
+    return summary;
+}
+
+function subscribeStatusReactions() {
+    if (!firebaseReady() || !currentUser) return;
+    if (typeof statusReactionUnsubscribe === 'function') {
+        statusReactionUnsubscribe();
+    }
+    const cutoffDate = new Date(Date.now() - STATUS_LIFETIME_MS);
+    statusReactionUnsubscribe = db.collection('statusReactions')
+        .where('createdAt', '>=', cutoffDate)
+        .orderBy('createdAt', 'desc')
+        .limit(500)
+        .onSnapshot((snapshot) => {
+            latestStatusReactionDocs = snapshot.docs;
+            renderLukeStatuses();
+        }, (error) => {
+            console.error('Failed to load status reactions:', error);
+            latestStatusReactionDocs = [];
+            renderLukeStatuses();
+        });
+}
+
+async function toggleStatusReaction(statusId, emoji) {
+    if (!firebaseReady() || !currentUser || !statusId || !STATUS_REACTION_OPTIONS.includes(emoji)) return;
+    const reactionDocId = `${currentUser.uid}_${statusId}`;
+    const reactionRef = db.collection('statusReactions').doc(reactionDocId);
+    const existingReaction = latestStatusReactionDocs.find((doc) => doc.id === reactionDocId);
+    try {
+        if (existingReaction && existingReaction.data().emoji === emoji) {
+            await reactionRef.delete();
+            return;
+        }
+        await reactionRef.set({
+            uid: currentUser.uid,
+            statusId: String(statusId),
+            emoji,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+    } catch (error) {
+        console.error('Failed to update status reaction:', error);
+        const feedbackEl = document.getElementById('statusFeedback');
+        if (feedbackEl) feedbackEl.textContent = 'Unable to update reaction.';
+    }
+}
+
 // Returns true when a scrollable element is within the threshold (in pixels) of the bottom.
 function isNearBottom(element, threshold = CHAT_AUTO_SCROLL_THRESHOLD) {
     if (!element) return true;
@@ -2897,6 +3099,7 @@ function openStatusScreen() {
     closeMenu();
     teardownCommunityListeners();
     subscribeLukeStatuses();
+    subscribeStatusReactions();
 }
 
 function openChatScreen() {
@@ -2908,6 +3111,7 @@ function openChatScreen() {
     closeMenu();
     teardownCommunityListeners();
     subscribeGroupChat();
+    renderPendingStatusChatReply();
 }
 
 function openAttendanceScreen() {
@@ -3352,6 +3556,9 @@ function teardownCommunityListeners() {
     if (typeof statusUnsubscribe === 'function') {
         statusUnsubscribe();
     }
+    if (typeof statusReactionUnsubscribe === 'function') {
+        statusReactionUnsubscribe();
+    }
     if (typeof chatUnsubscribe === 'function') {
         chatUnsubscribe();
     }
@@ -3362,10 +3569,12 @@ function teardownCommunityListeners() {
         announcementsUnsubscribe();
     }
     statusUnsubscribe = null;
+    statusReactionUnsubscribe = null;
     chatUnsubscribe = null;
     photoLibraryUnsubscribe = null;
     announcementsUnsubscribe = null;
     latestStatusDocs = [];
+    latestStatusReactionDocs = [];
     latestSundayPhotoDocs = [];
     latestAnnouncementDocs = [];
     sundayServicePhotoFile = null;
@@ -3428,6 +3637,7 @@ function renderLukeStatuses() {
     });
     statusFeed.innerHTML = '';
     visibleStatuses.forEach(({ doc, data }) => {
+        const reactionSummary = getStatusReactionSummary(doc.id);
         const item = document.createElement('li');
         item.className = 'feed-item';
         const meta = document.createElement('div');
@@ -3507,8 +3717,40 @@ function renderLukeStatuses() {
                 item.appendChild(attachmentBox);
             }
         }
+        const reactionRow = document.createElement('div');
+        reactionRow.className = 'status-reaction-row';
+        STATUS_REACTION_OPTIONS.forEach((emoji) => {
+            const reactionBtn = document.createElement('button');
+            reactionBtn.type = 'button';
+            reactionBtn.className = 'status-reaction-btn';
+            if (reactionSummary.currentUserEmoji === emoji) {
+                reactionBtn.classList.add('active');
+            }
+            reactionBtn.setAttribute('aria-label', `React with ${emoji}`);
+            reactionBtn.addEventListener('click', () => {
+                toggleStatusReaction(doc.id, emoji);
+            });
+            const emojiSpan = document.createElement('span');
+            emojiSpan.textContent = emoji;
+            reactionBtn.appendChild(emojiSpan);
+            const countSpan = document.createElement('span');
+            countSpan.className = 'status-reaction-count';
+            countSpan.textContent = String(reactionSummary.counts.get(emoji) || 0);
+            reactionBtn.appendChild(countSpan);
+            reactionRow.appendChild(reactionBtn);
+        });
+        item.appendChild(reactionRow);
         const actionRow = document.createElement('div');
         actionRow.className = 'feed-action-row';
+        const replyBtn = document.createElement('button');
+        replyBtn.className = 'feed-view-btn';
+        replyBtn.type = 'button';
+        replyBtn.textContent = 'Reply in Chat';
+        replyBtn.setAttribute('aria-label', 'Reply to status in group chat');
+        replyBtn.addEventListener('click', () => {
+            prepareStatusReply(doc.id, data);
+        });
+        actionRow.appendChild(replyBtn);
         const shareBtn = document.createElement('button');
         shareBtn.className = 'feed-share-btn';
         shareBtn.type = 'button';
@@ -4322,6 +4564,22 @@ function subscribeGroupChat() {
                 meta.appendChild(author);
                 meta.appendChild(when);
                 item.appendChild(meta);
+                if (data.statusReply && typeof data.statusReply === 'object') {
+                    const replyContext = document.createElement('div');
+                    replyContext.className = 'chat-status-reply-context';
+                    const replyHeader = document.createElement('div');
+                    replyHeader.className = 'chat-status-reply-header';
+                    const replyLabel = document.createElement('span');
+                    replyLabel.className = 'chat-status-reply-label';
+                    replyLabel.textContent = `Status • ${data.statusReply.statusAuthorName || 'Anonymous'}`;
+                    replyHeader.appendChild(replyLabel);
+                    replyContext.appendChild(replyHeader);
+                    const replyText = document.createElement('p');
+                    replyText.className = 'chat-status-reply-text';
+                    replyText.textContent = buildStatusChatReplyPreview(data.statusReply) || 'Status reply';
+                    replyContext.appendChild(replyText);
+                    item.appendChild(replyContext);
+                }
                 if (data.message) {
                     const text = document.createElement('p');
                     text.className = 'chat-message-text';
@@ -4355,6 +4613,7 @@ async function sendGroupMessage() {
     if (!firebaseReady() || !currentUser || !currentProfile) return;
     const chatMessageEl = document.getElementById('chatMessage');
     const feedbackEl = document.getElementById('chatFeedback');
+    renderPendingStatusChatReply();
     const message = chatMessageEl.value.trim();
     if (!message) {
         feedbackEl.textContent = 'Type a message before sending.';
@@ -4367,8 +4626,12 @@ async function sendGroupMessage() {
             message: message.slice(0, 400),
             createdAt: firebase.firestore.FieldValue.serverTimestamp()
         };
+        if (pendingStatusChatReply) {
+            messagePayload.statusReply = { ...pendingStatusChatReply };
+        }
         await db.collection('groupMessages').add(messagePayload);
         chatMessageEl.value = '';
+        clearPendingStatusChatReply();
         feedbackEl.textContent = 'Message sent.';
     } catch (error) {
         console.error('Failed to send message:', error);
@@ -4567,6 +4830,7 @@ function initFirebase() {
     auth.onAuthStateChanged(async (user) => {
         if (!user) {
             teardownCommunityListeners();
+            pendingStatusChatReply = null;
             currentUser = null;
             currentProfile = null;
             clearResumeState();
