@@ -166,6 +166,40 @@ service cloud.firestore {
       return hasValidText('message', 400);
     }
 
+    function hasValidOptionalStatusReply() {
+      return !('statusReply' in request.resource.data)
+        || (
+          request.resource.data.statusReply is map
+          && request.resource.data.statusReply.keys().hasOnly(['statusId', 'statusAuthorName', 'statusText', 'lukeReference'])
+          && request.resource.data.statusReply.statusId is string
+          && request.resource.data.statusReply.statusId.size() > 0
+          && request.resource.data.statusReply.statusId.size() <= 120
+          && request.resource.data.statusReply.statusAuthorName is string
+          && request.resource.data.statusReply.statusAuthorName.size() > 0
+          && request.resource.data.statusReply.statusAuthorName.size() <= 80
+          && request.resource.data.statusReply.statusText is string
+          && request.resource.data.statusReply.statusText.size() <= 180
+          && (
+            !('lukeReference' in request.resource.data.statusReply)
+            || (
+              request.resource.data.statusReply.lukeReference is string
+              && request.resource.data.statusReply.lukeReference.size() <= 50
+            )
+          )
+        );
+    }
+
+    function hasValidStatusReaction() {
+      return request.resource.data.statusId is string
+        && request.resource.data.statusId.size() > 0
+        && request.resource.data.statusId.size() <= 120
+        && request.resource.data.uid is string
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.emoji is string
+        && request.resource.data.emoji in ['❤️', '🙏', '🔥', '👏', '😊']
+        && request.resource.data.createdAt is timestamp;
+    }
+
     function hasValidSundayServicePhotoData() {
       return request.resource.data.photo is map
         && request.resource.data.photo.keys().hasOnly(['name', 'type', 'size', 'url'])
@@ -230,8 +264,21 @@ service cloud.firestore {
         && request.resource.data.uid == request.auth.uid
         && hasValidAuthorName('authorName', 80)
         && hasValidGroupMessageContent()
+        && hasValidOptionalStatusReply()
         && request.resource.data.createdAt is timestamp;
       allow update: if false;
+      allow delete: if isSignedIn() && resource.data.uid == request.auth.uid;
+    }
+
+    match /statusReactions/{reactionId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn()
+        && reactionId == request.auth.uid + '_' + request.resource.data.statusId
+        && hasValidStatusReaction();
+      allow update: if isSignedIn()
+        && resource.data.uid == request.auth.uid
+        && reactionId == request.auth.uid + '_' + request.resource.data.statusId
+        && hasValidStatusReaction();
       allow delete: if isSignedIn() && resource.data.uid == request.auth.uid;
     }
 
