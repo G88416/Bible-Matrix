@@ -992,6 +992,24 @@ body.menu-lock {
     margin: 8px 0 12px;
 }
 
+.attendance-qr-card {
+    margin-bottom: 14px;
+    padding: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.04);
+    text-align: center;
+}
+
+.attendance-qr-card img {
+    width: min(100%, 220px);
+    height: auto;
+    display: block;
+    margin: 8px auto 0;
+    border-radius: 8px;
+    background: #fff;
+}
+
 .photo-library-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
@@ -1946,6 +1964,10 @@ body {
         <div class="community-grid">
             <div class="status-form">
                 <h3>Add attendance</h3>
+                <div class="attendance-qr-card">
+                    <span class="muted-note">Sunday service attendee QR code</span>
+                    <img src="https://github.com/user-attachments/assets/a4178be6-5319-4339-8fa3-2d1167c6df53" alt="Sunday service attendee QR code" loading="lazy" />
+                </div>
                 <input id="attendanceDate" type="date" />
                 <input id="attendanceName" type="text" maxlength="80" placeholder="Full name" />
                 <input id="attendancePhone" type="tel" maxlength="20" placeholder="Phone number (optional)" />
