@@ -1747,25 +1747,90 @@ body {
             </table>
             <h2>Stage Journey</h2>
             <div class="stage-overview">
-                <div class="stage-card clickable" role="button" tabindex="0" onclick="startFromStage(0)" onkeydown="handleStageCardKey(event, 0)">
+                <div class="stage-card clickable" role="button" tabindex="0" onclick="startHomeStage(0)" onkeydown="handleStageCardKey(event, 0)">
                     <div class="stage-label">Stage 1</div>
                     <h3>Foundations</h3>
                     <p>Start with familiar Luke passages and warm up the room.</p>
                 </div>
-                <div class="stage-card clickable" role="button" tabindex="0" onclick="startFromStage(1)" onkeydown="handleStageCardKey(event, 1)">
+                <div class="stage-card clickable" role="button" tabindex="0" onclick="startHomeStage(1)" onkeydown="handleStageCardKey(event, 1)">
                     <div class="stage-label">Stage 2</div>
                     <h3>Growing Deeper</h3>
                     <p>Move into ministry moments, miracles, and meaning.</p>
                 </div>
-                <div class="stage-card clickable" role="button" tabindex="0" onclick="startFromStage(2)" onkeydown="handleStageCardKey(event, 2)">
+                <div class="stage-card clickable" role="button" tabindex="0" onclick="startHomeStage(2)" onkeydown="handleStageCardKey(event, 2)">
                     <div class="stage-label">Stage 3</div>
                     <h3>Kingdom Focus</h3>
                     <p>Challenge the group with discipleship and parable details.</p>
                 </div>
-                <div class="stage-card clickable" role="button" tabindex="0" onclick="startFromStage(3)" onkeydown="handleStageCardKey(event, 3)">
+                <div class="stage-card clickable" role="button" tabindex="0" onclick="startHomeStage(3)" onkeydown="handleStageCardKey(event, 3)">
                     <div class="stage-label">Stage 4</div>
                     <h3>Leadership Level</h3>
                     <p>Finish strong with tougher resurrection and mission questions.</p>
+                </div>
+            </div>
+        </aside>
+    </div>
+</section>
+
+<section id="sundayChallengeScreen" class="screen">
+    <div class="app-topbar">
+        <button class="icon-btn" onclick="toggleMenu()" aria-label="Open navigation menu">☰</button>
+        <button class="icon-btn status-icon" onclick="openStatusScreen()" aria-label="Open Luke status">
+            <span class="status-ring">+</span>
+        </button>
+    </div>
+    <div class="container glass hero">
+        <div class="hero-copy">
+            <div class="app-logo-wrap" style="align-items:flex-start; flex-direction:row; margin-bottom:16px;">
+                <img src="/icons/logo-advanced.svg" alt="Bible Matrix logo" style="width:56px;height:56px;border-radius:14px;" />
+                <span class="app-brand" style="align-self:center;margin-left:12px;">Bible Matrix</span>
+            </div>
+            <div class="eyebrow">⛪ Weekly Bible Challenge</div>
+            <h1>Sunday Challenge Quiz</h1>
+            <p>
+                Test your understanding of Luke 16:1–3, Luke 17:11–14, and Luke 19:5 with quiz and lessons learned questions.
+                Play through the full challenge and climb the weekly ranking table.
+            </p>
+            <div class="hero-actions">
+                <button class="btn btn-primary" onclick="startSundayChallengeGame()">Start Sunday Challenge Quiz</button>
+                <button class="btn btn-secondary" onclick="showSundayChallengeRules()">How to Play</button>
+                <button class="btn btn-secondary" onclick="goHome()">Home</button>
+            </div>
+            <footer>“Whoever can be trusted with very little can also be trusted with much.” — Luke 16:10</footer>
+        </div>
+
+        <aside class="hero-panel">
+            <h2>🏆 Ranking</h2>
+            <table class="rank-table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Name</th>
+                        <th>Score</th>
+                    </tr>
+                </thead>
+                <tbody id="sundayChallengeRankingTableBody">
+                    <tr>
+                        <td colspan="3">No ranking data yet.</td>
+                    </tr>
+                </tbody>
+            </table>
+            <h2>Challenge Segments</h2>
+            <div class="stage-overview">
+                <div class="stage-card clickable" role="button" tabindex="0" onclick="startSundayChallengeFromStage(0)" onkeydown="handleSundayChallengeCardKey(event, 0)">
+                    <div class="stage-label">Part 1</div>
+                    <h3>Luke 16:1–3</h3>
+                    <p>The Parable of the Shrewd Manager and stewardship lessons.</p>
+                </div>
+                <div class="stage-card clickable" role="button" tabindex="0" onclick="startSundayChallengeFromStage(1)" onkeydown="handleSundayChallengeCardKey(event, 1)">
+                    <div class="stage-label">Part 2</div>
+                    <h3>Luke 17:11–14</h3>
+                    <p>Jesus heals ten lepers with faith and obedience lessons.</p>
+                </div>
+                <div class="stage-card clickable" role="button" tabindex="0" onclick="startSundayChallengeFromStage(2)" onkeydown="handleSundayChallengeCardKey(event, 2)">
+                    <div class="stage-label">Part 3</div>
+                    <h3>Luke 19:5</h3>
+                    <p>Jesus and Zacchaeus: response, value, and joyful obedience.</p>
                 </div>
             </div>
         </aside>
@@ -2154,7 +2219,7 @@ body {
 
         <div class="result-actions">
             <button class="btn btn-primary" onclick="restartGame()">Play Again</button>
-            <button class="btn btn-secondary" onclick="showRules()">View Rules</button>
+            <button id="resultRulesBtn" class="btn btn-secondary" onclick="showRules()">View Rules</button>
             <button class="btn btn-secondary" onclick="goHome()">Home</button>
         </div>
     </div>
@@ -2175,10 +2240,11 @@ const firebaseConfig = {
     measurementId: "G-JV415H1MB5"
 };
 // Firebase web app configuration.
-const MAX_QUIZ_SCORE = 40;
+const MAX_HOME_QUIZ_SCORE = 40;
+const MAX_SUNDAY_CHALLENGE_SCORE = 18;
 const QUIZ_TIME_LIMIT_SECONDS = 30;
 
-const stages = [
+const homeStages = [
     {
         name: "Foundations",
         description: "Warm up with core Luke moments your group will recognize quickly.",
@@ -2424,6 +2490,147 @@ const stages = [
         ]
     }
 ];
+
+const sundayChallengeStages = [
+    {
+        name: 'Luke 16:1–3',
+        description: 'The Parable of the Shrewd Manager and lessons on stewardship.',
+        difficulty: 'Sunday challenge',
+        timeLimit: QUIZ_TIME_LIMIT_SECONDS,
+        points: 1,
+        aiCorrectProbability: 0.38,
+        questions: [
+            {
+                question: 'Who called the manager to give an account of his management?',
+                answers: ['A servant', 'The rich man', 'A farmer', 'A tax collector'],
+                correct: 1
+            },
+            {
+                question: "Why was the manager about to lose his position?",
+                answers: ['He was sick', 'He wanted to resign', "He was accused of wasting his master's possessions", 'He moved to another city'],
+                correct: 2
+            },
+            {
+                question: 'What did the manager say he was not strong enough to do?',
+                answers: ['Fish', 'Build houses', 'Travel', 'Dig'],
+                correct: 3
+            },
+            {
+                question: 'What character quality is emphasized when handling resources entrusted to us?',
+                answers: ['Carelessness', 'Faithfulness and stewardship', 'Laziness', 'Pride'],
+                correct: 1
+            },
+            {
+                question: 'Why should believers think wisely about the future?',
+                answers: ['To gain popularity', 'To prepare responsibly and honor God', 'To avoid helping others', 'To become famous'],
+                correct: 1
+            },
+            {
+                question: 'What can happen when people misuse responsibilities entrusted to them?',
+                answers: ['Greater rewards', 'No consequences', 'Loss of trust and opportunity', 'Automatic promotion'],
+                correct: 2
+            }
+        ]
+    },
+    {
+        name: 'Luke 17:11–14',
+        description: 'Jesus heals ten lepers with lessons on faith, obedience, and gratitude.',
+        difficulty: 'Sunday challenge',
+        timeLimit: QUIZ_TIME_LIMIT_SECONDS,
+        points: 1,
+        aiCorrectProbability: 0.45,
+        questions: [
+            {
+                question: 'How many lepers called out to Jesus for mercy?',
+                answers: ['Five', 'Seven', 'Ten', 'Twelve'],
+                correct: 2
+            },
+            {
+                question: 'What did the lepers call Jesus?',
+                answers: ['King', 'Master', 'Prophet', 'Teacher of the Law'],
+                correct: 1
+            },
+            {
+                question: 'What instruction did Jesus give the lepers?',
+                answers: ['Go home', 'Pray all night', 'Show yourselves to the priests', 'Wait by the road'],
+                correct: 2
+            },
+            {
+                question: 'When were the lepers healed?',
+                answers: ['Immediately after praying', 'While they were going to the priests', 'The next day', 'After returning home'],
+                correct: 1
+            },
+            {
+                question: 'What should we do when facing impossible situations?',
+                answers: ['Give up', 'Run away', 'Call upon Jesus in faith', 'Keep silent'],
+                correct: 2
+            },
+            {
+                question: 'What does the obedience of the lepers teach us?',
+                answers: ['Faith requires action', 'Obedience is optional', 'Faith is unnecessary', 'Miracles are impossible'],
+                correct: 0
+            },
+            {
+                question: "What happened as the lepers obeyed Jesus' command?",
+                answers: ['They became tired', 'They were healed', 'They got lost', 'Nothing changed'],
+                correct: 1
+            },
+            {
+                question: "What attitude should believers maintain after receiving God's blessings?",
+                answers: ['Pride', 'Gratitude and thanksgiving', 'Selfishness', 'Complaining'],
+                correct: 1
+            }
+        ]
+    },
+    {
+        name: 'Luke 19:5',
+        description: 'Jesus and Zacchaeus: being seen, called, and transformed.',
+        difficulty: 'Sunday challenge',
+        timeLimit: QUIZ_TIME_LIMIT_SECONDS,
+        points: 1,
+        aiCorrectProbability: 0.5,
+        questions: [
+            {
+                question: 'What was the name of the man Jesus called down from the tree?',
+                answers: ['Bartimaeus', 'Zacchaeus', 'Simon', 'Matthew'],
+                correct: 1
+            },
+            {
+                question: 'What did Jesus tell Zacchaeus?',
+                answers: ['Follow Me tomorrow', 'Meet Me in Jerusalem', 'I must stay at your house today', 'Go back to work'],
+                correct: 2
+            },
+            {
+                question: "What does Jesus' interaction with Zacchaeus teach us?",
+                answers: ['Jesus only notices important people', 'Jesus knows and values every person', 'Wealth guarantees salvation', 'People cannot change'],
+                correct: 1
+            },
+            {
+                question: 'What should we do when Jesus calls us?',
+                answers: ['Delay our response', 'Ignore Him', 'Respond willingly and joyfully', 'Wait for others to respond first'],
+                correct: 2
+            }
+        ]
+    }
+];
+
+const QUIZ_CONFIGS = {
+    home: {
+        scoreField: 'bestScore',
+        maxScore: MAX_HOME_QUIZ_SCORE,
+        rankingTableBodyId: 'rankingTableBody',
+        stages: homeStages
+    },
+    sundayChallenge: {
+        scoreField: 'sundayChallengeBestScore',
+        maxScore: MAX_SUNDAY_CHALLENGE_SCORE,
+        rankingTableBodyId: 'sundayChallengeRankingTableBody',
+        stages: sundayChallengeStages
+    }
+};
+
+let activeQuizMode = 'home';
+let activeStages = homeStages;
 
 let currentStageIndex = 0;
 let currentQuestionIndex = 0;
@@ -3023,19 +3230,32 @@ function isNearBottom(element, threshold = CHAT_AUTO_SCROLL_THRESHOLD) {
 
 function cloneStageResults(data) {
     return (data || []).map((stage, index) => ({
-        name: stage.name || stages[index]?.name || `Stage ${index + 1}`,
+        name: stage.name || activeStages[index]?.name || `Stage ${index + 1}`,
         player: Math.max(0, Number(stage.player) || 0),
         ai: Math.max(0, Number(stage.ai) || 0),
-        points: stages[index]?.points || 1
+        points: activeStages[index]?.points || 1
     }));
 }
 
 function getSafeStageIndex(index) {
-    return Math.max(0, Math.min(Number(index) || 0, stages.length - 1));
+    return Math.max(0, Math.min(Number(index) || 0, activeStages.length - 1));
+}
+
+function setActiveQuizMode(mode) {
+    const normalizedMode = mode in QUIZ_CONFIGS ? mode : 'home';
+    const configuredStages = QUIZ_CONFIGS[normalizedMode]?.stages;
+    if (!Array.isArray(configuredStages) || configuredStages.length === 0) {
+        activeQuizMode = 'home';
+        activeStages = homeStages;
+        return;
+    }
+    activeQuizMode = normalizedMode;
+    activeStages = configuredStages;
 }
 
 function setResumeState(stageIndex, questionIndex) {
     resumeState = {
+        mode: activeQuizMode,
         stageIndex,
         questionIndex,
         playerScore,
@@ -3054,13 +3274,20 @@ function clearResumeState() {
 function updateResumeButton() {
     const resumeBtn = document.getElementById('resumeJourneyBtn');
     if (!resumeBtn) return;
+    const resumeMode = resumeState?.mode || 'home';
     const canResume = Boolean(
         currentUser
         && resumeState
+        && (resumeMode in QUIZ_CONFIGS)
         && Number.isInteger(resumeState.stageIndex)
         && resumeState.stageIndex >= 0
-        && resumeState.stageIndex < stages.length
+        && resumeState.stageIndex < QUIZ_CONFIGS[resumeMode].stages.length
     );
+    if (canResume) {
+        resumeBtn.textContent = resumeMode === 'sundayChallenge' ? 'Resume Sunday Challenge' : 'Resume Journey';
+    } else {
+        resumeBtn.textContent = 'Resume Journey';
+    }
     resumeBtn.hidden = !canResume;
 }
 
@@ -3147,6 +3374,17 @@ function openAnnouncementsScreen() {
     closeMenu();
     teardownCommunityListeners();
     subscribeAnnouncements();
+}
+
+function openSundayChallengeScreen() {
+    if (!currentUser) {
+        showScreen('authScreen');
+        return;
+    }
+    showScreen('sundayChallengeScreen');
+    closeMenu();
+    teardownCommunityListeners();
+    refreshLeaderboard('sundayChallenge');
 }
 
 function setAttendanceDefaultDate() {
@@ -4689,6 +4927,7 @@ async function verifySignupCode() {
             gender,
             phoneNumber: user.phoneNumber || phone,
             bestScore: 0,
+            sundayChallengeBestScore: 0,
             createdAt: firebase.firestore.FieldValue.serverTimestamp(),
             updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         });
@@ -4741,14 +4980,16 @@ async function verifyLoginCode() {
     }
 }
 
-async function refreshLeaderboard() {
+async function refreshLeaderboard(mode = 'home') {
     if (!firebaseReady()) return;
-    const rankingTableBody = document.getElementById('rankingTableBody');
+    const quizConfig = QUIZ_CONFIGS[mode] || QUIZ_CONFIGS.home;
+    const rankingTableBody = document.getElementById(quizConfig.rankingTableBodyId);
+    if (!rankingTableBody) return;
     rankingTableBody.innerHTML = '<tr><td colspan="3">Loading...</td></tr>';
     try {
         const snapshot = await db.collection('users')
-            .where('bestScore', '>=', 0)
-            .orderBy('bestScore', 'desc')
+            .where(quizConfig.scoreField, '>=', 0)
+            .orderBy(quizConfig.scoreField, 'desc')
             .limit(100)
             .get();
 
@@ -4764,7 +5005,7 @@ async function refreshLeaderboard() {
             const data = doc.data();
             const row = document.createElement('tr');
             const nameClass = getGenderClass(data.gender);
-            const safeScore = Math.min(MAX_QUIZ_SCORE, Math.max(0, Number(data.bestScore) || 0));
+            const safeScore = Math.min(quizConfig.maxScore, Math.max(0, Number(data[quizConfig.scoreField]) || 0));
             if (lastScore === null || safeScore !== lastScore) {
                 currentRank += 1;
                 lastScore = safeScore;
@@ -4793,17 +5034,18 @@ async function refreshLeaderboard() {
 
 async function saveBestScore() {
     if (!firebaseReady() || !currentUser || !currentProfile) return;
-    const boundedScore = Math.max(0, Math.min(MAX_QUIZ_SCORE, playerCorrectAnswers));
-    const bestScore = Math.max(Number(currentProfile.bestScore || 0), boundedScore);
+    const quizConfig = QUIZ_CONFIGS[activeQuizMode] || QUIZ_CONFIGS.home;
+    const boundedScore = Math.max(0, Math.min(quizConfig.maxScore, playerCorrectAnswers));
+    const bestScore = Math.max(Number(currentProfile[quizConfig.scoreField] || 0), boundedScore);
     await db.collection('users').doc(currentUser.uid).set({
         uid: currentUser.uid,
         fullName: currentProfile.fullName || '',
         gender: currentProfile.gender || '',
         phoneNumber: currentProfile.phoneNumber || currentUser.phoneNumber || '',
-        bestScore,
+        [quizConfig.scoreField]: bestScore,
         updatedAt: firebase.firestore.FieldValue.serverTimestamp()
     }, { merge: true });
-    currentProfile.bestScore = bestScore;
+    currentProfile[quizConfig.scoreField] = bestScore;
 }
 
 async function logout() {
@@ -4852,7 +5094,22 @@ function initFirebase() {
 }
 
 function startGame() {
+    setActiveQuizMode('home');
     startFromStage(0);
+}
+
+function startSundayChallengeGame() {
+    startSundayChallengeFromStage(0);
+}
+
+function startSundayChallengeFromStage(stageIndex) {
+    setActiveQuizMode('sundayChallenge');
+    startFromStage(stageIndex);
+}
+
+function startHomeStage(stageIndex) {
+    setActiveQuizMode('home');
+    startFromStage(stageIndex);
 }
 
 function startFromStage(stageIndex) {
@@ -4869,7 +5126,7 @@ function startFromStage(stageIndex) {
     playerCorrectAnswers = 0;
     awaitingAnswer = false;
     isPaused = false;
-    stageResults = stages.map((stage) => ({
+    stageResults = activeStages.map((stage) => ({
         name: stage.name,
         player: 0,
         ai: 0,
@@ -4890,6 +5147,7 @@ function resumeGame() {
         startGame();
         return;
     }
+    setActiveQuizMode(resumeState.mode || 'home');
 
     clearInterval(countdown);
     initializeQuizMeta();
@@ -4900,9 +5158,9 @@ function resumeGame() {
     playerCorrectAnswers = Math.max(0, Number(resumeState.playerCorrectAnswers) || 0);
     stageResults = cloneStageResults(resumeState.stageResults);
 
-    while (stageResults.length < stages.length) {
+    while (stageResults.length < activeStages.length) {
         stageResults.push({
-            name: stages[stageResults.length].name,
+            name: activeStages[stageResults.length].name,
             player: 0,
             ai: 0,
             points: 1
@@ -4919,14 +5177,21 @@ function resumeGame() {
 function handleStageCardKey(event, stageIndex) {
     if (event.key === 'Enter' || event.key === ' ') {
         event.preventDefault();
-        startFromStage(stageIndex);
+        startHomeStage(stageIndex);
+    }
+}
+
+function handleSundayChallengeCardKey(event, stageIndex) {
+    if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        startSundayChallengeFromStage(stageIndex);
     }
 }
 
 function loadQuestion() {
     clearInterval(countdown);
 
-    const stage = stages[currentStageIndex];
+    const stage = activeStages[currentStageIndex];
     if (!stage) {
         showResults();
         return;
@@ -5029,7 +5294,7 @@ function selectAnswer(selectedIndex, button) {
     clearInterval(countdown);
     document.getElementById('pauseBtn').disabled = true;
 
-    const stage = stages[currentStageIndex];
+    const stage = activeStages[currentStageIndex];
     const question = stage?.questions?.[currentQuestionIndex];
     if (!question) {
         loadQuestion();
@@ -5067,7 +5332,7 @@ function handleTimeUp() {
     isPaused = false;
     document.getElementById('pauseBtn').disabled = true;
 
-    const stage = stages[currentStageIndex];
+    const stage = activeStages[currentStageIndex];
     const question = stage.questions[currentQuestionIndex];
     const buttons = document.querySelectorAll('.answer-btn');
 
@@ -5095,8 +5360,8 @@ function moveToNextQuestion() {
 function handleStageComplete() {
     clearInterval(countdown);
     isPaused = false;
-    const stage = stages[currentStageIndex];
-    const isLastStage = currentStageIndex === stages.length - 1;
+    const stage = activeStages[currentStageIndex];
+    const isLastStage = currentStageIndex === activeStages.length - 1;
 
     document.getElementById('transitionPill').textContent = `Stage ${currentStageIndex + 1} complete`;
     document.getElementById('transitionTitle').textContent = isLastStage
@@ -5104,7 +5369,7 @@ function handleStageComplete() {
         : `${stage.name} complete!`;
     document.getElementById('transitionMessage').textContent = isLastStage
         ? 'You made it through every round. Review the final results and celebrate the growth.'
-        : `Get ready for ${stages[currentStageIndex + 1].name}. The questions are about to get tougher.`;
+        : `Get ready for ${activeStages[currentStageIndex + 1].name}. The questions are about to get tougher.`;
     document.getElementById('transitionPlayerScore').textContent = stageResults[currentStageIndex].player;
     document.getElementById('transitionAIScore').textContent = stageResults[currentStageIndex].ai;
     document.getElementById('transitionNextStage').textContent = isLastStage ? 'Done' : currentStageIndex + 2;
@@ -5119,7 +5384,7 @@ function handleStageComplete() {
 }
 
 function startNextStage() {
-    if (currentStageIndex >= stages.length - 1) {
+    if (currentStageIndex >= activeStages.length - 1) {
         showResults();
         return;
     }
@@ -5152,11 +5417,15 @@ function showResults() {
         resultMessage = 'Excellent work. You stayed strong through each stage and finished ahead of the AI opponent.';
     } else if (aiScore > playerScore) {
         winnerText = '🤖 The AI pulled ahead this time.';
-        resultMessage = 'You still completed all four stages—jump back in and see if your group can beat the next run.';
+        resultMessage = `You still completed all ${activeStages.length} stages—jump back in and see if your group can beat the next run.`;
     }
 
     document.getElementById('winnerText').textContent = winnerText;
     document.getElementById('resultMessage').textContent = `${resultMessage} Your ranking score is ${playerCorrectAnswers} out of ${getTotalQuestionCount()}.`;
+    const resultRulesBtn = document.getElementById('resultRulesBtn');
+    if (resultRulesBtn) {
+        resultRulesBtn.onclick = activeQuizMode === 'sundayChallenge' ? showSundayChallengeRules : showRules;
+    }
 
     const breakdown = document.getElementById('stageBreakdown');
     breakdown.innerHTML = '';
@@ -5168,10 +5437,14 @@ function showResults() {
 
     saveBestScore()
         .catch((error) => console.error('Failed to save best score:', error))
-        .finally(() => refreshLeaderboard());
+        .finally(() => refreshLeaderboard(activeQuizMode));
 }
 
 function restartGame() {
+    if (activeQuizMode === 'sundayChallenge') {
+        startSundayChallengeGame();
+        return;
+    }
     startGame();
 }
 
@@ -5187,11 +5460,11 @@ function goHome() {
 }
 
 function getTotalQuestionCount() {
-    return stages.reduce((sum, stage) => sum + stage.questions.length, 0);
+    return activeStages.reduce((sum, stage) => sum + stage.questions.length, 0);
 }
 
 function getAnsweredQuestionCount() {
-    return stages
+    return activeStages
         .slice(0, currentStageIndex)
         .reduce((sum, stage) => sum + stage.questions.length, 0) + currentQuestionIndex;
 }
@@ -5215,6 +5488,21 @@ function showRules() {
 6. Your ranking score is based on correct answers out of 40.
 
 Perfect for youth nights, young adult hangouts, and ministry competitions!`
+    );
+}
+
+function showSundayChallengeRules() {
+    alert(
+`SUNDAY CHALLENGE QUIZ RULES
+
+1. The challenge has 3 segments from Luke 16:1–3, Luke 17:11–14, and Luke 19:5.
+2. Answer every question before the timer ends to maximize your score.
+3. Your score is based only on your own correct answers.
+4. If time runs out, the question is marked wrong and the game moves on.
+5. You can pause and resume the timer whenever needed.
+6. Your Sunday challenge ranking score is based on correct answers out of 18.
+
+Use this challenge to review both Bible facts and lessons learned together.`
     );
 }
 
@@ -5387,9 +5675,10 @@ if ('serviceWorker' in navigator) {
         <strong>BIBLE MATRIX</strong>
         <button class="icon-btn" onclick="closeMenu()" aria-label="Close menu">✕</button>
     </div>
-    <p class="muted-note">Navigate to quiz, Luke status, group chat, announcements, Sunday service attendance register, or photo library.</p>
+    <p class="muted-note">Navigate to quiz, Sunday challenge, Luke status, group chat, announcements, Sunday service attendance register, or photo library.</p>
     <div class="menu-actions">
         <button class="menu-btn" onclick="goHome()">🏠 Home</button>
+        <button class="menu-btn" onclick="openSundayChallengeScreen()">📘 Sunday Challenge Quiz</button>
         <button class="menu-btn" onclick="openStatusScreen()">🟢 Luke Status</button>
         <button class="menu-btn" onclick="openChatScreen()">💬 Group Chat</button>
         <button class="menu-btn" onclick="openAnnouncementsScreen()">📢 Announcements</button>
