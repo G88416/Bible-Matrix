@@ -1788,7 +1788,7 @@ body {
             <div class="eyebrow">⛪ Weekly Bible Challenge</div>
             <h1>Sunday Challenge Quiz</h1>
             <p>
-                Test your understanding of Luke 16:1–3, Luke 17:11–14, and Luke 19:5 with quiz and lessons learnt questions.
+                Test your understanding of Luke 16:1–3, Luke 17:11–14, and Luke 19:5 with quiz and lessons learned questions.
                 Play through the full challenge and climb the weekly ranking table.
             </p>
             <div class="hero-actions">
@@ -1817,17 +1817,17 @@ body {
             </table>
             <h2>Challenge Segments</h2>
             <div class="stage-overview">
-                <div class="stage-card clickable" role="button" tabindex="0" onclick="startSundayChallengeGame()" onkeydown="handleSundayChallengeCardKey(event)">
+                <div class="stage-card clickable" role="button" tabindex="0" onclick="startSundayChallengeFromStage(0)" onkeydown="handleSundayChallengeCardKey(event, 0)">
                     <div class="stage-label">Part 1</div>
                     <h3>Luke 16:1–3</h3>
                     <p>The Parable of the Shrewd Manager and stewardship lessons.</p>
                 </div>
-                <div class="stage-card clickable" role="button" tabindex="0" onclick="startSundayChallengeGame()" onkeydown="handleSundayChallengeCardKey(event)">
+                <div class="stage-card clickable" role="button" tabindex="0" onclick="startSundayChallengeFromStage(1)" onkeydown="handleSundayChallengeCardKey(event, 1)">
                     <div class="stage-label">Part 2</div>
                     <h3>Luke 17:11–14</h3>
                     <p>Jesus heals ten lepers with faith and obedience lessons.</p>
                 </div>
-                <div class="stage-card clickable" role="button" tabindex="0" onclick="startSundayChallengeGame()" onkeydown="handleSundayChallengeCardKey(event)">
+                <div class="stage-card clickable" role="button" tabindex="0" onclick="startSundayChallengeFromStage(2)" onkeydown="handleSundayChallengeCardKey(event, 2)">
                     <div class="stage-label">Part 3</div>
                     <h3>Luke 19:5</h3>
                     <p>Jesus and Zacchaeus: response, value, and joyful obedience.</p>
@@ -3243,8 +3243,14 @@ function getSafeStageIndex(index) {
 
 function setActiveQuizMode(mode) {
     const normalizedMode = mode in QUIZ_CONFIGS ? mode : 'home';
+    const configuredStages = QUIZ_CONFIGS[normalizedMode]?.stages;
+    if (!Array.isArray(configuredStages) || configuredStages.length === 0) {
+        activeQuizMode = 'home';
+        activeStages = homeStages;
+        return;
+    }
     activeQuizMode = normalizedMode;
-    activeStages = QUIZ_CONFIGS[normalizedMode].stages;
+    activeStages = configuredStages;
 }
 
 function setResumeState(stageIndex, questionIndex) {
@@ -3268,14 +3274,20 @@ function clearResumeState() {
 function updateResumeButton() {
     const resumeBtn = document.getElementById('resumeJourneyBtn');
     if (!resumeBtn) return;
+    const resumeMode = resumeState?.mode || 'home';
     const canResume = Boolean(
         currentUser
         && resumeState
-        && resumeState.mode === 'home'
+        && (resumeMode in QUIZ_CONFIGS)
         && Number.isInteger(resumeState.stageIndex)
         && resumeState.stageIndex >= 0
-        && resumeState.stageIndex < homeStages.length
+        && resumeState.stageIndex < QUIZ_CONFIGS[resumeMode].stages.length
     );
+    if (canResume) {
+        resumeBtn.textContent = resumeMode === 'sundayChallenge' ? 'Resume Sunday Challenge' : 'Resume Journey';
+    } else {
+        resumeBtn.textContent = 'Resume Journey';
+    }
     resumeBtn.hidden = !canResume;
 }
 
@@ -5087,9 +5099,12 @@ function startGame() {
 }
 
 function startSundayChallengeGame() {
+    startSundayChallengeFromStage(0);
+}
+
+function startSundayChallengeFromStage(stageIndex) {
     setActiveQuizMode('sundayChallenge');
-    clearResumeState();
-    startFromStage(0);
+    startFromStage(stageIndex);
 }
 
 function startHomeStage(stageIndex) {
@@ -5132,7 +5147,7 @@ function resumeGame() {
         startGame();
         return;
     }
-    setActiveQuizMode('home');
+    setActiveQuizMode(resumeState.mode || 'home');
 
     clearInterval(countdown);
     initializeQuizMeta();
@@ -5166,10 +5181,10 @@ function handleStageCardKey(event, stageIndex) {
     }
 }
 
-function handleSundayChallengeCardKey(event) {
+function handleSundayChallengeCardKey(event, stageIndex) {
     if (event.key === 'Enter' || event.key === ' ') {
         event.preventDefault();
-        startSundayChallengeGame();
+        startSundayChallengeFromStage(stageIndex);
     }
 }
 
@@ -5422,12 +5437,7 @@ function showResults() {
 
     saveBestScore()
         .catch((error) => console.error('Failed to save best score:', error))
-        .finally(() => {
-            refreshLeaderboard(activeQuizMode);
-            if (activeQuizMode !== 'home') {
-                refreshLeaderboard('home');
-            }
-        });
+        .finally(() => refreshLeaderboard(activeQuizMode));
 }
 
 function restartGame() {
@@ -5492,7 +5502,7 @@ function showSundayChallengeRules() {
 5. You can pause and resume the timer whenever needed.
 6. Your Sunday challenge ranking score is based on correct answers out of 18.
 
-Use this challenge to review both Bible facts and lessons learnt together.`
+Use this challenge to review both Bible facts and lessons learned together.`
     );
 }
 

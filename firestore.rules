@@ -30,7 +30,10 @@ service cloud.firestore {
 
     function hasNonDecreasingSundayChallengeScore() {
       return !('sundayChallengeBestScore' in resource.data)
-        || request.resource.data.sundayChallengeBestScore >= resource.data.sundayChallengeBestScore;
+        || (
+          'sundayChallengeBestScore' in request.resource.data
+          && request.resource.data.sundayChallengeBestScore >= resource.data.sundayChallengeBestScore
+        );
     }
 
     function hasValidName() {
