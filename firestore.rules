@@ -19,6 +19,20 @@ service cloud.firestore {
         && request.resource.data.bestScore <= 40;
     }
 
+    function hasValidSundayChallengeScore() {
+      return !('sundayChallengeBestScore' in request.resource.data)
+        || (
+          request.resource.data.sundayChallengeBestScore is int
+          && request.resource.data.sundayChallengeBestScore >= 0
+          && request.resource.data.sundayChallengeBestScore <= 18
+        );
+    }
+
+    function hasNonDecreasingSundayChallengeScore() {
+      return !('sundayChallengeBestScore' in resource.data)
+        || request.resource.data.sundayChallengeBestScore >= resource.data.sundayChallengeBestScore;
+    }
+
     function hasValidName() {
       return request.resource.data.fullName is string
         && request.resource.data.fullName.size() > 1
@@ -234,14 +248,17 @@ service cloud.firestore {
         && hasValidName()
         && hasValidGender()
         && hasValidPhoneNumber()
-        && hasValidScore();
+        && hasValidScore()
+        && hasValidSundayChallengeScore();
       allow update: if isOwner(userId)
         && request.resource.data.uid == resource.data.uid
         && hasValidName()
         && hasValidGender()
         && hasValidPhoneNumber()
         && hasValidScore()
-        && request.resource.data.bestScore >= resource.data.bestScore;
+        && hasValidSundayChallengeScore()
+        && request.resource.data.bestScore >= resource.data.bestScore
+        && hasNonDecreasingSundayChallengeScore();
       allow delete: if false;
     }
 
